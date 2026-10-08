@@ -274,8 +274,8 @@ def ensure_draft_version(client: ASCClient, app_id: str, preferred: str | None =
         return editable
     live = find_live_version(client, app_id)
     base = preferred or (live["attributes"]["versionString"] if live else "1.0.0")
-    if preferred and find_version_by_string(client, app_id, preferred):
-        return find_version_by_string(client, app_id, preferred)  # type: ignore
+    # `preferred` is the version to bump from, never the target: a live 1.2.1
+    # yields a 1.2.2 draft rather than handing back the frozen live record.
     candidate = bump_version(base)
     for _ in range(8):
         if find_version_by_string(client, app_id, candidate):
