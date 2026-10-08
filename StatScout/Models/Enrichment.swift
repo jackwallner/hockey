@@ -1,7 +1,7 @@
 import Foundation
 
-/// Who a player is, what he costs, how much he plays and whether he is hurt,
-/// from `public.player_profiles` (see `backend/ingest_enrichment.py`).
+/// Who a player is and how much he plays, from `public.player_profiles` (see
+/// `backend/ingest_enrichment.py`).
 ///
 /// Every field is optional: a source that was late on the last run leaves its
 /// columns null, and the screens that read them simply leave that line out.
@@ -12,27 +12,21 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
     var birthDate: Date?
     var heightInches: Int?
     var weightPounds: Int?
-    var college: String?
+    /// "Richmond Hill, ON, CAN".
+    var birthplace: String?
     var yearsExperience: Int?
     var draftYear: Int?
     var draftRound: Int?
     var draftPick: Int?
     var draftTeam: String?
-    /// Average per year, in millions of dollars.
-    var contractAPY: Double?
-    /// APY as a share of the salary cap in the year it was signed, which is
-    /// what makes a 2022 deal and a 2026 deal comparable.
-    var contractCapShare: Double?
-    var contractYears: Int?
-    var contractYearSigned: Int?
-    var offenseSnaps: Int?
-    var defenseSnaps: Int?
-    var offenseSnapShare: Double?
-    var defenseSnapShare: Double?
-    var injuryWeek: Int?
-    var injuryStatus: String?
-    var injury: String?
-    var practiceStatus: String?
+    /// Season ice time in seconds, all situations.
+    var toiSeconds: Int?
+    /// Ice time per game in seconds.
+    var toiPerGame: Int?
+    var powerPlayToiSeconds: Int?
+    var penaltyKillToiSeconds: Int?
+    /// Share of the club's skater minutes this player was on the ice for.
+    var toiShare: Double?
 
     enum CodingKeys: String, CodingKey {
         case playerId = "player_id"
@@ -41,24 +35,17 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         case birthDate = "birth_date"
         case heightInches = "height_in"
         case weightPounds = "weight_lb"
-        case college
+        case birthplace
         case yearsExperience = "years_exp"
         case draftYear = "draft_year"
         case draftRound = "draft_round"
         case draftPick = "draft_pick"
         case draftTeam = "draft_team"
-        case contractAPY = "contract_apy"
-        case contractCapShare = "contract_cap_pct"
-        case contractYears = "contract_years"
-        case contractYearSigned = "contract_year_signed"
-        case offenseSnaps = "off_snaps"
-        case defenseSnaps = "def_snaps"
-        case offenseSnapShare = "off_snap_pct"
-        case defenseSnapShare = "def_snap_pct"
-        case injuryWeek = "injury_week"
-        case injuryStatus = "injury_status"
-        case injury
-        case practiceStatus = "practice_status"
+        case toiSeconds = "toi_seconds"
+        case toiPerGame = "toi_per_gp"
+        case powerPlayToiSeconds = "pp_toi_seconds"
+        case penaltyKillToiSeconds = "pk_toi_seconds"
+        case toiShare = "toi_share"
     }
 
     init(playerId: Int, season: Int) {
@@ -74,24 +61,17 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         birthDate = try c.decodeIfPresent(String.self, forKey: .birthDate).flatMap(Self.day)
         heightInches = try c.decodeIfPresent(Int.self, forKey: .heightInches)
         weightPounds = try c.decodeIfPresent(Int.self, forKey: .weightPounds)
-        college = try c.decodeIfPresent(String.self, forKey: .college)
+        birthplace = try c.decodeIfPresent(String.self, forKey: .birthplace)
         yearsExperience = try c.decodeIfPresent(Int.self, forKey: .yearsExperience)
         draftYear = try c.decodeIfPresent(Int.self, forKey: .draftYear)
         draftRound = try c.decodeIfPresent(Int.self, forKey: .draftRound)
         draftPick = try c.decodeIfPresent(Int.self, forKey: .draftPick)
         draftTeam = try c.decodeIfPresent(String.self, forKey: .draftTeam)
-        contractAPY = try c.decodeIfPresent(Double.self, forKey: .contractAPY)
-        contractCapShare = try c.decodeIfPresent(Double.self, forKey: .contractCapShare)
-        contractYears = try c.decodeIfPresent(Int.self, forKey: .contractYears)
-        contractYearSigned = try c.decodeIfPresent(Int.self, forKey: .contractYearSigned)
-        offenseSnaps = try c.decodeIfPresent(Int.self, forKey: .offenseSnaps)
-        defenseSnaps = try c.decodeIfPresent(Int.self, forKey: .defenseSnaps)
-        offenseSnapShare = try c.decodeIfPresent(Double.self, forKey: .offenseSnapShare)
-        defenseSnapShare = try c.decodeIfPresent(Double.self, forKey: .defenseSnapShare)
-        injuryWeek = try c.decodeIfPresent(Int.self, forKey: .injuryWeek)
-        injuryStatus = try c.decodeIfPresent(String.self, forKey: .injuryStatus)
-        injury = try c.decodeIfPresent(String.self, forKey: .injury)
-        practiceStatus = try c.decodeIfPresent(String.self, forKey: .practiceStatus)
+        toiSeconds = try c.decodeIfPresent(Int.self, forKey: .toiSeconds)
+        toiPerGame = try c.decodeIfPresent(Int.self, forKey: .toiPerGame)
+        powerPlayToiSeconds = try c.decodeIfPresent(Int.self, forKey: .powerPlayToiSeconds)
+        penaltyKillToiSeconds = try c.decodeIfPresent(Int.self, forKey: .penaltyKillToiSeconds)
+        toiShare = try c.decodeIfPresent(Double.self, forKey: .toiShare)
     }
 
     private static func day(_ raw: String) -> Date? {
@@ -115,7 +95,7 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         return "\(height), \(weightPounds)"
     }
 
-    /// "2023 R1 #20", or "Undrafted" for a player who came in without a pick.
+    /// "2015 R1 #1", or "Undrafted" for a player who came in without a pick.
     var draftLabel: String? {
         if let draftYear, let draftRound, let draftPick {
             return "\(draftYear) R\(draftRound) #\(draftPick)"
@@ -123,58 +103,29 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         return yearsExperience != nil ? "Undrafted" : nil
     }
 
-    /// "$42.2M/yr".
-    var contractLabel: String? {
-        guard let contractAPY, contractAPY > 0 else { return nil }
-        return contractAPY >= 10
-            ? String(format: "$%.1fM/yr", contractAPY)
-            : String(format: "$%.2fM/yr", contractAPY)
+    /// "21:14 TOI/GP".
+    var toiPerGameLabel: String? {
+        guard let toiPerGame, toiPerGame > 0 else { return nil }
+        return String(format: "%d:%02d", toiPerGame / 60, toiPerGame % 60)
     }
 
-    /// Snap share for the side of the ball the player is ranked on.
-    func snapShare(defense: Bool) -> Double? {
-        defense ? defenseSnapShare : offenseSnapShare
-    }
-
-    func snaps(defense: Bool) -> Int? {
-        defense ? defenseSnaps : offenseSnaps
-    }
-}
-
-/// An entry on the weekly injury report, when it still describes a game that
-/// has not been played.
-struct InjuryReport: Hashable, Sendable {
-    let status: String
-    let injury: String?
-
-    /// "Out", "Doubtful" and "Questionable" are what the badge shows; a
-    /// practice-only line ("Limited") is not a game status and is left off.
-    static func current(from profile: PlayerProfile?, upcomingWeek: Int?) -> InjuryReport? {
-        guard let profile,
-              let status = profile.injuryStatus?.trimmingCharacters(in: .whitespaces),
-              !status.isEmpty,
-              let week = profile.injuryWeek,
-              let upcomingWeek,
-              week >= upcomingWeek
-        else { return nil }
-        return InjuryReport(status: status, injury: profile.injury)
-    }
-
-    var isOut: Bool { status.lowercased() == "out" }
-
-    /// "Q", "D", "Out".
-    var shortStatus: String {
-        switch status.lowercased() {
-        case "questionable": return "Q"
-        case "doubtful": return "D"
-        default: return status
+    /// "3:12 PP · 1:48 PK" per game, for the deployment line.
+    func specialTeamsLabel(games: Int) -> String? {
+        guard games > 0 else { return nil }
+        func clock(_ seconds: Int?) -> String? {
+            guard let seconds, seconds > 0 else { return nil }
+            let per = seconds / games
+            return String(format: "%d:%02d", per / 60, per % 60)
         }
+        let parts = [clock(powerPlayToiSeconds).map { "\($0) PP" }, clock(penaltyKillToiSeconds).map { "\($0) PK" }].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }
 
-/// One club's power rating from `public.team_ratings`: points per game better
-/// or worse than an average team on a neutral field. After Hawk Blogger's HB
-/// Power Rankings; see `backend/team_ratings.py`.
+/// One club's power rating from `public.team_ratings`: goals per game better
+/// or worse than an average team on neutral ice. Expected goals and actual
+/// goals, schedule-adjusted; see `backend/team_ratings.py`. The `ties`
+/// column holds overtime and shootout losses, `points_for` goals for.
 struct TeamRating: Decodable, Hashable, Sendable, Identifiable {
     let season: Int
     let team: String
@@ -208,7 +159,7 @@ struct TeamRating: Decodable, Hashable, Sendable, Identifiable {
 }
 
 /// A projected margin for an unplayed game, from the two power ratings plus
-/// home field.
+/// home ice.
 struct GameProjection: Decodable, Hashable, Sendable {
     let gameId: String
     let homeMargin: Double
@@ -220,12 +171,12 @@ struct GameProjection: Decodable, Hashable, Sendable {
         case homeWinProbability = "home_win_prob"
     }
 
-    /// "SEA by 4.5", "Toss-up" under a point.
+    /// "EDM by 0.6", "Toss-up" under a quarter of a goal.
     func label(home: String, away: String) -> String {
         let margin = abs(homeMargin)
-        guard margin >= 1 else { return "Toss-up" }
+        guard margin >= 0.25 else { return "Toss-up" }
         let favourite = homeMargin > 0 ? home : away
-        return "\(displayTeamAbbr(favourite)) by \(String(format: "%.1f", (margin * 2).rounded() / 2))"
+        return "\(displayTeamAbbr(favourite)) by \(String(format: "%.1f", margin))"
     }
 
     func winProbability(for team: String, home: String) -> Double {
@@ -235,7 +186,9 @@ struct GameProjection: Decodable, Hashable, Sendable {
     }
 }
 
-/// A club's line in the standings, from posted finals.
+/// A club's line in the standings, from posted finals. `ties` holds overtime
+/// and shootout losses (a point each), `pointsFor` and `pointsAgainst` are
+/// goals; the names stay so the team cards and tests read the same fields.
 struct StandingsRow: Hashable, Sendable, Identifiable {
     let team: String
     var wins = 0
@@ -248,13 +201,20 @@ struct StandingsRow: Hashable, Sendable, Identifiable {
 
     var id: String { team }
     var games: Int { wins + losses + ties }
+    var otLosses: Int { ties }
+    var goalsFor: Int { pointsFor }
+    var goalsAgainst: Int { pointsAgainst }
     var differential: Int { pointsFor - pointsAgainst }
+    /// Standings points: two for a win, one for an overtime or shootout loss.
+    var points: Int { wins * 2 + ties }
+    /// Points percentage, the NHL's own tiebreaker before regulation wins.
     var winPercentage: Double {
-        games == 0 ? 0 : (Double(wins) + Double(ties) / 2) / Double(games)
+        games == 0 ? 0 : Double(points) / Double(games * 2)
     }
 
+    /// "12-5-2", always three numbers, the way hockey records are written.
     var record: String {
-        ties > 0 ? "\(wins)-\(losses)-\(ties)" : "\(wins)-\(losses)"
+        "\(wins)-\(losses)-\(ties)"
     }
 
     /// Regular-season finals only, oldest first so the streak reads off the end.
@@ -279,7 +239,7 @@ struct StandingsRow: Hashable, Sendable, Identifiable {
                 row.pointsFor += mine
                 row.pointsAgainst += theirs
                 rows[team] = row
-                results[team, default: []].append(result)
+                results[team, default: []].append(result == "OTL" ? "L" : result)
             }
         }
         for (team, list) in results {
@@ -290,102 +250,14 @@ struct StandingsRow: Hashable, Sendable, Identifiable {
         return rows
     }
 
-    /// Win percentage, then point differential, then name: not the NFL's full
-    /// tiebreaker ladder, and the Standings screen says so.
+    /// Points, then points percentage, then goal differential, then name: not
+    /// the NHL's full tiebreaker ladder, and the Standings screen says so.
     static func ordered(_ rows: [StandingsRow]) -> [StandingsRow] {
         rows.sorted {
+            if $0.points != $1.points { return $0.points > $1.points }
             if $0.winPercentage != $1.winPercentage { return $0.winPercentage > $1.winPercentage }
             if $0.differential != $1.differential { return $0.differential > $1.differential }
             return $0.team < $1.team
         }
-    }
-}
-
-/// What a player produces set against what he is paid, in the app's percentile
-/// idiom. Inspired by Hawk Blogger's Value Over Expected, with the contract
-/// rather than the draft slot as the expectation: the version that moves every
-/// week of the season.
-///
-/// Both halves are percentile ranks inside one pool: this season's qualified
-/// players at the position who have an active deal. Pay ranks cap share at
-/// signing; production ranks the average of the player's ranked, qualified
-/// percentiles in his position's category. Value is production minus pay.
-struct ContractValue: Hashable, Sendable {
-    let payPercentile: Int
-    let productionPercentile: Int
-    let poolSize: Int
-
-    var score: Int { productionPercentile - payPercentile }
-
-    enum Verdict: String, Sendable {
-        case bargain = "Bargain"
-        case outplaying = "Outplaying his deal"
-        case fair = "Paid about right"
-        case under = "Below his deal"
-        case overpaid = "Overpaid so far"
-    }
-
-    var verdict: Verdict {
-        switch score {
-        case 25...: return .bargain
-        case 10..<25: return .outplaying
-        case -9..<10: return .fair
-        case -24 ..< -9: return .under
-        default: return .overpaid
-        }
-    }
-
-    var scoreLabel: String { score > 0 ? "+\(score)" : "\(score)" }
-
-    /// Offense only for now: until Pro-Football-Reference's advanced defensive
-    /// table publishes, a defender's production percentile is counting stats.
-    static let positions: Set<PlayerPositionGroup> = [.qb, .rb, .wr, .te]
-
-    /// Values for every eligible player in `players` (one season and phase).
-    static func compute(
-        players: [Player],
-        profiles: [Int: PlayerProfile],
-        isQualified: (Player) -> Bool
-    ) -> [Int: ContractValue] {
-        var out: [Int: ContractValue] = [:]
-        let groups = Dictionary(grouping: players.filter { positions.contains($0.positionGroup) }, by: \.positionGroup)
-        for (_, group) in groups {
-            let pool: [(id: Int, pay: Double, production: Double)] = group.compactMap { player in
-                guard isQualified(player),
-                      let share = profiles[player.playerId]?.contractCapShare, share > 0,
-                      let production = production(for: player) else { return nil }
-                return (player.playerId, share, production)
-            }
-            guard pool.count >= 5 else { continue }
-            let pays = pool.map(\.pay)
-            let productions = pool.map(\.production)
-            for entry in pool {
-                out[entry.id] = ContractValue(
-                    payPercentile: midpointPercentile(entry.pay, in: pays),
-                    productionPercentile: midpointPercentile(entry.production, in: productions),
-                    poolSize: pool.count
-                )
-            }
-        }
-        return out
-    }
-
-    /// Mean of the player's ranked, qualified percentiles in his primary
-    /// category, or nil when there are none to average.
-    static func production(for player: Player) -> Double? {
-        let category = player.positionGroup.primaryCategory
-        let ranked = player.metrics.filter {
-            $0.category == category && $0.qualified != false && !$0.isUnranked
-        }
-        guard !ranked.isEmpty else { return nil }
-        return Double(ranked.map(\.percentile).reduce(0, +)) / Double(ranked.count)
-    }
-
-    static func midpointPercentile(_ value: Double, in values: [Double]) -> Int {
-        guard !values.isEmpty else { return 50 }
-        let below = values.filter { $0 < value }.count
-        let equal = values.filter { $0 == value }.count
-        let raw = (Double(below) + Double(equal) / 2) / Double(values.count) * 100
-        return max(1, min(99, Int(raw.rounded())))
     }
 }
