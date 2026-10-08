@@ -292,7 +292,7 @@ def test_qualification_scale_follows_the_median_club():
         "games": [10, 8, 10, 10, 9, 3],
     })
     scale = ingest.qualification_scale(games, ingest.DEFAULT_SEASON)
-    assert scale == pytest.approx(10 / 82)
+    assert scale == pytest.approx(10 / ingest.league_games(ingest.DEFAULT_SEASON))
 
 
 def test_one_early_game_does_not_move_the_bar_and_the_floor_holds():
