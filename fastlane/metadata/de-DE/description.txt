@@ -1,0 +1,34 @@
+Wer führt die Liga wirklich an?
+Ranke NFL-Spieler nach fortgeschrittenen Metriken, lies ein vollständiges Perzentil-Profil mit einem Tipp und verfolge, wer gerade in Form kommt.
+
+StatScout bündelt EPA pro Spielzug, CPOE, YAC over Expected, Lauf-Effizienz, Receiving-Produktion, Defense-Leistung und die klassischen Box-Score-Zahlen in einer schnellen iPhone-App.
+
+VISUELLE PERZENTILE
+Jede Metrik erscheint als Balken mit farbigem Marker, von Rost (0. Perzentil) über Sand (50.) bis Rasengrün (100.).
+
+VOLLSTÄNDIGE SPIELERPROFILE
+Perzentil-Ranglisten für Passing, Rushing, Receiving und Defense, Umschalten zwischen fortgeschrittenen Metriken und Standardstatistiken, dazu die Form der letzten Spiele.
+
+IMMER AKTUELL AM SPIELTAG
+StatScout prüft während der Saison den ganzen Tag auf neu veröffentlichte Statistiken und aktualisiert sie, sobald sie da sind. Jeder Bildschirm zeigt, welche Woche und welche Spiele enthalten sind.
+
+BESTENLISTEN UND FOLLOWING
+Starte mit vertrauten Bestenlisten wie Passing Yards oder wechsle zu fortgeschrittenen Rankings. Filtere nach Passing, Rushing, Receiving oder Defense und suche jeden Spieler, ohne seinen Ligarang zu verlieren. Dein Team und deine Lieblingsspieler findest du kostenlos gebündelt unter Following.
+
+STATSCOUT+
+- Trends: die ganze Liga danach sortiert, wer heiß läuft und wer abkühlt
+- Recent Form: die letzten 3 / 5 / 8 Spiele
+- Spielervergleich: zwei Spieler nebeneinander oder ein Spieler über mehrere Jahre
+- Team-Scouting: alle 32 Klubs
+- Historie: jede Saison zurück bis 2000, plus All-Time-Karriereperzentile
+
+PRIVATSPHÄRE ZUERST
+Keine Konten. Keine Anmeldung. Keine Werbung. Kein Tracking durch Dritte.
+
+Abo-Details
+StatScout+ ist als automatisch verlängerbares Abo (monatlich oder jährlich, beide mit 7 Tagen kostenlosem Test) oder als einmaliger Lifetime-Kauf erhältlich. Die Preise werden vor dem Kauf in der App angezeigt und unterscheiden sich je nach Region. Die Zahlung wird bei der Bestätigung über deine Apple-ID abgebucht. Abos verlängern sich automatisch, sofern sie nicht mindestens 24 Stunden vor Ende des laufenden Zeitraums gekündigt werden. Verwalten oder kündigen kannst du jederzeit unter Einstellungen → Apple-ID → Abos.
+
+Datenschutz: https://jackwallner.github.io/football/privacy-policy.html
+Nutzungsbedingungen (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+StatScout steht in keiner Verbindung zur National Football League (NFL), zu einem NFL-Team oder zur NFLPA und wird von diesen weder autorisiert noch unterstützt. Spieler- und Teamnamen sowie Statistiken dienen ausschließlich der Identifikation und Information.

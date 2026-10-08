@@ -1,0 +1,533 @@
+import SwiftUI
+
+struct AboutView: View {
+    @EnvironmentObject private var store: StoreService
+    let lastUpdated: Date?
+    var dataCoverage: DataCoverage?
+    var freshness: DataFreshness?
+    var onRequestReview: (() -> Void)?
+    @State private var paywallTrigger: PaywallTrigger?
+
+    private var version: String {
+        let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0"
+        return "\(short) (\(build))"
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                proStatusCard
+                glossaryCard
+                linkCard
+                refreshCard
+                aboutCard
+                versionCard
+                disclaimerCard
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
+            .padding(.bottom, 12)
+            Color.clear.frame(height: 88)
+        }
+        .background(GridironPalette.canvas.ignoresSafeArea())
+        .sheet(item: $paywallTrigger) { trigger in
+            PaywallView(trigger: trigger)
+        }
+    }
+
+    private var glossaryCard: some View {
+        NavigationLink {
+            StatGlossaryView()
+        } label: {
+            VStack(spacing: 0) {
+                GridironSectionBar(title: "REFERENCE")
+                row(
+                    icon: "text.book.closed.fill",
+                    title: "Stat Glossary",
+                    subtitle: "Definitions and formulas for every stat in StatScout."
+                )
+            }
+            .background(GridironPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .overlay(
+                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
+                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var aboutCard: some View {
+        VStack(spacing: 0) {
+            GridironSectionBar(title: "STATSCOUT")
+            HStack(spacing: 12) {
+                Image(systemName: "football.fill")
+                    .font(.title2)
+                    .foregroundStyle(GridironPalette.turf)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Percentile Rankings")
+                        .font(GridironType.cardTitle)
+                        .foregroundStyle(GridironPalette.ink)
+                    Text("Mobile-first percentile rankings and leaderboards for fans and media.")
+                        .font(GridironType.small)
+                        .foregroundStyle(GridironPalette.inkSecondary)
+                }
+                Spacer()
+            }
+            .padding(GridironGeo.padCard)
+        }
+        .background(GridironPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
+                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+        )
+    }
+
+    private var proStatusCard: some View {
+        VStack(spacing: 0) {
+            GridironSectionBar(title: "STATSCOUT+")
+            VStack(spacing: 0) {
+                HStack {
+                    Image(systemName: store.isPro ? "crown.fill" : "crown")
+                        .font(.title2)
+                        .foregroundStyle(store.isPro ? Color.yellow : GridironPalette.inkTertiary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(store.isPro ? "StatScout+ Unlocked" : "Free Version")
+                            .font(GridironType.bodyBold)
+                            .foregroundStyle(GridironPalette.ink)
+                        // Named to match `PaywallView.proFeatures`. This used to
+                        // promise "historical seasons and year-over-year
+                        // comparisons" and stop there, undercounting the
+                        // subscription by three features (Trends, recent form,
+                        // head-to-head) on the one screen a user reaches by
+                        // going looking for the offer.
+                        Text(store.isPro
+                             ? "All StatScout+ features are active."
+                             : "Unlock Trends, recent form, head-to-head and every season back to 2000.")
+                            .font(GridironType.small)
+                            .foregroundStyle(GridironPalette.inkSecondary)
+                    }
+                    Spacer()
+                    if !store.isPro {
+                        Button(store.isLapsed ? "Renew" : store.upgradeCTALabel) {
+                            paywallTrigger = store.defaultUpgradeTrigger
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(GridironPalette.turf)
+                        .controlSize(.small)
+                    }
+                }
+                .padding(GridironGeo.padCard)
+
+                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+                Button {
+                    Task { await store.restorePurchases() }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.caption)
+                        Text("Restore Purchases")
+                            .font(GridironType.smallBold)
+                    }
+                    .foregroundStyle(GridironPalette.linkBlue)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(GridironGeo.padCard)
+                }
+                .buttonStyle(.plain)
+
+                if let error = store.lastError {
+                    Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+                    Text(error)
+                        .font(GridironType.small)
+                        .foregroundStyle(GridironPalette.turf)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(GridironGeo.padCard)
+                }
+            }
+        }
+        .background(GridironPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
+                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+        )
+    }
+
+    /// Which games are in, phrased the way the boards phrase it.
+    ///
+    /// The row "Last Refreshed" needs standing next to it. The nightly job runs
+    /// every night against a source that publishes weekly, so on most days it
+    /// rewrites every row and closes out no new game: the write stamp says
+    /// today while the newest game is Sunday's. Reporting only the write stamp
+    /// made the app contradict the Trends header, which correctly says "Through
+    /// Week 12". Weeks lead because that is the unit the sport and the rest of
+    /// the app count in; the date follows for anyone who wants it.
+    private var gamesThroughText: String {
+        guard let coverage = freshness?.coverage ?? dataCoverage else { return "-" }
+        let stamp = coverage.asOf.formatted(DataCoverage.gameDayStyle)
+        guard let week = coverage.week else { return stamp }
+        let phase = coverage.phase == .playoffs ? " (playoffs)" : ""
+        return "Week \(week)\(phase) · \(stamp)"
+    }
+
+    private var checkedText: String {
+        (freshness?.checkedAt ?? lastUpdated)?.formatted(date: .long, time: .shortened) ?? "-"
+    }
+
+    private var sourcePublishedText: String? {
+        freshness?.sourcePublishedAt?.formatted(date: .long, time: .shortened)
+    }
+
+    private var refreshCard: some View {
+        VStack(spacing: 0) {
+            GridironSectionBar(title: "DATA")
+            row(
+                icon: "arrow.triangle.2.circlepath",
+                title: "Data Updates",
+                subtitle: "Checks for new NFL player data throughout the season."
+            )
+            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+            row(
+                icon: "calendar.badge.clock",
+                title: "Games Through",
+                subtitle: gamesThroughText
+            )
+            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+            row(
+                icon: "clock.arrow.circlepath",
+                title: "Last Checked",
+                subtitle: checkedText
+            )
+            if let sourcePublishedText {
+                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+                row(
+                    icon: "cloud.sun.fill",
+                    title: "Source Published",
+                    subtitle: sourcePublishedText
+                )
+            }
+        }
+        .background(GridironPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
+                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+        )
+    }
+
+    private var linkCard: some View {
+        VStack(spacing: 0) {
+            GridironSectionBar(title: "SUPPORT & PRIVACY")
+            Button {
+                if let onRequestReview {
+                    onRequestReview()
+                } else {
+                    ReviewPromptCoordinator.shared.requestEnjoymentPrompt()
+                }
+            } label: {
+                row(
+                    icon: "star.fill",
+                    title: "Rate or Send Feedback",
+                    subtitle: "Help StatScout grow - or tell us what to improve."
+                )
+            }
+            .buttonStyle(.plain)
+
+            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+
+            // Always-works fallback: the native rating sheet is rate-limited and
+            // may show nothing, so keep a direct write-review link for users who
+            // explicitly want to leave a review.
+            Link(destination: AppStoreReviewLinks.writeReviewURL) {
+                row(
+                    icon: "square.and.pencil",
+                    title: "Rate on the App Store",
+                    subtitle: "Opens the App Store to write a review."
+                )
+            }
+            .buttonStyle(.plain)
+
+            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+
+            if let supportURL = URL(string: "https://jackwallner.github.io/football/support.html") {
+                Link(destination: supportURL) {
+                    row(
+                        icon: "envelope.fill",
+                        title: "Contact Support",
+                        subtitle: "jackwallner+bb@gmail.com"
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            
+            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline)
+            
+            if let privacyURL = URL(string: "https://jackwallner.github.io/football/privacy-policy.html") {
+                Link(destination: privacyURL) {
+                    row(
+                        icon: "shield.lefthalf.filled",
+                        title: "Privacy Policy",
+                        subtitle: "No ads or tracking."
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .background(GridironPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
+                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+        )
+    }
+
+    private var versionCard: some View {
+        VStack(spacing: 0) {
+            GridironSectionBar(title: "VERSION")
+            HStack {
+                Text("App Version")
+                    .font(GridironType.bodyBold)
+                    .foregroundStyle(GridironPalette.ink)
+                Spacer()
+                Text(version)
+                    .font(GridironType.statSmall)
+                    .foregroundStyle(GridironPalette.inkSecondary)
+            }
+            .padding(GridironGeo.padCard)
+        }
+        .background(GridironPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
+                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+        )
+    }
+
+    private var disclaimerCard: some View {
+        VStack(spacing: 0) {
+            GridironSectionBar(title: "DISCLAIMER")
+            Text("Not affiliated with, endorsed by, or sponsored by the National Football League, its teams, or the NFLPA. Team names and abbreviations are used for identification only. All trademarks are property of their respective owners.")
+                .font(GridironType.small)
+                .foregroundStyle(GridironPalette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(GridironGeo.padCard)
+        }
+        .background(GridironPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
+                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+        )
+    }
+
+    private func row(icon: String, title: String, subtitle: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(GridironPalette.turf)
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(GridironType.bodyBold)
+                    .foregroundStyle(GridironPalette.ink)
+                Text(subtitle)
+                    .font(GridironType.small)
+                    .foregroundStyle(GridironPalette.inkSecondary)
+            }
+            Spacer()
+        }
+        .padding(GridironGeo.padCard)
+    }
+}
+
+private struct GlossaryEntry: Identifiable {
+    let id: String
+    let label: String
+    let category: String
+    let description: String
+}
+
+struct StatGlossaryView: View {
+    @State private var searchText = ""
+
+    private let supplemental: [GlossaryEntry] = [
+        .init(id: "general-games", label: "G", category: "General", description: "Games in which the player recorded a tracked statistic."),
+        .init(id: "general-value", label: "Contract Value", category: "General", description: "Production percentile minus pay percentile, both ranked among this season's qualified players at the position who have an active contract. Pay is the deal's yearly average as a share of the salary cap when it was signed. +20 means producing like a player paid far more. Offense only until advanced defensive stats publish. Contracts: OverTheCap via nflverse."),
+        .init(id: "general-power", label: "Power Rating", category: "General", description: "Points per game better or worse than an average team on a neutral field, from EPA per dropback, EPA per run and points, for minus against, adjusted for schedule. Early in the season last year's rating counts as five games of evidence. Two ratings read like a point spread, with about two points for home field. Modeled on Hawk Blogger's HB Power Rankings."),
+        .init(id: "general-small-sample", label: "Small sample", category: "General", description: "Below the playing-time minimum for that stat, prorated by how much of the season the typical team has played. Defenders need a quarter of their team's defensive snaps."),
+        .init(id: "general-not-ranked", label: "Not ranked", category: "General", description: "A counting stat at zero. When most of the league has none of something, a tie at zero has no honest percentile, so the value shows and the bar does not."),
+        .init(id: "passing-cmp-att", label: "Cmp/Att", category: "Passing", description: "Pass completions and attempts."),
+        .init(id: "passing-cmp", label: "Cmp", category: "Passing", description: "Completed forward passes."),
+        .init(id: "passing-att", label: "Att", category: "Passing", description: "Forward pass attempts."),
+        .init(id: "rushing-car", label: "Car", category: "Rushing", description: "Rushing attempts, also called carries."),
+        .init(id: "receiving-rec-tgt", label: "Rec/Tgt", category: "Receiving", description: "Receptions and targets."),
+        .init(id: "receiving-tgt", label: "Tgt", category: "Receiving", description: "Pass attempts directed at the receiver."),
+        .init(id: "percentile", label: "Percentile", category: "General", description: "A 1–100 rank among players in the same season, season type, and stat category. Higher is always better after lower-is-better stats are inverted."),
+    ]
+
+    private var entries: [GlossaryEntry] {
+        let registry = FootballMetricRegistry.definitions.map {
+            GlossaryEntry(
+                id: "\($0.category.rawValue)-\($0.label)",
+                label: $0.label,
+                category: $0.category.rawValue,
+                description: $0.description
+            )
+        }
+        let all = (supplemental + registry).sorted {
+            $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending
+        }
+        guard !searchText.isEmpty else { return all }
+        return all.filter {
+            $0.label.localizedCaseInsensitiveContains(searchText)
+                || $0.category.localizedCaseInsensitiveContains(searchText)
+                || $0.description.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    private var categories: [String] {
+        let order = ["General", "Passing", "Rushing", "Receiving", "Defense"]
+        return order.filter { category in entries.contains { $0.category == category } }
+    }
+
+    /// A `ScrollView` of cards, not a `List` with `.searchable`.
+    ///
+    /// Two things were wrong with the system version. The app draws its own
+    /// floating tab bar over every screen, including pushed ones - and on iOS 26
+    /// `.searchable` puts the search field at the *bottom* of the screen, so the
+    /// field materialised underneath the tab bar with its lower half clipped off.
+    /// Nothing about the search was reachable. And the grouped `List` was the one
+    /// screen in the app rendering system chrome instead of the card idiom
+    /// everything else uses, so it read as a different app.
+    ///
+    /// The in-content `SearchField` is the same control the Teams tab and the
+    /// team roster already use, it sits where the reader's eye starts, and it
+    /// cannot collide with the tab bar.
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                SearchField(text: $searchText, prompt: "Search stats")
+
+                Text("Values come from nflverse player statistics and NFL Next Gen Stats. Percentiles are calculated separately for each season and season type. The current season ranks everyone who has played; past seasons rank qualifying players.")
+                    .font(GridironType.small)
+                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 4)
+
+                if entries.isEmpty {
+                    ContentUnavailableView {
+                        Label("No stats found", systemImage: "magnifyingglass")
+                    } description: {
+                        Text("Nothing matches \"\(searchText)\". Try a stat's abbreviation, like YAC or EPA.")
+                    }
+                    .padding(.vertical, 40)
+                } else {
+                    ForEach(categories, id: \.self) { category in
+                        categoryCard(category)
+                    }
+                }
+
+                sourcesCard
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
+            // Scroll-under spacer for the floating tab bar, same as every other
+            // scrolling screen.
+            Color.clear.frame(height: 88)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .background(GridironPalette.canvas.ignoresSafeArea())
+        .navigationTitle("Stat Glossary")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func categoryCard(_ category: String) -> some View {
+        VStack(spacing: 0) {
+            GridironSectionBar(title: category.uppercased())
+
+            let rows = entries.filter { $0.category == category }
+            ForEach(Array(rows.enumerated()), id: \.element.id) { index, entry in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(entry.label)
+                        .font(GridironType.bodyBold)
+                        .foregroundStyle(GridironPalette.ink)
+                    Text(entry.description)
+                        .font(GridironType.small)
+                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(GridironGeo.padCard)
+                .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .overlay(
+                    Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                    alignment: .bottom
+                )
+            }
+        }
+        .background(GridironPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
+                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+        )
+    }
+
+    private var sourcesCard: some View {
+        VStack(spacing: 0) {
+            GridironSectionBar(title: "SOURCES")
+            sourceRow(
+                "NFL Next Gen Stats Glossary",
+                url: URL(string: "https://nextgenstats.nfl.com/glossary")!
+            )
+            sourceRow(
+                "nflreadpy Player Stats",
+                url: URL(string: "https://nflreadpy.nflverse.com/api/load_functions/#nflreadpy.load_player_stats")!,
+                isLast: true
+            )
+        }
+        .background(GridironPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
+                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+        )
+    }
+
+    private func sourceRow(_ title: String, url: URL, isLast: Bool = false) -> some View {
+        Link(destination: url) {
+            HStack(spacing: 8) {
+                Text(title)
+                    .font(GridironType.small)
+                    .foregroundStyle(GridironPalette.turf)
+                Spacer(minLength: 0)
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(GridironPalette.inkTertiary)
+            }
+            .padding(GridironGeo.padCard)
+            .background(GridironPalette.surface)
+            .overlay(
+                Rectangle()
+                    .fill(isLast ? Color.clear : GridironPalette.divider)
+                    .frame(height: GridironGeo.hairline),
+                alignment: .bottom
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+#Preview {
+    NavigationStack {
+        AboutView(
+            lastUpdated: Date(),
+            dataCoverage: DataCoverage(asOf: .now, week: 12, phase: .regular)
+        )
+            .environmentObject(StoreService.shared)
+    }
+}

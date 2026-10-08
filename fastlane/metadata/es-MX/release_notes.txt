@@ -1,0 +1,1 @@
+Los tableros por posición ahora abren con la estadística predeterminada de cada posición. Al cambiar de posición, solo se conserva la estadística que elegiste.

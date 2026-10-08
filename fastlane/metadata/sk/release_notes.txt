@@ -1,0 +1,1 @@
+Prehľady pozícií sa teraz otvárajú s predvolenou štatistikou danej pozície. Pri zmene pozície sa zachová iba štatistika, ktorú ste vybrali.

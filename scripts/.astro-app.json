@@ -1,0 +1,12 @@
+{
+  "appId": "119",
+  "astroAppName": "Football Next Play: StatScout",
+  "appName": "Football Next: StatScout",
+  "appStoreId": "6792930447",
+  "bundleId": "com.jackwallner.football",
+  "store": "us",
+  "temporary": true,
+  "keywordCount": 84,
+  "syncedAt": "2026-07-29",
+  "note": "ASC draft 1.0 exists but has never been released, so Astro cannot resolve ID 6792930447. Keep temporary tracking under app 119 (its Astro name is still the old 'Football Next Play' string) until Astro indexes the live listing, then migrate keywords and tags across."
+}

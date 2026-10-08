@@ -1,0 +1,1 @@
+Positionslistorna öppnas nu med standardstatistiken för varje position. När du byter position följer bara statistiken du valt med.

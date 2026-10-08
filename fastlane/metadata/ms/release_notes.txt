@@ -1,0 +1,1 @@
+Papan posisi kini dibuka dengan statistik lalai bagi setiap posisi. Apabila anda bertukar posisi, hanya statistik yang anda pilih dikekalkan.

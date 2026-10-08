@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - Football Next: StatScout</title>
+    <meta name="description" content="Get help with StatScout. Contact support, read FAQs, and learn more about NFL percentile rankings.">
+    <style>
+        :root {
+            --bg: #fafafa;
+            --bg-elevated: #ffffff;
+            --text: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-tertiary: #86868b;
+            --accent: #d32f2f;
+            --border: rgba(0,0,0,0.06);
+            --radius: 18px;
+            --radius-pill: 980px;
+            --max-width: 700px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+        .container { max-width: var(--max-width); margin: 0 auto; padding: 0 24px; }
+
+        /* Nav */
+        nav {
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            background: rgba(250,250,250,0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        nav .container { display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 17px; }
+        .nav-brand::before {
+            content: "";
+            display: inline-block;
+            width: 28px; height: 28px;
+            background: var(--accent);
+            border-radius: 8px;
+            mask: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>') center/contain no-repeat;
+            -webkit-mask: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>') center/contain no-repeat;
+        }
+        .nav-links { display: flex; gap: 8px; }
+        .nav-link { font-size: 14px; text-decoration: none; color: var(--text); padding: 6px 14px; border-radius: var(--radius-pill); font-weight: 500; transition: background 0.2s; }
+        .nav-link:hover { background: rgba(0,0,0,0.04); }
+        .nav-link.primary { background: var(--text); color: #fff; padding: 8px 18px; }
+        .nav-link.primary:hover { background: #333; }
+
+        /* Content */
+        .page-header { padding: 60px 0 20px; }
+        .page-header h1 { font-size: 36px; font-weight: 700; letter-spacing: -1px; margin-bottom: 4px; }
+        .page-header p { color: var(--text-secondary); font-size: 17px; }
+
+        .content { padding-bottom: 80px; }
+        .content h2 { font-size: 22px; font-weight: 600; margin-top: 40px; margin-bottom: 16px; }
+        .content h3 { font-size: 17px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: var(--text); }
+        .content p { color: var(--text-secondary); margin-bottom: 12px; font-size: 15px; }
+        .content a { color: #0066cc; text-decoration: none; font-weight: 500; }
+        .content a:hover { text-decoration: underline; }
+
+        .card { background: var(--bg-elevated); padding: 28px; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 24px; }
+        .card h2 { margin-top: 0; font-size: 18px; margin-bottom: 8px; }
+        .card p { margin-bottom: 0; }
+        .card p + p { margin-top: 8px; }
+
+        /* Footer */
+        footer { text-align: center; padding: 40px 24px; font-size: 12px; color: var(--text-tertiary); border-top: 1px solid var(--border); }
+        footer a { color: var(--text-tertiary); text-decoration: none; margin: 0 10px; transition: color 0.2s; }
+        footer a:hover { color: var(--text); }
+
+        @media (max-width: 768px) {
+            .page-header h1 { font-size: 28px; }
+            .nav-links .nav-link:not(.primary) { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a class="nav-brand" href="index.html">Football Next: StatScout</a>
+            <div class="nav-links">
+                <a class="nav-link" href="index.html">Home</a>
+                <a class="nav-link primary" href="support.html">Support</a>
+                <a class="nav-link" href="privacy-policy.html">Privacy</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <h1>Support</h1>
+            <p>Get help with StatScout, your mobile-first NFL percentile rankings tracker.</p>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="container">
+            <div class="card">
+                <h2>Contact Support</h2>
+                <p>For technical issues, feedback, or feature requests, please email us directly:</p>
+                <p><a href="mailto:jackwallner+ff@gmail.com">jackwallner+ff@gmail.com</a></p>
+            </div>
+
+            <h2>Frequently Asked Questions</h2>
+
+            <h3>How often is data updated?</h3>
+            <p>During the season, StatScout checks for newly published NFL stats throughout the day and updates soon after games finish. Each screen shows which week and games the numbers include.</p>
+
+            <h3>Where does the data come from?</h3>
+            <p>Our percentile rankings are calculated using public pitch-tracking data. We aggregate this data to provide a visual, easy-to-read comparison of every player in the league.</p>
+
+            <h3>Is my data private?</h3>
+            <p>Yes. StatScout does not collect any personal information, search history, or location data. Your app preferences are stored locally on your device. <a href="privacy-policy.html">Read our Privacy Policy &rarr;</a></p>
+
+            <h3>What devices are supported?</h3>
+            <p>StatScout is built for iPhone and requires iOS 17 or later.</p>
+
+            <h3>Do I need an account?</h3>
+            <p>No. StatScout works right out of the box with no sign-up or login required. Optional Pro purchases unlock historical and comparison features.</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Jack Wallner</p>
+        <div style="margin-top: 10px;">
+            <a href="index.html">Home</a>
+            <a href="support.html">Support</a>
+            <a href="privacy-policy.html">Privacy</a>
+        </div>
+    </footer>
+</body>
+</html>

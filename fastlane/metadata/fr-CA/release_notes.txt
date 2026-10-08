@@ -1,0 +1,1 @@
+Les tableaux de positions s’ouvrent maintenant sur la statistique par défaut de chaque position. En changeant de position, seule la statistique que vous avez choisie est conservée.

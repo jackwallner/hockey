@@ -1,0 +1,1 @@
+Pregledi pozicija sada se otvaraju sa zadanom statistikom za svaku poziciju. Pri promjeni pozicije prenosi se samo statistika koju ste odabrali.

@@ -1,0 +1,1 @@
+Positieoverzichten openen nu met de standaardstatistiek voor elke positie. Bij het wisselen van positie blijft alleen een door jou gekozen statistiek behouden.

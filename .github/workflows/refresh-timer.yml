@@ -1,0 +1,42 @@
+name: NFL Refresh Timer
+
+# Sleeps until the next moment the schedule planner asked for, then starts the
+# refresh workflow. GitHub's cron is best effort and skipped five straight hours
+# on the 2026 opening Sunday, so each refresh run books its own successor here.
+# Only the newest timer survives: a newer plan cancels the older sleep.
+on:
+  workflow_dispatch:
+    inputs:
+      wait_seconds:
+        description: "Seconds to wait before starting the refresh workflow"
+        required: true
+        default: "900"
+
+concurrency:
+  group: nfl-refresh-timer
+  cancel-in-progress: true
+
+jobs:
+  wait:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Sleep until the planned check
+        env:
+          WAIT: ${{ inputs.wait_seconds }}
+        run: |
+          wait="${WAIT//[^0-9]/}"
+          wait="${wait:-900}"
+          # A job can run six hours. Wake early instead; the planner books the
+          # rest of the wait on the next hop.
+          if [ "$wait" -gt 20700 ]; then wait=20700; fi
+          echo "Sleeping ${wait}s"
+          sleep "$wait"
+
+      - name: Start the refresh workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run nightly-statcast.yml --repo "$GITHUB_REPOSITORY" -f planned=true

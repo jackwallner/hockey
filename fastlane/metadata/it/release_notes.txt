@@ -1,0 +1,1 @@
+Le classifiche per ruolo ora si aprono con la statistica predefinita di ciascun ruolo. Quando cambi ruolo, viene mantenuta solo la statistica che hai scelto.

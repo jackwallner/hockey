@@ -1,0 +1,1 @@
+Positionsoversigterne åbner nu med standardstatistikken for hver position. Ved skift af position følger kun den statistik med, som du selv har valgt.

@@ -1,0 +1,39 @@
+DerivedData/
+.build/
+.swiftpm/
+build/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+.env
+.env.*
+!.env.example
+.hockey_credentials
+__pycache__/
+*.pyc
+.DS_Store
+supabase/.temp/
+*.bak
+.commandcode/
+archive_output.log
+
+# Scratch video-analysis artifacts (too large / not source)
+video_to_analyze.mp4
+video_compressed.mp4
+video_audio.mp3
+video_frames/
+.stale_screenshots_backup_*/
+
+# Claude Code runtime
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# Python venv
+backend/.venv/
+
+# Fastlane metadata backups (inherited baseball cruft)
+fastlane/metadata.bak.*/
+
+# App Review contact phone stays local (never in a public repo)
+fastlane/metadata*/review_information/phone_number.txt

@@ -1,0 +1,1 @@
+nfl,statistik,spillere,epa,cpoe,yac,sammenlign,kast,løb,modtagelse,forsvar,ranking

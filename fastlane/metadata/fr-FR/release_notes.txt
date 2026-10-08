@@ -1,0 +1,1 @@
+Les tableaux par poste s’ouvrent désormais sur la statistique par défaut de chaque poste. En changeant de poste, seule la statistique que vous avez choisie est conservée.

@@ -1,0 +1,83 @@
+{
+  "identifier": "B1E6DF0D",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "19.99",
+      "familyShareable": false,
+      "internalID": "C62590B4",
+      "localizations": [
+        {
+          "description": "Gridiron Pro, one-time purchase.",
+          "displayName": "Gridiron Pro Lifetime",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.jackwallner.hockey.pro",
+      "referenceName": "Gridiron Pro Lifetime",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {},
+  "subscriptionGroups": [
+    {
+      "id": "59F6E36A",
+      "localizations": [],
+      "name": "Gridiron Pro",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "displayPrice": "9.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "B00EB953",
+          "introductoryOffer": {
+            "internalID": "82C9A040",
+            "paymentMode": "free",
+            "subscriptionPeriod": "P1W"
+          },
+          "localizations": [
+            {
+              "description": "Gridiron Pro, billed yearly.",
+              "displayName": "Gridiron Pro Yearly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.jackwallner.hockey.pro.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Gridiron Pro Yearly",
+          "subscriptionGroupID": "59F6E36A",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "displayPrice": "1.99",
+          "familyShareable": false,
+          "groupNumber": 2,
+          "internalID": "7DC8D808",
+          "introductoryOffer": {
+            "internalID": "F95F2E49",
+            "paymentMode": "free",
+            "subscriptionPeriod": "P1W"
+          },
+          "localizations": [
+            {
+              "description": "Gridiron Pro, billed monthly.",
+              "displayName": "Gridiron Pro Monthly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.jackwallner.hockey.pro.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Gridiron Pro Monthly",
+          "subscriptionGroupID": "59F6E36A",
+          "type": "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 1,
+    "minor": 1
+  }
+}

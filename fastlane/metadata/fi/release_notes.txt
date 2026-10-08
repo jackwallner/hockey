@@ -1,0 +1,1 @@
+Pelipaikkakohtaiset tilastotaulukot avautuvat nyt kyseisen pelipaikan oletustilastoon. Pelipaikkaa vaihdettaessa säilyy vain itse valitsemasi tilasto.

@@ -1,0 +1,1 @@
+Přehledy pozic se nyní otevírají s výchozí statistikou dané pozice. Při přepnutí pozice se zachová jen statistika, kterou jste vybrali.

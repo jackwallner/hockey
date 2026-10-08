@@ -1,0 +1,1 @@
+Positionsübersichten öffnen jetzt mit der jeweiligen Standardstatistik. Beim Positionswechsel wird nur eine von dir ausgewählte Statistik übernommen.

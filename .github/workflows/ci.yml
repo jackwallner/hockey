@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - run: PYTHONPATH=backend python -m pytest backend/tests
+      - run: python -m unittest discover -s scripts/tests -v
+
+  ios-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install xcodegen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      # Unit tests only, and no `|| true`.
+      #
+      # This used to run the whole scheme and swallow the result. `|| true` on a
+      # test step is not a lenient gate, it is no gate: the job went green on
+      # every push regardless of what failed, which is how a UI suite that cannot
+      # launch the app under the test host stayed red without anyone hearing
+      # about it. Either the result matters or the step should not exist.
+      #
+      # `StatScoutUITests` is deliberately excluded rather than fixed here. It
+      # drives a debug build that decodes a 33k-row bundled snapshot before any
+      # board exists, and under XCUITest that regularly exceeds even a 360s wait
+      # and surfaces as "application is not running" with the app entirely
+      # healthy. That is a harness problem on a hosted runner, and pretending
+      # otherwise is what produced the `|| true` in the first place. Run it
+      # locally when touching navigation; see StatScoutUITests/SeasonPickerUITests.
+      # The destination is resolved, not hardcoded.
+      #
+      # It used to say `name=iPhone 16`, and that device is not installed on the
+      # runner image any more (only `iPhone 16e` is) - so xcodebuild failed on
+      # destination resolution before running a single test, and `|| true`
+      # reported it as a pass. The job had been testing nothing at all. A pinned
+      # device name is guaranteed to rot every time Apple ships a phone; picking
+      # the newest available iPhone cannot.
+      - name: Build and test
+        run: |
+          set -euo pipefail
+          UDID=$(xcrun simctl list devices available --json | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for runtime in sorted(devices, reverse=True):
+              for device in devices[runtime]:
+                  if device.get('isAvailable') and device['name'].startswith('iPhone'):
+                      print(device['udid'])
+                      raise SystemExit
+          raise SystemExit('no available iPhone simulator on this runner')
+          ")
+          xcrun simctl list devices available | grep -m1 "$UDID" || true
+          xcodebuild -project StatScout.xcodeproj \
+            -scheme StatScout \
+            -destination "id=$UDID" \
+            -only-testing:StatScoutTests \
+            test
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}

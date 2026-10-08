@@ -1,0 +1,163 @@
+opt_out_usage
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Download current metadata + screenshots from App Store Connect into /tmp/asc-live"
+  lane :download_state do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_API_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: ENV["ASC_KEY_PATH"]
+    )
+
+    sh("rm -rf /tmp/asc-live && mkdir -p /tmp/asc-live")
+
+    deliver(
+      api_key: api_key,
+      run_precheck_before_submit: false,
+      metadata_path: "/tmp/asc-live/metadata",
+      screenshots_path: "/tmp/asc-live/screenshots",
+      skip_binary_upload: true,
+      skip_screenshots: false,
+      skip_metadata: false,
+      force: true
+    )
+  end
+
+  desc "Fill whats_new + promotional_text on deprecated locales that ASC still requires"
+  lane :fill_deprecated_locales do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_API_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: ENV["ASC_KEY_PATH"]
+    )
+
+    app = Spaceship::ConnectAPI::App.find("com.jackwallner.football")
+    version = app.get_edit_app_store_version
+    UI.user_error!("No editable version found") unless version
+
+    # Read the copy from fastlane/metadata rather than carrying literals here.
+    #
+    # These were hardcoded, and they were the *baseball* app's: "Visual Statcast
+    # percentile rankings and MLB Savant-style metrics ... Hitting, Pitching,
+    # Fielding, and Running", left behind when this repo was forked. Running this
+    # lane would have pushed MLB copy onto a live NFL listing, in eleven locales,
+    # with nothing on screen to suggest it had happened. The metadata directory is
+    # the single source of truth for every other locale already; there is no
+    # reason for these eleven to be the exception.
+    deprecated = %w[bn-BD gu-IN kn-IN ml-IN mr-IN or-IN pa-IN sl-SI ta-IN te-IN ur-PK]
+    meta = File.expand_path("metadata", __dir__)
+
+    def read_meta(meta, locale, file)
+      path = File.join(meta, locale, file)
+      path = File.join(meta, "en-US", file) unless File.exist?(path)
+      UI.user_error!("missing metadata: #{file}") unless File.exist?(path)
+      File.read(path).strip
+    end
+
+    version.get_app_store_version_localizations.each do |loc|
+      next unless deprecated.include?(loc.locale)
+      UI.message("Filling #{loc.locale}...")
+      loc.update(attributes: {
+        whatsNew: read_meta(meta, loc.locale, "release_notes.txt"),
+        promotionalText: read_meta(meta, loc.locale, "promotional_text.txt")
+      })
+    end
+
+    UI.success("All deprecated locales filled.")
+  end
+
+  desc "Upload screenshots and metadata to App Store Connect (fastlane 2.234+)"
+  lane :upload_metadata do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_API_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: ENV["ASC_KEY_PATH"]
+    )
+
+    version = ENV["ASC_APP_VERSION"]
+    UI.user_error!("Set ASC_APP_VERSION (run: eval \"$(python3 scripts/asc-ensure-draft-version.py | grep '^export ')\")") unless version && !version.empty?
+
+    skip_shots = ENV.fetch("SKIP_SCREENSHOTS", "false") == "true"
+
+    deliver(
+      api_key: api_key,
+      app_version: version,
+      skip_app_version_update: true,
+      force: true,
+      ignore_language_directory_validation: true,
+      precheck_include_in_app_purchases: false,
+      version_check_wait_retry_limit: 7,
+      skip_binary_upload: true,
+      skip_screenshots: skip_shots,
+      overwrite_screenshots: !skip_shots,
+      submit_for_review: false,
+      automatic_release: false,
+      run_precheck_before_submit: false,
+      app_review_information: {
+        first_name: "Jack",
+        last_name: "Wallner",
+        email: "jackwallner@gmail.com",
+        demo_user: "N/A - no login or account system",
+        demo_password: "",
+        notes: <<~NOTES
+          The App Store name is Football Next: StatScout. The app is named Gridiron StatScout in-app and StatScout on the Home Screen. It is a read-only NFL statistics viewer with no accounts or sign-in.
+
+          Core flow:
+          1. Launch the app and open the Stats tab for current-season player rankings.
+          2. Filter by position, choose a statistic, and open a player profile for percentile rankings, standard stats, bio, injury status, contract value, and game log.
+          3. Open Games for the schedule, posted scores, box scores, and advanced EPA breakdowns.
+          4. Open Teams for records, standings, team power ratings, and projected margins.
+          5. Contract Value is available in player profiles and on the Stats board. The top-ranked player is free; the full board is part of StatScout+.
+          6. Following, player comparisons, Trends, Recent Form, and historical views are available from their tabs or player/team pages.
+
+          StatScout+ features (IAP via RevenueCat):
+          - Trends, Recent Form, player comparisons, team scouting, historical seasons back to 2000, and All-Time career percentiles
+          - Restore Purchases is available in Settings; purchases can be tested with an Apple sandbox account
+
+          Data: public nflverse / nflreadpy NFL statistics, refreshed nightly. Not affiliated with the NFL, any NFL team, or the NFLPA. No league, team, or player imagery is used.
+
+          The app has no accounts, social features, live scores, play-by-play, betting odds, wagers, or fantasy team management. Game projections are informational estimates, not betting odds.
+        NOTES
+      },
+      submission_information: {
+        add_id_info_uses_idfa: false
+      }
+    )
+  end
+
+  desc "Submit the draft version for App Store review (metadata already uploaded)"
+  lane :submit_review do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_API_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: ENV["ASC_KEY_PATH"]
+    )
+
+    version = ENV["ASC_APP_VERSION"]
+    UI.user_error!("Set ASC_APP_VERSION") unless version && !version.empty?
+    build_number = ENV["ASC_BUILD_NUMBER"]
+    UI.user_error!("Set ASC_BUILD_NUMBER") unless build_number && !build_number.empty?
+
+    deliver(
+      api_key: api_key,
+      app_version: version,
+      build_number: build_number,
+      skip_app_version_update: true,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true,
+      ignore_language_directory_validation: true,
+      submit_for_review: true,
+      automatic_release: false,
+      run_precheck_before_submit: false,
+      submission_information: {
+        add_id_info_uses_idfa: false,
+        export_compliance_uses_encryption: false,
+        content_rights_contains_third_party_content: false
+      }
+    )
+  end
+end
