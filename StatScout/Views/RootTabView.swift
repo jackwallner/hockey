@@ -178,7 +178,7 @@ struct RootTabView: View {
 
         var icon: String {
             switch self {
-            case .games: return "sportscourt.fill"
+            case .games: return "hockey.puck.fill"
             case .stats: return "chart.bar.fill"
             case .trends: return "flame.fill"
             case .teams: return "shield.lefthalf.filled"
