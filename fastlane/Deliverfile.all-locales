@@ -1,8 +1,8 @@
-# All deliver-supported locales (incl. 11 added in fastlane 2.234+).
+# Locales supported by current Fastlane. Retired App Store locale entries are
+# updated through the `fill_deprecated_locales` lane.
 # Enables appInfo + version localizations on upload when missing in ASC.
 languages([
   "ar-SA",
-  "bn-BD",
   "ca",
   "cs",
   "da",
@@ -17,7 +17,6 @@ languages([
   "fi",
   "fr-CA",
   "fr-FR",
-  "gu-IN",
   "he",
   "hi",
   "hr",
@@ -25,29 +24,20 @@ languages([
   "id",
   "it",
   "ja",
-  "kn-IN",
   "ko",
-  "ml-IN",
-  "mr-IN",
   "ms",
   "nl-NL",
   "no",
-  "or-IN",
-  "pa-IN",
   "pl",
   "pt-BR",
   "pt-PT",
   "ro",
   "ru",
   "sk",
-  "sl-SI",
   "sv",
-  "ta-IN",
-  "te-IN",
   "th",
   "tr",
   "uk",
-  "ur-PK",
   "vi",
   "zh-Hans",
   "zh-Hant"

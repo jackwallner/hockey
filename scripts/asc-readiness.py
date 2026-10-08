@@ -124,7 +124,7 @@ def main() -> None:
         # locales can be checked phrase by phrase. Everywhere else, assert the
         # parts that survive translation: the 24-hour clause and both links.
         if locale.startswith("en"):
-            required = ("renews automatically", "24 hours", "Privacy Policy", "Terms of Use")
+            required = ("renew automatically", "24 hours", "Privacy Policy", "Terms of Use")
         else:
             required = ("24", "stdeula", "privacy-policy.html")
         if not all(term in description for term in required):
@@ -161,7 +161,8 @@ def main() -> None:
         "age rating",
         f"wellness={declaration.get('healthOrWellnessTopics')} "
         f"medical={declaration.get('medicalOrTreatmentInformation')}",
-        declaration.get("healthOrWellnessTopics") is True,
+        declaration.get("healthOrWellnessTopics") is not True
+        and declaration.get("medicalOrTreatmentInformation") == "NONE",
     )
 
     review_detail = client.get(
@@ -173,10 +174,9 @@ def main() -> None:
         for field in ("contactFirstName", "contactLastName", "contactPhone", "contactEmail"):
             check(f"review {field}", "present" if review_attributes.get(field) else None)
         review_notes = review_attributes.get("notes") or ""
-        # Carried over from a logging app, where the sentinel was "LOGGING IS
-        # FREE". Nothing is logged here: the free tier is today's numbers, and
-        # that is the split a reviewer has to be able to find in the notes.
-        sentinel = "TODAY'S NUMBERS ARE FREE"
+        # The split a reviewer has to be able to find in the notes: the
+        # current-season boards are free, StatScout+ is the paid tier.
+        sentinel = "StatScout+ features"
         check(
             "review notes describe the free tier",
             "current" if sentinel in review_notes else "stale",
