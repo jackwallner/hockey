@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import json
+import http.client
 import os
 import re
+import socket
 import time
 import urllib.error
 import urllib.parse
@@ -36,14 +38,27 @@ def load_credentials() -> tuple[str, str, str]:
     issuer_id = os.environ.get("ASC_ISSUER_ID")
     key_path = os.environ.get("ASC_KEY_PATH")
     if not all([key_id, issuer_id, key_path]):
-        creds_path = Path.home() / ".hockey_credentials"
+        creds_path = Path.home() / ".baseball_credentials"
         if creds_path.exists():
             for line in creds_path.read_text().splitlines():
                 line = line.strip()
                 if not line or line.startswith("#") or "=" not in line:
                     continue
                 k, v = line.split("=", 1)
-                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+                k = k.strip()
+                # The file is meant to be sourced by a shell, so every line is
+                # `export NAME=value`. Without stripping the keyword the whole
+                # fallback silently set variables named "export ASC_KEY_PATH"
+                # and every script here died on "set ASC_API_KEY_ID".
+                if k.startswith("export "):
+                    k = k[len("export "):].strip()
+                if not k:
+                    continue
+                v = v.strip().strip('"').strip("'")
+                # Same reason: `ASC_KEY_PATH="$HOME/.appstoreconnect/..."` is a
+                # shell expansion, and Python opens the literal path otherwise.
+                v = os.path.expandvars(os.path.expanduser(v))
+                os.environ.setdefault(k, v)
         key_id = os.environ.get("ASC_API_KEY_ID")
         issuer_id = os.environ.get("ASC_ISSUER_ID")
         key_path = os.environ.get("ASC_KEY_PATH")
@@ -65,10 +80,52 @@ def bearer_token(key_id: str, issuer_id: str, key_path: str) -> str:
 
 
 class ASCClient:
-    def __init__(self, token: str):
-        self.token = token
+    """App Store Connect client that keeps its own bearer token fresh.
 
-    def request(self, method: str, path: str, body: dict | None = None) -> dict:
+    Apple caps the JWT lifetime at 20 minutes. Scripts that touch every
+    territory (intro offers, price schedules) routinely run longer than that,
+    and a client holding a single token dies partway through with a 401 having
+    already made hundreds of writes. Pass the credentials and the token is
+    minted on demand instead.
+    """
+
+    #: Re-mint this many seconds before Apple's 20-minute expiry.
+    REFRESH_MARGIN = 300
+
+    #: Statuses that mean "Apple is busy", not "the request was wrong".
+    RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
+
+    #: Enough attempts, with the backoff below, to cover about two minutes.
+    MAX_ATTEMPTS = 8
+
+    def __init__(self, token: str | None = None, credentials: tuple[str, str, str] | None = None):
+        self._credentials = credentials
+        self._token = token
+        self._minted_at = time.time() if token else 0.0
+        if token is None and credentials is None:
+            raise ValueError("ASCClient needs a token or credentials")
+
+    @classmethod
+    def from_credentials(cls, credentials: tuple[str, str, str] | None = None) -> "ASCClient":
+        return cls(credentials=credentials or load_credentials())
+
+    @property
+    def token(self) -> str:
+        expired = time.time() - self._minted_at > (1200 - self.REFRESH_MARGIN)
+        if self._token is None or (self._credentials and expired):
+            self._token = bearer_token(*self._credentials)  # type: ignore[misc]
+            self._minted_at = time.time()
+        return self._token
+
+    def _force_refresh(self) -> bool:
+        """Mint a new token after a 401. False when there is nothing to mint from."""
+        if not self._credentials:
+            return False
+        self._token = bearer_token(*self._credentials)
+        self._minted_at = time.time()
+        return True
+
+    def request(self, method: str, path: str, body: dict | None = None, _retried: bool = False) -> dict:
         url = f"{API}{path}"
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(
@@ -81,10 +138,31 @@ class ASCClient:
             },
         )
         try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                raw = resp.read().decode()
-                return json.loads(raw) if raw else {}
+            for attempt in range(self.MAX_ATTEMPTS):
+                try:
+                    with urllib.request.urlopen(req, timeout=120) as resp:
+                        raw = resp.read().decode()
+                        return json.loads(raw) if raw else {}
+                except urllib.error.HTTPError as e:
+                    # Apple answers a long write run with 500s and 429s that
+                    # clear on their own. Four tries inside eight seconds was
+                    # not enough to ride one out: setting up two subscriptions
+                    # means several hundred POSTs, and the intro-offer loop died
+                    # partway through every time. Back off far enough to
+                    # outlast the throttle, and leave every other status to the
+                    # handler below.
+                    if e.code not in self.RETRY_STATUSES or attempt == self.MAX_ATTEMPTS - 1:
+                        raise
+                    time.sleep(min(2 ** attempt, 60))
+                except (http.client.RemoteDisconnected, urllib.error.URLError, socket.timeout):
+                    if attempt == self.MAX_ATTEMPTS - 1:
+                        raise
+                    time.sleep(min(2 ** attempt, 60))
         except urllib.error.HTTPError as e:
+            # A 401 on a long run is an expired token, not a bad key. Mint a new
+            # one and retry once before giving up.
+            if e.code == 401 and not _retried and self._force_refresh():
+                return self.request(method, path, body, _retried=True)
             err = e.read().decode()
             raise RuntimeError(f"{method} {path} -> {e.code}: {err}") from e
 
@@ -96,6 +174,9 @@ class ASCClient:
 
     def patch(self, path: str, body: dict) -> dict:
         return self.request("PATCH", path, body)
+
+    def delete(self, path: str) -> dict:
+        return self.request("DELETE", path)
 
 
 def list_all(client: ASCClient, path: str) -> list[dict]:
@@ -193,6 +274,8 @@ def ensure_draft_version(client: ASCClient, app_id: str, preferred: str | None =
         return editable
     live = find_live_version(client, app_id)
     base = preferred or (live["attributes"]["versionString"] if live else "1.0.0")
+    if preferred and find_version_by_string(client, app_id, preferred):
+        return find_version_by_string(client, app_id, preferred)  # type: ignore
     candidate = bump_version(base)
     for _ in range(8):
         if find_version_by_string(client, app_id, candidate):
@@ -248,6 +331,6 @@ def description_for_locale(locale: str, source: str = "en-US") -> str:
     if len(desc) < 10:
         desc = (
             read_meta("en-US", "description")
-            or "One Tap Headache Tracker — migraine and headache diary with Apple Watch logging."
+            or "VO2 Max Daily Tracker shows Apple Health cardio fitness estimates and trends."
         )
     return desc[:4000]
