@@ -11,4 +11,4 @@ jobs:
     permissions:
       contents: read
     steps:
-      - run: echo "Keepalive — maintaining workflow scheduler priority."
+      - run: echo "Keepalive, maintaining workflow scheduler priority."

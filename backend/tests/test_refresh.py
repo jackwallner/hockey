@@ -1,60 +1,70 @@
 from datetime import datetime, timezone
 
-import pandas as pd
 import pytest
 
-from refresh import _coverage, _validate_unique
+import refresh
+from ingest_game_logs import GameBatch
+from refresh import (
+    Candidate,
+    CandidateNotReady,
+    Coverage,
+    _validate_unique,
+    compute_coverage,
+    content_hash,
+    merge_logs,
+)
+
+NOW = datetime(2026, 10, 8, 18, 0, tzinfo=timezone.utc)
 
 
-NOW = datetime(2026, 9, 12, 18, 0, tzinfo=timezone.utc)
+def final(game_id):
+    return {"game_id": game_id}
 
 
-def test_coverage_allows_a_valid_early_week_when_another_game_is_pending():
-    schedule = pd.DataFrame([
-        {"season": 2026, "game_id": "2026_01_A_B", "gameday": "2026-09-10", "game_type": "REG"},
-        {"season": 2026, "game_id": "2026_01_C_D", "gameday": "2026-09-13", "game_type": "REG"},
-    ])
-    weekly = pd.DataFrame([
-        {"season": 2026, "game_id": "2026_01_A_B", "week": 1},
-    ])
-
-    coverage = _coverage(weekly, schedule, 2026, NOW)
-
-    assert coverage.expected_games == 1
-    assert coverage.observed_games == 1
-    assert coverage.coverage_status == "complete"
-    assert coverage.max_week == 1
-    assert coverage.max_game_date == "2026-09-10"
+def log(game_id, player_id=1, game_date="2026-10-07", week=2, **extra):
+    return {
+        "player_id": player_id, "season": 2026, "season_type": "REG", "game_id": game_id,
+        "game_date": game_date, "week": week, "player_type": "f", "team": "EDM",
+        "opponent": "CGY", "plays": 20, "touches": 4, "metrics": {"goals": 1},
+        "updated_at": "2026-10-08T00:00:00+00:00", **extra,
+    }
 
 
-def test_coverage_marks_missing_completed_source_games_partial():
-    schedule = pd.DataFrame([
-        {"season": 2026, "game_id": "2026_01_A_B", "gameday": "2026-09-10", "game_type": "REG"},
-        {"season": 2026, "game_id": "2026_01_C_D", "gameday": "2026-09-11", "game_type": "REG"},
-    ])
-    weekly = pd.DataFrame([
-        {"season": 2026, "game_id": "2026_01_A_B", "week": 1},
-    ])
+# --------------------------------------------------------------------------- #
+# Coverage: finals in the games table against finals with game-log rows
+# --------------------------------------------------------------------------- #
+def test_coverage_is_complete_when_every_final_has_rows():
+    coverage = compute_coverage([final("a"), final("b")], [log("a"), log("b", game_date="2026-10-09", week=3)])
+    assert coverage == Coverage(3, "2026-10-09", 2, 2, "complete")
 
-    coverage = _coverage(weekly, schedule, 2026, NOW)
 
-    assert coverage.expected_games == 2
-    assert coverage.observed_games == 1
+def test_a_final_without_rows_makes_coverage_partial():
+    coverage = compute_coverage([final("a"), final("b")], [log("a")])
+    assert (coverage.expected_games, coverage.observed_games) == (2, 1)
     assert coverage.coverage_status == "partial"
 
 
-def test_coverage_does_not_count_preseason_games():
-    schedule = pd.DataFrame([
-        {"season": 2026, "game_id": "2026_00_A_B", "gameday": "2026-08-28", "game_type": "PRE"},
-    ])
-    weekly = pd.DataFrame([
-        {"season": 2026, "game_id": "2026_00_A_B", "week": 0},
-    ])
+def test_logs_for_games_missing_from_the_table_do_not_count_as_observed():
+    coverage = compute_coverage([final("a")], [log("a"), log("zz")])
+    assert (coverage.expected_games, coverage.observed_games) == (1, 1)
 
-    coverage = _coverage(weekly, schedule, 2026, NOW)
 
-    assert coverage.expected_games == 0
-    assert coverage.observed_games == 1
+def test_no_logs_means_no_week_or_date():
+    coverage = compute_coverage([final("a")], [])
+    assert (coverage.max_week, coverage.max_game_date, coverage.coverage_status) == (None, None, "partial")
+
+
+def test_no_finals_is_complete():
+    assert compute_coverage([], []).coverage_status == "complete"
+
+
+# --------------------------------------------------------------------------- #
+def test_merge_keeps_published_rows_and_lets_a_new_row_win():
+    old = [log("a", player_id=1), log("a", player_id=2)]
+    new = [{**log("a", player_id=2), "metrics": {"goals": 9}}, log("b", player_id=1, game_date="2026-10-09")]
+    merged = merge_logs(old, new)
+    assert len(merged) == 3
+    assert next(r for r in merged if r["player_id"] == 2)["metrics"] == {"goals": 9}
 
 
 def test_candidate_key_validation_rejects_duplicate_rows():
@@ -64,33 +74,136 @@ def test_candidate_key_validation_rejects_duplicate_rows():
         _validate_unique(rows * 2, ("id", "season", "season_type"), "snapshots")
 
 
-def _candidate(stamp: str, passing_yards: int = 205):
-    from refresh import Candidate, Coverage
+def test_candidate_key_validation_rejects_incomplete_keys():
+    with pytest.raises(CandidateNotReady, match="incomplete key"):
+        _validate_unique([{"id": None, "season": 2026}], ("id", "season"), "snapshots")
 
-    return Candidate(
+
+# --------------------------------------------------------------------------- #
+def _candidate(stamp: str, goals=205, **overrides):
+    values = dict(
         season=2026,
         season_types=("REG",),
-        snapshots=({"id": 1, "season": 2026, "updated_at": stamp, "standard_stats": [{"label": "Pass Yds", "value": passing_yards}]},),
-        game_logs=({"player_id": 1, "game_date": "2026-09-10", "updated_at": stamp},),
-        recent_form=({"player_id": 1, "window_weeks": 3, "updated_at": stamp},),
-        coverage=Coverage(1, "2026-09-10", 2, 2, "complete"),
-        ngs_status="ready",
-        pfr_status="pending",
+        snapshots=({"id": 1, "season": 2026, "updated_at": stamp, "standard_stats": [{"label": "G", "value": goals}]},),
+        game_logs=({"player_id": 1, "game_date": "2026-10-10", "updated_at": stamp, "metrics": {"ixg": 1.0}},),
+        recent_form=({"player_id": 1, "window_weeks": 2, "updated_at": stamp},),
+        coverage=Coverage(1, "2026-10-10", 2, 2, "complete"),
+        shots_status="ready",
+        summary_status="ready",
     )
+    values.update(overrides)
+    return Candidate(**values)
 
 
 def test_content_hash_ignores_build_timestamps():
-    from refresh import content_hash
-
-    assert content_hash(_candidate("2026-09-13T10:00:00Z")) == content_hash(_candidate("2026-09-13T17:49:00Z"))
+    assert content_hash(_candidate("2026-10-09T10:00:00Z")) == content_hash(_candidate("2026-10-09T17:49:00Z"))
 
 
 def test_content_hash_changes_with_a_stat():
-    from refresh import content_hash
-
     assert content_hash(_candidate("x", 205)) != content_hash(_candidate("x", 206))
 
 
+def test_content_hash_treats_a_whole_number_float_like_an_int():
+    """The same ixG read back from Postgres (1.0) and freshly built (1) must hash alike."""
+    as_int = _candidate("x", game_logs=({"player_id": 1, "game_date": "d", "metrics": {"ixg": 1}},))
+    as_float = _candidate("x", game_logs=({"player_id": 1, "game_date": "d", "metrics": {"ixg": 1.0}},))
+    assert content_hash(as_int) == content_hash(as_float)
+
+
+# --------------------------------------------------------------------------- #
+# build_candidate wiring (network and database replaced)
+# --------------------------------------------------------------------------- #
+def _snapshot(pid=1, phase="REG"):
+    return {"id": pid, "season": 2026, "season_type": phase, "updated_at": "x"}
+
+
+@pytest.fixture
+def wired(monkeypatch):
+    state = {
+        "snapshots": ([_snapshot(1)], "ready"),
+        "existing": [log("a")],
+        "batch": GameBatch(rows=[log("b", game_date="2026-10-09", week=3)], done=["b"]),
+        "finals": [final("a"), final("b")],
+    }
+    monkeypatch.setattr(refresh, "build_snapshots", lambda season, now: state["snapshots"])
+    monkeypatch.setattr(refresh, "fetch_serving_logs", lambda client, season: state["existing"])
+    monkeypatch.setattr(refresh, "fetch_final_games", lambda client, season: state["finals"])
+
+    def new_rows(client, season, now, **kwargs):
+        state["kwargs"] = kwargs
+        if isinstance(state["batch"], Exception):
+            raise state["batch"]
+        return state["batch"]
+
+    monkeypatch.setattr(refresh, "build_new_rows", new_rows)
+    return state
+
+
+def build(wired, **kwargs):
+    return refresh.build_candidate(2026, client=object(), now=NOW, **kwargs)
+
+
+def test_candidate_stages_the_published_rows_plus_the_new_finals(wired):
+    candidate = build(wired)
+    assert {r["game_id"] for r in candidate.game_logs} == {"a", "b"}
+    assert candidate.coverage == Coverage(3, "2026-10-09", 2, 2, "complete")
+    assert candidate.shots_status == "ready" and candidate.summary_status == "ready"
+    assert candidate.season_types == ("REG",)
+    assert {r["window_weeks"] for r in candidate.recent_form} == {2, 4, 8}
+
+
+def test_finals_moneypuck_has_not_published_show_as_pending_and_partial(wired):
+    wired["batch"] = GameBatch(rows=[], pending=["b"])
+    candidate = build(wired)
+    assert candidate.coverage.coverage_status == "partial"
+    assert candidate.shots_status == "pending"
+    assert {r["game_id"] for r in candidate.game_logs} == {"a"}
+
+
+def test_a_shot_file_failure_keeps_the_published_logs_and_reports_degraded(wired):
+    wired["batch"] = RuntimeError("shots download failed")
+    candidate = build(wired)
+    assert candidate.shots_status == "degraded"
+    assert {r["game_id"] for r in candidate.game_logs} == {"a"}
+
+
+def test_full_logs_flag_reaches_the_ingest(wired):
+    build(wired, full_logs=True)
+    assert wired["kwargs"]["full"] is True
+
+
+def test_no_snapshots_is_not_ready(wired):
+    wired["snapshots"] = ([], "unknown")
+    with pytest.raises(CandidateNotReady, match="no snapshot rows"):
+        build(wired)
+
+
+def test_no_game_logs_is_not_ready(wired):
+    wired["existing"], wired["batch"], wired["finals"] = [], GameBatch(), []
+    with pytest.raises(CandidateNotReady, match="no game-log rows"):
+        build(wired)
+
+
+def test_logs_for_a_phase_without_snapshots_are_not_published(wired):
+    wired["existing"] = [log("a"), {**log("p", player_id=1), "season_type": "POST"}]
+    candidate = build(wired)
+    assert {r["season_type"] for r in candidate.game_logs} == {"REG"}
+
+
+def test_recent_form_only_includes_players_with_a_snapshot(wired):
+    wired["existing"] = [log("a", player_id=1), log("a", player_id=2)]
+    candidate = build(wired)
+    assert {r["player_id"] for r in candidate.recent_form} == {1}
+    assert len(candidate.game_logs) == 3  # logs are kept for every player
+
+
+def test_summary_statuses_merge_to_the_worst():
+    assert refresh._merge_status("ready", "degraded", "pending") == "degraded"
+    assert refresh._merge_status("ready", "pending") == "pending"
+    assert refresh._merge_status() == "unknown"
+
+
+# --------------------------------------------------------------------------- #
 class _FlakyRPC:
     def __init__(self, errors):
         self.errors = list(errors)
@@ -107,22 +220,25 @@ class _FlakyRPC:
 
 
 def test_rpc_retries_gateway_timeouts():
-    from refresh import _rpc
     client = _FlakyRPC([RuntimeError("{'code': 504, 'details': 'Gateway Timeout'}")])
-    assert _rpc(client, "mark_data_refresh_unchanged", {}, sleep=lambda _: None) == {"status": "unchanged"}
+    assert refresh._rpc(client, "mark_data_refresh_unchanged", {}, sleep=lambda _: None) == {"status": "unchanged"}
     assert client.calls == 2
 
 
 def test_rpc_treats_already_applied_retry_as_done():
-    from refresh import _rpc
     client = _FlakyRPC([RuntimeError("504 Gateway Timeout"), RuntimeError("refresh x is already unchanged")])
-    assert _rpc(client, "mark_data_refresh_unchanged", {}, sleep=lambda _: None) == {"status": "already_applied"}
+    assert refresh._rpc(client, "mark_data_refresh_unchanged", {}, sleep=lambda _: None) == {"status": "already_applied"}
 
 
 def test_rpc_does_not_retry_real_errors():
-    import pytest
-    from refresh import _rpc
     client = _FlakyRPC([RuntimeError("refresh output differs from the live revision")])
     with pytest.raises(RuntimeError):
-        _rpc(client, "mark_data_refresh_unchanged", {}, sleep=lambda _: None)
+        refresh._rpc(client, "mark_data_refresh_unchanged", {}, sleep=lambda _: None)
     assert client.calls == 1
+
+
+def test_refusing_a_different_supabase_project(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "https://qwkmpwnhrejsuplcwxrb.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "key")
+    with pytest.raises(RuntimeError, match="Hockey"):
+        refresh._client()

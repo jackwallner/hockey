@@ -1,48 +1,66 @@
 """
-Per-player-per-game NFL ingest. Powers player profiles and the shared 3/5/8
-week Trends windows.
+Per-player-per-game NHL ingest. Powers player game logs and the 2/4/8-week
+Trends windows (``rollup_recent_form.py``).
 
-Reads weekly ``load_player_stats`` rows (one row per player per game), joins
-``load_schedules`` for the game date, and upserts one row per player per game
-into Supabase ``public.player_game_logs``.
-Regular season and postseason rows are stored separately.
+One ``public.player_game_logs`` row per player per game, keyed
+``(player_id, season, season_type, game_date, player_type)`` with ``game_id``
+(the NHL id as text) alongside. Rows are raw counts, never rates, so a window
+rate is recomputed exactly from summed numerators and denominators. ``plays`` is
+time on ice in whole minutes and ``touches`` is shot attempts (skaters) or shots
+against (goalies). Metric keys are exactly the contract's:
 
-Metrics are stored as raw per-game counts, never pre-divided rates: pass_yards,
-attempts, carries, etc. go in as-is, not as yards-per-attempt. That's what lets
-``rollup_recent_form.py`` recompute an exact window rate from summed
-numerators and denominators instead of averaging already-averaged numbers,
-which is the same reason the baseball app's game logs store counts. Passing,
-rushing and receiving EPA are kept as three separate values (not just the
-summed ``epa_total``) so a per-category recent-form rate can be derived later;
-``epa_total`` stays too for the existing RecentFormCard.
+  skaters  goals, assists, primary_assists, points, shots_on_goal,
+           shot_attempts, ixg, hd_shots, hits, blocks, takeaways, giveaways,
+           pim, plus_minus, pp_goals, faceoffs_won, faceoffs_lost, toi_seconds
+  goalies  shots_against, saves, goals_against, xga, hd_shots_against,
+           hd_goals_against, toi_seconds, decision_win, shutout, started
 
-Optionally folds in a handful of Next Gen Stats weekly metrics (CPOE, time to
-throw, separation, YAC above expectation, rush yards over expected) that have
-no other per-game source. The join is on (player_id, season, week) against
-NGS's weekly (week > 0) rows; it's skipped for seasons before NGS existed.
+Three sources per game, joined on the NHL player id:
 
-Incremental by default: starts from the latest game_date already in the DB for
-the season. Pass ``--full`` to re-ingest the whole season (also needed after a
-metric-set change, since incremental only reaches new games). ``--season N``
-overrides the resolved season.
+* NHL boxscore ``gamecenter/<id>/boxscore``: the counting stats and ice time.
+* NHL play-by-play ``gamecenter/<id>/play-by-play``: faceoff counts (the
+  boxscore carries only a percentage), primary assists (``assist1PlayerId``)
+  and the shooter's blocked attempts. The contract named the boxscore alone;
+  that cannot supply faceoffs won and lost, and MoneyPuck's shot file leaves
+  blocked attempts out, which would put the per-game ``shot_attempts`` below
+  the season total in ``player_snapshots``.
+* MoneyPuck ``shots_<season>.zip`` (downloaded once per run into
+  ``backend/.cache/``): expected goals per shot. Per game and shooter it gives
+  ixG, unblocked attempts and high-danger shots (xG >= 0.2, which reproduces
+  MoneyPuck's own high-danger count); per game and goalie it gives xGA, high
+  danger shots against and high-danger goals against. ``shot_attempts`` is the
+  unblocked attempts plus the play-by-play blocked ones, which matches
+  MoneyPuck's season ``I_F_shotAttempts``.
+
+A final game is ingested only once MoneyPuck's shot file contains it, so a row
+never carries a false zero ixG. Games not yet in the file are left for the next
+run (the refresh probe fingerprints the shot file, so it runs when they land).
+
+Incremental by default: only finals in ``public.games`` with no game-log rows
+yet. ``--full`` re-ingests the whole season and prunes rows it no longer
+produced. ``--season N`` overrides the resolved season.
 
 Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (same as ingest.py).
 """
 
+from __future__ import annotations
+
 import argparse
+import io
+import json
 import logging
 import os
 import sys
+import zipfile
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Iterable, Iterator, Mapping, Optional
 
-import nflreadpy as nfl
 import pandas as pd
-import polars as pl
 from dotenv import load_dotenv
 from supabase import create_client
 
-from ingest import NGS_FIRST_SEASON, gsis_to_id, player_type_from_position, resolve_season
+from ingest import DEFAULT_SEASON, chunks, http_get, player_type_from_position, resolve_season
 
 load_dotenv()
 
@@ -52,280 +70,381 @@ UTC = timezone.utc
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
-# Per-game metric columns carried into the ``metrics`` jsonb (source -> key),
-# stored as raw counts. Grouped by category to mirror NFL_CONTRACT.md; every
-# column here is summed straight across a recent-form window, never averaged
-# per-game, so the window's rates can be recomputed exactly from the sums.
-METRIC_COLS = {
-    # Passing.
-    "passing_yards": "passing_yards",
-    "passing_tds": "passing_tds",
-    "passing_interceptions": "interceptions",
-    "completions": "completions",
-    "attempts": "attempts",
-    "sacks_suffered": "sacks_suffered",
-    "sack_yards_lost": "sack_yards_lost",
-    "passing_first_downs": "passing_first_downs",
-    "passing_air_yards": "passing_air_yards",
-    # Rushing.
-    "carries": "carries",
-    "rushing_yards": "rushing_yards",
-    "rushing_tds": "rushing_tds",
-    "rushing_first_downs": "rushing_first_downs",
-    "rushing_fumbles": "rushing_fumbles",
-    "rushing_fumbles_lost": "rushing_fumbles_lost",
-    # Receiving.
-    "receptions": "receptions",
-    "targets": "targets",
-    "receiving_yards": "receiving_yards",
-    "receiving_tds": "receiving_tds",
-    "receiving_yards_after_catch": "receiving_yac",
-    "receiving_first_downs": "receiving_first_downs",
-    "receiving_air_yards": "receiving_air_yards",
-    "receiving_fumbles": "receiving_fumbles",
-    # Defense.
-    "def_interceptions": "def_interceptions",
-    "def_sacks": "def_sacks",
-    "def_tackles_solo": "def_tackles_solo",
-    "def_tackle_assists": "def_tackle_assists",
-    "def_pass_defended": "def_pass_defended",
-    "def_fumbles_forced": "def_fumbles_forced",
-    "def_tackles_for_loss": "def_tackles_for_loss",
-    "def_qb_hits": "def_qb_hits",
-    # EPA, kept per-category (not just summed) so recent form can report a
-    # per-category rate the way the season snapshot does.
-    "passing_epa": "passing_epa",
-    "rushing_epa": "rushing_epa",
-    "receiving_epa": "receiving_epa",
-}
-EPA_COLS = ["passing_epa", "rushing_epa", "receiving_epa"]
+NHL_API = "https://api-web.nhle.com/v1/gamecenter/{game_id}/{kind}"
+SHOTS_URL = "https://peter-tanner.com/moneypuck/downloads/shots_{season}.zip"
+HIGH_DANGER_XG = 0.2
+UPSERT_BATCH = 200
+LOG_BATCH_GAMES = 25  # games ingested between upserts in the CLI
 
-# Weekly Next Gen Stats columns worth folding into the game log (source ->
-# key). Season-only NGS metrics that have no clean per-game denominator
-# (aggressiveness, avg_intended_air_yards) are deliberately left out — see the
-# module docstring.
-NGS_PASSING_COLS = {
-    "completion_percentage_above_expectation": "cpoe",
-    "avg_time_to_throw": "avg_time_to_throw",
-}
-NGS_RUSHING_COLS = {
-    "rush_yards_over_expected": "rush_yoe",
-}
-NGS_RECEIVING_COLS = {
-    "avg_separation": "avg_separation",
-    "avg_yac_above_expectation": "avg_yac_above_expectation",
-}
-NGS_STORE_PLACES = 2  # storage precision; the rollup re-rounds its own output.
+SKATER_KEYS = (
+    "goals", "assists", "primary_assists", "points", "shots_on_goal",
+    "shot_attempts", "ixg", "hd_shots", "hits", "blocks", "takeaways",
+    "giveaways", "pim", "plus_minus", "pp_goals", "faceoffs_won",
+    "faceoffs_lost", "toi_seconds",
+)
+GOALIE_KEYS = (
+    "shots_against", "saves", "goals_against", "xga", "hd_shots_against",
+    "hd_goals_against", "toi_seconds", "decision_win", "shutout", "started",
+)
+SHOT_COLUMNS = ("game_id", "xGoal", "goal", "shooterPlayerId", "goalieIdForShot")
+STORE_PLACES = 3
+
+_shots_memo: dict[int, pd.DataFrame] = {}
 
 
-def _to_pandas(frame: Any) -> pd.DataFrame:
-    if isinstance(frame, pl.DataFrame):
-        return frame.to_pandas()
-    return frame
-
-
-def _num(row: pd.Series, col: str) -> float:
-    val = row.get(col)
+# --------------------------------------------------------------------------- #
+# Pure helpers (unit-tested; no network)
+# --------------------------------------------------------------------------- #
+def toi_seconds(text: Any) -> int:
+    """``"19:42"`` -> 1182; blank or malformed -> 0."""
     try:
-        return float(val) if val is not None and not pd.isna(val) else 0.0
+        minutes, seconds = str(text).split(":")[:2]
+        return int(minutes) * 60 + int(seconds)
     except (ValueError, TypeError):
-        return 0.0
+        return 0
 
 
-def schedule_map(schedule: pd.DataFrame) -> dict[str, str]:
-    """Map game_id -> gameday (ISO date string)."""
-    out: dict[str, str] = {}
-    for _, row in schedule.iterrows():
-        gid = row.get("game_id")
-        day = row.get("gameday")
-        if gid is not None and day is not None and not pd.isna(day):
-            out[str(gid)] = str(day)[:10]
-    return out
+def short_game_id(game_id: Any) -> int:
+    """NHL id -> MoneyPuck shot-file id (2025020001 -> 20001)."""
+    return int(str(game_id)[4:])
 
 
-def ngs_weekly_lookup(ngs: pd.DataFrame, cols: dict[str, str]) -> dict[tuple[str, int], dict[str, float]]:
-    """Map (gsis_id, week) -> {renamed metric: value} from a weekly NGS frame.
-
-    Callers pass only week > 0 rows; week 0 is NGS's own season-aggregate row
-    and isn't a per-game data point. Pure: no network, easy to unit test.
-    """
-    if ngs is None or ngs.empty:
-        return {}
-    present = {src: dst for src, dst in cols.items() if src in ngs.columns}
-    if not present or "player_gsis_id" not in ngs.columns or "week" not in ngs.columns:
-        return {}
-
-    out: dict[tuple[str, int], dict[str, float]] = {}
-    for _, row in ngs.iterrows():
-        gsis = row.get("player_gsis_id")
-        week = row.get("week")
-        if gsis is None or week is None or pd.isna(week):
-            continue
-        values: dict[str, float] = {}
-        for src, dst in present.items():
-            raw = row.get(src)
-            if raw is None or pd.isna(raw):
-                continue
-            values[dst] = round(float(raw), NGS_STORE_PLACES)
-        if values:
-            out[(str(gsis), int(week))] = values
-    return out
+def _int(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
-def build_game_log_rows(
-    weekly: pd.DataFrame,
-    sched: dict[str, str],
-    season: int,
+@dataclass
+class ShotTables:
+    """Per (short game id, player id) sums from the MoneyPuck shot file."""
+
+    skaters: dict[tuple[int, int], dict[str, float]] = field(default_factory=dict)
+    goalies: dict[tuple[int, int], dict[str, float]] = field(default_factory=dict)
+    games: set[int] = field(default_factory=set)
+
+
+def build_shot_tables(shots: pd.DataFrame) -> ShotTables:
+    """Group the shot file by game and shooter / goalie."""
+    tables = ShotTables()
+    if shots.empty:
+        return tables
+    frame = shots.copy()
+    frame["hd"] = (frame["xGoal"] >= HIGH_DANGER_XG).astype(int)
+    frame["hd_goal"] = frame["hd"] * frame["goal"].fillna(0).astype(int)
+    tables.games = {int(g) for g in frame["game_id"].dropna().unique()}
+
+    shooters = frame[frame["shooterPlayerId"].notna()]
+    grouped = shooters.groupby(["game_id", "shooterPlayerId"]).agg(
+        ixg=("xGoal", "sum"), attempts=("xGoal", "size"), hd=("hd", "sum")
+    )
+    for (game, player), row in grouped.iterrows():
+        tables.skaters[(int(game), int(player))] = {
+            "ixg": float(row["ixg"]), "attempts": int(row["attempts"]), "hd": int(row["hd"]),
+        }
+
+    goalies = frame[frame["goalieIdForShot"].fillna(0) > 0]
+    grouped = goalies.groupby(["game_id", "goalieIdForShot"]).agg(
+        xga=("xGoal", "sum"), hd=("hd", "sum"), hd_goals=("hd_goal", "sum")
+    )
+    for (game, player), row in grouped.iterrows():
+        tables.goalies[(int(game), int(player))] = {
+            "xga": float(row["xga"]), "hd": int(row["hd"]), "hd_goals": int(row["hd_goals"]),
+        }
+    return tables
+
+
+def parse_play_by_play(pbp: Mapping[str, Any]) -> dict[int, dict[str, int]]:
+    """Per player: faceoffs won/lost, primary assists, blocked shot attempts."""
+    stats: dict[int, dict[str, int]] = {}
+
+    def bump(player: Any, key: str) -> None:
+        if player:
+            row = stats.setdefault(int(player), {
+                "faceoffs_won": 0, "faceoffs_lost": 0, "primary_assists": 0, "blocked_attempts": 0,
+            })
+            row[key] += 1
+
+    for play in pbp.get("plays") or []:
+        kind = play.get("typeDescKey")
+        details = play.get("details") or {}
+        if kind == "faceoff":
+            bump(details.get("winningPlayerId"), "faceoffs_won")
+            bump(details.get("losingPlayerId"), "faceoffs_lost")
+        elif kind == "goal":
+            bump(details.get("assist1PlayerId"), "primary_assists")
+        elif kind == "blocked-shot":
+            bump(details.get("shootingPlayerId"), "blocked_attempts")
+    return stats
+
+
+def _skater_row(
+    player: Mapping[str, Any],
+    group_type: str,
+    shots: Mapping[str, float],
+    play: Mapping[str, int],
+) -> Optional[dict[str, Any]]:
+    seconds = toi_seconds(player.get("toi"))
+    if seconds <= 0:
+        return None
+    attempts = int(shots.get("attempts", 0)) + int(play.get("blocked_attempts", 0))
+    metrics = {
+        "goals": _int(player.get("goals")),
+        "assists": _int(player.get("assists")),
+        "primary_assists": int(play.get("primary_assists", 0)),
+        "points": _int(player.get("points")),
+        "shots_on_goal": _int(player.get("sog")),
+        "shot_attempts": attempts,
+        "ixg": round(float(shots.get("ixg", 0.0)), STORE_PLACES),
+        "hd_shots": int(shots.get("hd", 0)),
+        "hits": _int(player.get("hits")),
+        "blocks": _int(player.get("blockedShots")),
+        "takeaways": _int(player.get("takeaways")),
+        "giveaways": _int(player.get("giveaways")),
+        "pim": _int(player.get("pim")),
+        "plus_minus": _int(player.get("plusMinus")),
+        "pp_goals": _int(player.get("powerPlayGoals")),
+        "faceoffs_won": int(play.get("faceoffs_won", 0)),
+        "faceoffs_lost": int(play.get("faceoffs_lost", 0)),
+        "toi_seconds": seconds,
+    }
+    return {
+        "player_id": int(player["playerId"]),
+        "player_type": player_type_from_position(player.get("position")) or group_type,
+        "plays": seconds // 60,
+        "touches": attempts,
+        "metrics": metrics,
+    }
+
+
+def _goalie_row(
+    player: Mapping[str, Any],
+    shots: Mapping[str, float],
+    sole_goalie: bool,
+    shootout: bool,
+) -> Optional[dict[str, Any]]:
+    seconds = toi_seconds(player.get("toi"))
+    if seconds <= 0:
+        return None
+    against = _int(player.get("goalsAgainst"))
+    won = str(player.get("decision") or "").upper() == "W"
+    shots_against = _int(player.get("shotsAgainst"))
+    metrics = {
+        "shots_against": shots_against,
+        "saves": _int(player.get("saves")),
+        "goals_against": against,
+        "xga": round(float(shots.get("xga", 0.0)), STORE_PLACES),
+        "hd_shots_against": int(shots.get("hd", 0)),
+        "hd_goals_against": int(shots.get("hd_goals", 0)),
+        "toi_seconds": seconds,
+        "decision_win": int(won),
+        # A shutout needs the whole game with no goals against; a shootout win
+        # is not one.
+        "shutout": int(won and against == 0 and sole_goalie and not shootout),
+        "started": int(bool(player.get("starter"))),
+    }
+    return {
+        "player_id": int(player["playerId"]),
+        "player_type": "g",
+        "plays": seconds // 60,
+        "touches": shots_against,
+        "metrics": metrics,
+    }
+
+
+def build_game_rows(
+    game: Mapping[str, Any],
+    boxscore: Mapping[str, Any],
+    pbp_stats: Mapping[int, Mapping[str, int]],
+    tables: ShotTables,
     now: datetime,
-    ngs_pass: Optional[dict[tuple[str, int], dict[str, float]]] = None,
-    ngs_rush: Optional[dict[tuple[str, int], dict[str, float]]] = None,
-    ngs_rec: Optional[dict[tuple[str, int], dict[str, float]]] = None,
-) -> list[dict]:
-    """Build one player_game_logs row per player per game (pure)."""
-    df = weekly[weekly["season"] == season].copy()
-    if df.empty:
-        return []
-
-    ngs_pass = ngs_pass or {}
-    ngs_rush = ngs_rush or {}
-    ngs_rec = ngs_rec or {}
-
-    now_str = now.isoformat()
-    rows: list[dict] = []
-
-    def defensive_involvement(r: pd.Series) -> float:
-        return (
-            _num(r, "def_tackles_solo") + _num(r, "def_tackle_assists")
-            + _num(r, "def_sacks") + _num(r, "def_interceptions")
-            + _num(r, "def_pass_defended") + _num(r, "def_fumbles_forced")
-        )
-
-    for _, r in df.iterrows():
-        pid = gsis_to_id(r.get("player_id"))
-        if pid is None:
-            continue
-        game_date = sched.get(str(r.get("game_id")))
-        if not game_date:
-            continue
-
-        week_raw = r.get("week")
-        week = int(week_raw) if week_raw is not None and not pd.isna(week_raw) else None
-
-        plays = int(_num(r, "attempts") + _num(r, "carries") + _num(r, "targets"))
-        touches = int(_num(r, "completions") + _num(r, "carries") + _num(r, "receptions"))
-        player_type = player_type_from_position(r.get("position"), r.get("position_group"))
-
-        if plays == 0 and defensive_involvement(r) == 0:
-            continue
-
-        metrics: dict[str, Any] = {}
-        for src, key in METRIC_COLS.items():
-            if src in r:
-                # EPA is a small-magnitude float where 2 decimal places loses
-                # real precision across a summed window; everything else is a
-                # whole-number or near-whole-number count.
-                places = 3 if src in EPA_COLS else 2
-                metrics[key] = round(_num(r, src), places)
-        epa_total = sum(_num(r, c) for c in EPA_COLS if c in r)
-        metrics["epa_total"] = round(epa_total, 3)
-
-        if week is not None:
-            gsis = str(r.get("player_id"))
-            for lookup in (ngs_pass, ngs_rush, ngs_rec):
-                extra = lookup.get((gsis, week))
-                if extra:
-                    metrics.update(extra)
-
-        rows.append({
-            "player_id": pid,
-            "season": season,
-            "season_type": str(r.get("season_type") or "REG"),
-            # Keep the upstream game identity alongside the date.  The legacy
-            # primary key remains date based for app compatibility, while the
-            # refresh publisher uses this value to prove that a new source
-            # generation did not silently drop a game already in production.
-            "game_id": str(r.get("game_id") or ""),
-            "game_date": game_date,
-            "player_type": player_type or "def",
-            "team": str(r.get("team") or ""),
-            "opponent": str(r.get("opponent_team") or ""),
-            "week": week,
-            "plays": plays,
-            "touches": touches,
-            "metrics": metrics,
-            "updated_at": now_str,
-        })
-
+) -> list[dict[str, Any]]:
+    """Every player-game row for one final game (pure)."""
+    short = short_game_id(game["game_id"])
+    shootout = str((boxscore.get("gameOutcome") or {}).get("lastPeriodType") or "").upper() == "SO"
+    teams = {
+        "homeTeam": (boxscore["homeTeam"].get("abbrev"), boxscore["awayTeam"].get("abbrev")),
+        "awayTeam": (boxscore["awayTeam"].get("abbrev"), boxscore["homeTeam"].get("abbrev")),
+    }
+    rows: list[dict[str, Any]] = []
+    for side, (team, opponent) in teams.items():
+        stats = (boxscore.get("playerByGameStats") or {}).get(side) or {}
+        goalies = stats.get("goalies") or []
+        played = [g for g in goalies if toi_seconds(g.get("toi")) > 0]
+        built: list[Optional[dict[str, Any]]] = []
+        for group, group_type in (("forwards", "f"), ("defense", "d")):
+            for player in stats.get(group) or []:
+                key = (short, int(player["playerId"]))
+                built.append(_skater_row(
+                    player, group_type,
+                    tables.skaters.get(key, {}), pbp_stats.get(int(player["playerId"]), {}),
+                ))
+        for player in goalies:
+            key = (short, int(player["playerId"]))
+            built.append(_goalie_row(player, tables.goalies.get(key, {}), len(played) == 1, shootout))
+        for row in built:
+            if row is None:
+                continue
+            rows.append({
+                **row,
+                "season": int(game["season"]),
+                "season_type": game["season_type"],
+                "game_id": str(game["game_id"]),
+                "game_date": str(game["game_date"])[:10],
+                "week": game.get("week"),
+                "team": team,
+                "opponent": opponent,
+                "updated_at": now.isoformat(),
+            })
     return rows
 
 
-def _latest_game_date(client, season: int) -> Optional[str]:
-    resp = (
-        client.table("player_game_logs")
-        .select("game_date")
-        .eq("season", season)
-        .order("game_date", desc=True)
-        .limit(1)
-        .execute()
-    )
-    if not resp.data:
-        return None
-    return str(resp.data[0]["game_date"])[:10]
+# --------------------------------------------------------------------------- #
+# Network
+# --------------------------------------------------------------------------- #
+def load_shot_tables(season: int, live: bool) -> Optional[ShotTables]:
+    """MoneyPuck shot file for the season, grouped; None when it is not published.
 
-
-def _upsert(client, rows: list[dict]) -> None:
-    batch_size = 200
-    for i in range(0, len(rows), batch_size):
-        batch = rows[i:i + batch_size]
-        try:
-            client.table("player_game_logs").upsert(
-                batch,
-                on_conflict=(
-                    "player_id,season,season_type,game_date,player_type"
-                ),
-            ).execute()
-        except Exception:
-            logger.exception("Upsert failed for batch starting at %d", i)
-            raise
-
-
-def _load_ngs_lookups(
-    season: int,
-    enrichment_status: Optional[dict[str, str]] = None,
-) -> tuple[dict, dict, dict]:
-    """Load and index the three weekly NGS frames, or empty dicts if unusable.
-
-    NGS data doesn't exist before 2016, and a fetch failure here shouldn't
-    fail the whole ingest — the game log is still useful without these five
-    extra metrics, so this degrades gracefully rather than raising.
+    Downloaded once per process. Finished seasons also live in
+    ``backend/.cache/`` so a re-ingest does not download 20 MB again.
     """
-    if season < NGS_FIRST_SEASON:
-        logger.info("Skipping weekly Next Gen Stats for %s (available since %s).", season, NGS_FIRST_SEASON)
-        if enrichment_status is not None:
-            enrichment_status["ngs"] = "not_applicable"
-        return {}, {}, {}
-    try:
-        logger.info("Loading weekly Next Gen Stats for %s...", season)
-        ngs_pass = _to_pandas(nfl.load_nextgen_stats([season], stat_type="passing"))
-        ngs_rush = _to_pandas(nfl.load_nextgen_stats([season], stat_type="rushing"))
-        ngs_rec = _to_pandas(nfl.load_nextgen_stats([season], stat_type="receiving"))
-        pass_lookup = ngs_weekly_lookup(ngs_pass[ngs_pass["week"] > 0], NGS_PASSING_COLS)
-        rush_lookup = ngs_weekly_lookup(ngs_rush[ngs_rush["week"] > 0], NGS_RUSHING_COLS)
-        rec_lookup = ngs_weekly_lookup(ngs_rec[ngs_rec["week"] > 0], NGS_RECEIVING_COLS)
-        logger.info(
-            "  NGS weekly rows indexed: passing=%d rushing=%d receiving=%d",
-            len(pass_lookup), len(rush_lookup), len(rec_lookup),
-        )
-        if enrichment_status is not None:
-            enrichment_status["ngs"] = "ready" if any(
-                (pass_lookup, rush_lookup, rec_lookup)
-            ) else "pending"
-        return pass_lookup, rush_lookup, rec_lookup
-    except Exception:
-        logger.exception("Failed to load weekly Next Gen Stats; continuing without them.")
-        if enrichment_status is not None:
-            enrichment_status["ngs"] = "degraded"
-        return {}, {}, {}
+    if season not in _shots_memo:
+        content = http_get(SHOTS_URL.format(season=season), cache=not live)
+        if not content:
+            return None
+        with zipfile.ZipFile(io.BytesIO(content)) as archive:
+            name = next(n for n in archive.namelist() if n.endswith(".csv"))
+            frame = pd.read_csv(archive.open(name), usecols=lambda c: c in SHOT_COLUMNS)
+        logger.info("MoneyPuck shots %s: %d rows", season, len(frame))
+        _shots_memo[season] = frame
+    return build_shot_tables(_shots_memo[season])
+
+
+def fetch_gamecenter(game_id: str, kind: str) -> Optional[dict[str, Any]]:
+    content = http_get(NHL_API.format(game_id=game_id, kind=kind))
+    return json.loads(content) if content else None
+
+
+def fetch_final_games(client: Any, season: int) -> list[dict[str, Any]]:
+    """Finals in ``public.games`` for the season, oldest first."""
+    rows: list[dict[str, Any]] = []
+    offset = 0
+    while True:
+        page = (
+            client.table("games")
+            .select("game_id,season,season_type,game_date,week,away_team,home_team")
+            .eq("season", season)
+            .not_.is_("home_score", "null")
+            .not_.is_("away_score", "null")
+            .order("game_date")
+            .order("game_id")
+            .range(offset, offset + 999)
+            .execute()
+            .data
+        ) or []
+        rows.extend(page)
+        if len(page) < 1000:
+            return rows
+        offset += 1000
+
+
+def logged_game_ids(client: Any, season: int) -> set[str]:
+    """Game ids that already have rows (read off the goalie rows, 2 to 3 per game)."""
+    ids: set[str] = set()
+    offset = 0
+    while True:
+        page = (
+            client.table("player_game_logs")
+            .select("game_id")
+            .eq("season", season)
+            .eq("player_type", "g")
+            .order("game_id")
+            .range(offset, offset + 999)
+            .execute()
+            .data
+        ) or []
+        ids.update(str(r["game_id"]) for r in page if r.get("game_id"))
+        if len(page) < 1000:
+            return ids
+        offset += 1000
+
+
+@dataclass
+class GameBatch:
+    """Rows built in one pass plus the finals that had to wait."""
+
+    rows: list[dict[str, Any]] = field(default_factory=list)
+    done: list[str] = field(default_factory=list)
+    pending: list[str] = field(default_factory=list)
+    shots_status: str = "ready"
+
+
+def iter_game_rows(
+    games: Iterable[Mapping[str, Any]],
+    tables: Optional[ShotTables],
+    now: datetime,
+    pending: list[str],
+) -> Iterator[tuple[str, list[dict[str, Any]]]]:
+    """Yield ``(game_id, rows)`` for each game whose three sources are ready.
+
+    Games missing from the shot file, or whose NHL payloads are unavailable,
+    are appended to ``pending`` and retried by the next run.
+    """
+    for game in games:
+        game_id = str(game["game_id"])
+        if tables is None or short_game_id(game_id) not in tables.games:
+            pending.append(game_id)
+            continue
+        try:
+            boxscore = fetch_gamecenter(game_id, "boxscore")
+            pbp = fetch_gamecenter(game_id, "play-by-play")
+        except Exception:  # noqa: BLE001 - one bad game must not stop the rest
+            logger.exception("NHL payloads failed for %s", game_id)
+            pending.append(game_id)
+            continue
+        if not boxscore or not pbp:
+            pending.append(game_id)
+            continue
+        rows = build_game_rows(game, boxscore, parse_play_by_play(pbp), tables, now)
+        if not rows:
+            pending.append(game_id)
+            continue
+        yield game_id, rows
+
+
+def build_new_rows(
+    client: Any,
+    season: int,
+    now: datetime,
+    *,
+    full: bool = False,
+    live: Optional[bool] = None,
+) -> GameBatch:
+    """Build rows for finals without logs (all finals when ``full``), in memory."""
+    live = season >= DEFAULT_SEASON if live is None else live
+    finals = fetch_final_games(client, season)
+    logged = set() if full else logged_game_ids(client, season)
+    todo = [g for g in finals if str(g["game_id"]) not in logged]
+    batch = GameBatch()
+    if not todo:
+        return batch
+    tables = load_shot_tables(season, live)
+    for game_id, rows in iter_game_rows(todo, tables, now, batch.pending):
+        batch.rows.extend(rows)
+        batch.done.append(game_id)
+        if len(batch.done) % 100 == 0:
+            logger.info("  %d/%d games built", len(batch.done), len(todo))
+    batch.shots_status = "ready" if tables is not None and not batch.pending else "pending"
+    logger.info("Built %d rows for %d games (%d pending)", len(batch.rows), len(batch.done), len(batch.pending))
+    return batch
+
+
+def upsert(client: Any, rows: list[dict[str, Any]]) -> None:
+    for batch in chunks(rows, UPSERT_BATCH):
+        client.table("player_game_logs").upsert(
+            batch, on_conflict="player_id,season,season_type,game_date,player_type"
+        ).execute()
 
 
 def run(full: bool = False, cli_season: Optional[int] = None) -> None:
@@ -338,44 +457,40 @@ def run(full: bool = False, cli_season: Optional[int] = None) -> None:
     client = create_client(url, key)
     season = resolve_season(cli_season)
     now = datetime.now(UTC)
-
-    logger.info("Loading weekly stats + schedule for %s...", season)
-    weekly = _to_pandas(nfl.load_player_stats([season]))
-    sched = schedule_map(_to_pandas(nfl.load_schedules([season])))
-
-    ngs_pass_lookup, ngs_rush_lookup, ngs_rec_lookup = _load_ngs_lookups(season)
-
-    rows = build_game_log_rows(weekly, sched, season, now, ngs_pass_lookup, ngs_rush_lookup, ngs_rec_lookup)
-    logger.info("Built %d game-log rows for %s", len(rows), season)
-
-    if not full:
-        latest = _latest_game_date(client, season)
-        if latest:
-            # Re-ingest the latest known day too (late/updated games).
-            before = len(rows)
-            rows = [r for r in rows if r["game_date"] >= latest]
-            logger.info("Incremental: keeping %d/%d rows on/after %s", len(rows), before, latest)
-
-    if not rows:
-        logger.info("Nothing to ingest for %s.", season)
+    finals = fetch_final_games(client, season)
+    if not finals:
+        logger.info("No final games in public.games for %s; run sync_games.py first.", season)
+        return
+    logged = set() if full else logged_game_ids(client, season)
+    todo = [g for g in finals if str(g["game_id"]) not in logged]
+    logger.info("%s: %d finals, %d to ingest%s", season, len(finals), len(todo), " (full)" if full else "")
+    if not todo:
         return
 
-    _upsert(client, rows)
-    if full:
-        cutoff = now.isoformat()
+    tables = load_shot_tables(season, live=season >= DEFAULT_SEASON)
+    pending: list[str] = []
+    written = 0
+    buffer: list[dict[str, Any]] = []
+    for count, (_game_id, rows) in enumerate(iter_game_rows(todo, tables, now, pending), start=1):
+        buffer.extend(rows)
+        if count % LOG_BATCH_GAMES == 0:
+            upsert(client, buffer)
+            written += len(buffer)
+            buffer = []
+            logger.info("  %d games ingested", count)
+    upsert(client, buffer)
+    written += len(buffer)
+    logger.info("Upserted %d game-log rows for %s (%d games still pending).", written, season, len(pending))
+
+    if full and not pending:
         response = (
             client.table("player_game_logs")
             .delete()
             .eq("season", season)
-            .lt("updated_at", cutoff)
+            .lt("updated_at", now.isoformat())
             .execute()
         )
-        logger.info(
-            "Pruned %d stale game-log rows for %s.",
-            len(response.data or []),
-            season,
-        )
-    logger.info("Done. Upserted %d game-log rows for %s.", len(rows), season)
+        logger.info("Pruned %d stale game-log rows for %s.", len(response.data or []), season)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -386,9 +501,7 @@ def _parse_args() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     args = _parse_args()
     run(full=args.full, cli_season=args.season)

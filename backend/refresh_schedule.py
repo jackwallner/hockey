@@ -1,24 +1,21 @@
-"""Decide from the NFL schedule whether a refresh probe is worth running.
+"""Decide from the NHL schedule whether a refresh probe is worth running.
 
-The workflow fires every 15 minutes during the season, and this gate turns
-most of those firings into a two-second no-op. Kickoff times are known for the
-whole season, so the useful moments are predictable: nflverse posts a game's
-player stats roughly one to two hours after the final whistle, and enrichment
-(Next Gen Stats, PFR advanced defense) trickles in over the following days.
+The workflow fires every 30 minutes in season as a backup to its own timer
+chain, and this gate turns most firings into a two-second no-op. Start times
+are known for the whole season, so the useful moments are predictable:
+MoneyPuck regenerates its files after the night's games (roughly 03:00 to 09:00
+ET) and the NHL boxscore is final within minutes of the horn.
 
-Cadence, measured from the last recorded probe (``last_checked_at``):
+Probe cadence, measured from the last recorded probe (``last_checked_at``):
 
-* A game whose score is posted but whose player stats are not in yet is
-  checked every 15 minutes for 12 hours after kickoff, every 30 minutes until
-  48 hours, then every 2 hours. This is the "late to post" backup.
-* Any game in the post-game window (kickoff + 3.5h to + 8h) is checked every
-  15 minutes even before its score is synced, then hourly until + 30h.
-* Enrichment for the week's games is checked every 3 hours until four days
-  after kickoff.
-* Otherwise one safety check a day.
+* Every 30 minutes from 2.5 hours after any game's start until 12 hours after.
+* Hourly from 12 hours until 36 hours after any game's start.
+* A final game still missing its player stats is also checked hourly until five
+  days after its start (MoneyPuck can publish a game late).
+* Otherwise every 6 hours in season (October to June) and daily off season.
 
-The schedule itself is re-synced from nflverse every 15 minutes while a game
-is live or just finished (scores), and once a day otherwise (flex changes).
+The schedule itself is re-synced every 15 minutes while a game is in progress
+(one call, scores only) and once a day in full (``sync_games.py``).
 
 Stdlib only, so the gate runs on the bare runner without installing anything.
 """
@@ -26,81 +23,44 @@ Stdlib only, so the gate runs on the bare runner without installing anything.
 from __future__ import annotations
 
 import argparse
-import csv
-import io
 import json
 import logging
 import os
+import re
 import sys
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Iterable, Mapping, Optional
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
-from zoneinfo import ZoneInfo
+
+from sync_games import Game, resolve_season, sync_full, sync_recent
 
 logger = logging.getLogger(__name__)
 UTC = timezone.utc
-EASTERN = ZoneInfo("America/New_York")
 
-GAMES_CSV_URL = "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv"
-PROJECT_HOST = "qwkmpwnhrejsuplcwxrb.supabase.co"
-USER_AGENT = "Gridiron-StatScout/refresh-schedule"
+PROJECT_HOST = "swlalptdamfccgjmpbyb.supabase.co"
+USER_AGENT = "Hockey StatScout (jackwallner+bb@gmail.com)"
 TIMEOUT_SECONDS = 30
 
 # GitHub delays scheduled runs by a few minutes, so a cadence counts as met a
 # little early rather than slipping a whole cycle.
 TOLERANCE = timedelta(minutes=4)
 
-POST_GAME_START = timedelta(hours=3, minutes=30)
-POST_GAME_DENSE_END = timedelta(hours=8)
-POST_GAME_BACKUP_END = timedelta(hours=30)
-MISSING_STATS_DENSE_END = timedelta(hours=12)
-MISSING_STATS_BACKUP_END = timedelta(hours=48)
+POST_GAME_START = timedelta(hours=2, minutes=30)
+POST_GAME_DENSE_END = timedelta(hours=12)
+POST_GAME_HOURLY_END = timedelta(hours=36)
 MISSING_STATS_GIVE_UP = timedelta(days=5)
-ENRICHMENT_END = timedelta(days=4)
-LIVE_SCORE_START = timedelta(minutes=-15)
-LIVE_SCORE_END = timedelta(hours=6)
-BASELINE = timedelta(hours=20)
+DENSE_CADENCE = timedelta(minutes=30)
+HOURLY_CADENCE = timedelta(hours=1)
+IN_SEASON_CADENCE = timedelta(hours=6)
+OFF_SEASON_CADENCE = timedelta(hours=24)
+IN_SEASON_MONTHS = frozenset({10, 11, 12, 1, 2, 3, 4, 5, 6})
 
-
-@dataclass(frozen=True)
-class Game:
-    game_id: str
-    season: int
-    season_type: str
-    game_type: str
-    week: int
-    game_date: date
-    kickoff_at: Optional[datetime]
-    away_team: str
-    home_team: str
-    away_score: Optional[int]
-    home_score: Optional[int]
-    overtime: bool
-    stadium: Optional[str]
-
-    @property
-    def is_final(self) -> bool:
-        return self.away_score is not None and self.home_score is not None
-
-    def as_row(self, synced_at: datetime) -> dict[str, Any]:
-        return {
-            "game_id": self.game_id,
-            "season": self.season,
-            "season_type": self.season_type,
-            "game_type": self.game_type,
-            "week": self.week,
-            "game_date": self.game_date.isoformat(),
-            "kickoff_at": self.kickoff_at.isoformat() if self.kickoff_at else None,
-            "away_team": self.away_team,
-            "home_team": self.home_team,
-            "away_score": self.away_score,
-            "home_score": self.home_score,
-            "overtime": self.overtime,
-            "stadium": self.stadium,
-            "synced_at": synced_at.isoformat(),
-        }
+LIVE_SYNC_START = timedelta(minutes=-15)
+LIVE_SYNC_END = timedelta(hours=4)
+LIVE_SYNC_CADENCE = timedelta(minutes=15)
+FULL_SYNC_CADENCE = timedelta(hours=24)
 
 
 @dataclass(frozen=True)
@@ -110,71 +70,17 @@ class Decision:
     sync_games: bool
     sync_reason: str
     next_check_at: Optional[datetime] = None
-
-
-def resolve_season(now: datetime) -> int:
-    raw = os.environ.get("STATCAST_SEASON", "").strip()
-    if raw:
-        return int(raw)
-    return now.year if now.month >= 9 else now.year - 1
+    sync_full: bool = False
 
 
 def _int(value: Any) -> Optional[int]:
     text = str(value).strip() if value is not None else ""
-    if not text or text.upper() == "NA":
+    if not text:
         return None
     try:
         return int(float(text))
     except ValueError:
         return None
-
-
-def kickoff_utc(gameday: str, gametime: str) -> Optional[datetime]:
-    """Scheduled kickoff, published as Eastern wall-clock time, in UTC."""
-    try:
-        day = date.fromisoformat(gameday.strip()[:10])
-        hours, minutes = (int(part) for part in gametime.strip().split(":")[:2])
-    except (ValueError, AttributeError):
-        return None
-    return datetime.combine(day, time(hours, minutes), EASTERN).astimezone(UTC)
-
-
-def parse_games_csv(text: str, seasons: Iterable[int]) -> list[Game]:
-    """Parse nflverse ``games.csv`` rows for the requested seasons."""
-    wanted = set(seasons)
-    games: list[Game] = []
-    for row in csv.DictReader(io.StringIO(text)):
-        season = _int(row.get("season"))
-        game_id = (row.get("game_id") or "").strip()
-        if season not in wanted or not game_id:
-            continue
-        game_type = (row.get("game_type") or "REG").strip().upper()
-        if game_type in {"PRE", "PRESEASON"}:
-            continue
-        week = _int(row.get("week"))
-        gameday = (row.get("gameday") or "").strip()
-        try:
-            game_date = date.fromisoformat(gameday[:10])
-        except ValueError:
-            continue
-        if week is None:
-            continue
-        games.append(Game(
-            game_id=game_id,
-            season=season,
-            season_type="REG" if game_type == "REG" else "POST",
-            game_type=game_type,
-            week=week,
-            game_date=game_date,
-            kickoff_at=kickoff_utc(gameday, row.get("gametime") or ""),
-            away_team=(row.get("away_team") or "").strip(),
-            home_team=(row.get("home_team") or "").strip(),
-            away_score=_int(row.get("away_score")),
-            home_score=_int(row.get("home_score")),
-            overtime=_int(row.get("overtime")) == 1,
-            stadium=(row.get("stadium") or "").strip() or None,
-        ))
-    return games
 
 
 def games_from_rows(rows: Iterable[Mapping[str, Any]]) -> list[Game]:
@@ -188,8 +94,8 @@ def games_from_rows(rows: Iterable[Mapping[str, Any]]) -> list[Game]:
             season_type=str(row.get("season_type") or "REG"),
             game_type=str(row.get("game_type") or "REG"),
             week=int(row["week"]),
-            game_date=date.fromisoformat(str(row["game_date"])[:10]),
-            kickoff_at=datetime.fromisoformat(str(kickoff).replace("Z", "+00:00")) if kickoff else None,
+            game_date=datetime.fromisoformat(str(row["game_date"])[:10]).date(),
+            kickoff_at=_parse_ts(kickoff),
             away_team=str(row.get("away_team") or ""),
             home_team=str(row.get("home_team") or ""),
             away_score=_int(row.get("away_score")),
@@ -204,8 +110,10 @@ def _due(last: Optional[datetime], now: datetime, cadence: timedelta) -> bool:
     return last is None or now - last >= cadence - TOLERANCE
 
 
-def _cadence(label: str, cadence: timedelta) -> tuple[str, timedelta]:
-    return label, cadence
+def baseline_cadence(now: datetime) -> tuple[str, timedelta]:
+    if now.month in IN_SEASON_MONTHS:
+        return "in-season check", IN_SEASON_CADENCE
+    return "off-season daily check", OFF_SEASON_CADENCE
 
 
 def probe_cadence(
@@ -214,27 +122,20 @@ def probe_cadence(
     games_with_stats: set[str],
 ) -> tuple[str, timedelta]:
     """The shortest cadence any game currently asks for, with its reason."""
-    best = _cadence("daily safety check", BASELINE)
+    best = baseline_cadence(now)
     for game in games:
         if game.kickoff_at is None:
             continue
         since = now - game.kickoff_at
-        if since < timedelta(0):
+        if since < POST_GAME_START:
             continue
         candidates: list[tuple[str, timedelta]] = []
+        if since < POST_GAME_DENSE_END:
+            candidates.append((f"{game.game_id} post-game window", DENSE_CADENCE))
+        elif since < POST_GAME_HOURLY_END:
+            candidates.append((f"{game.game_id} post-game backup", HOURLY_CADENCE))
         if game.is_final and game.game_id not in games_with_stats and since < MISSING_STATS_GIVE_UP:
-            if since < MISSING_STATS_DENSE_END:
-                candidates.append(_cadence(f"{game.game_id} final, stats not in", timedelta(minutes=15)))
-            elif since < MISSING_STATS_BACKUP_END:
-                candidates.append(_cadence(f"{game.game_id} stats late", timedelta(minutes=30)))
-            else:
-                candidates.append(_cadence(f"{game.game_id} stats very late", timedelta(hours=2)))
-        if POST_GAME_START <= since < POST_GAME_DENSE_END:
-            candidates.append(_cadence(f"{game.game_id} post-game window", timedelta(minutes=15)))
-        elif POST_GAME_DENSE_END <= since < POST_GAME_BACKUP_END:
-            candidates.append(_cadence(f"{game.game_id} post-game backup", timedelta(hours=1)))
-        elif POST_GAME_BACKUP_END <= since < ENRICHMENT_END:
-            candidates.append(_cadence(f"{game.game_id} enrichment", timedelta(hours=3)))
+            candidates.append((f"{game.game_id} final, stats not in", HOURLY_CADENCE))
         for candidate in candidates:
             if candidate[1] < best[1]:
                 best = candidate
@@ -242,14 +143,18 @@ def probe_cadence(
 
 
 def sync_cadence(games: Iterable[Game], now: datetime) -> tuple[str, timedelta]:
-    best = _cadence("daily schedule sync", BASELINE)
+    """15 minutes while any game is in progress, else the daily full sync."""
     for game in games:
         if game.kickoff_at is None or game.is_final:
             continue
-        since = now - game.kickoff_at
-        if LIVE_SCORE_START <= since < LIVE_SCORE_END:
-            return _cadence(f"{game.game_id} in progress", timedelta(minutes=15))
-    return best
+        if LIVE_SYNC_START <= now - game.kickoff_at < LIVE_SYNC_END:
+            return f"{game.game_id} in progress", LIVE_SYNC_CADENCE
+    return "daily schedule sync", FULL_SYNC_CADENCE
+
+
+def _full_due(now: datetime, last_full_sync_at: Optional[datetime]) -> bool:
+    """The daily full sync; the first one is due when no full sync was ever stamped."""
+    return _due(last_full_sync_at, now, FULL_SYNC_CADENCE)
 
 
 def decide(
@@ -259,22 +164,29 @@ def decide(
     games_with_stats: set[str],
     last_probe_at: Optional[datetime],
     last_sync_at: Optional[datetime],
+    last_full_sync_at: Optional[datetime] = None,
     force: bool = False,
 ) -> Decision:
     sync_reason, sync_every = sync_cadence(games, now)
-    if not games:
-        sync_reason, sync_every = "schedule table empty", timedelta(0)
     probe_reason, probe_every = probe_cadence(games, now, games_with_stats)
     if force:
-        return Decision(True, "forced", True, "forced")
+        return Decision(True, "forced", True, "forced", sync_full=True)
+    full = _full_due(now, last_full_sync_at)
+    recent = _due(last_sync_at, now, sync_every) and sync_every < FULL_SYNC_CADENCE
+    reason = "no full sync on record" if full and last_full_sync_at is None else sync_reason
     return Decision(
         probe=_due(last_probe_at, now, probe_every),
         probe_reason=f"{probe_reason} (every {int(probe_every.total_seconds() // 60)}m)",
-        sync_games=_due(last_sync_at, now, sync_every),
-        sync_reason=f"{sync_reason} (every {int(sync_every.total_seconds() // 60)}m)",
+        sync_games=full or recent,
+        sync_reason=f"{reason} ({'full' if full else 'scores'})" if full or recent else reason,
+        sync_full=full,
     )
 
 
+# Games the planner reads: finals still owed stats (five days) and tonight's
+# slate plus the next day's, which the 24-hour look-ahead below can reach.
+PLAN_LOOKBACK = timedelta(days=6)
+PLAN_LOOKAHEAD = timedelta(days=2)
 STEP = timedelta(minutes=5)
 HORIZON = timedelta(hours=24)
 
@@ -286,19 +198,24 @@ def next_check_at(
     games_with_stats: set[str],
     last_probe_at: Optional[datetime],
     last_sync_at: Optional[datetime],
+    last_full_sync_at: Optional[datetime] = None,
 ) -> datetime:
     """The first moment after ``now`` when a probe or a schedule sync is due.
 
-    GitHub drops scheduled runs under load (on 2026-09-13 none fired for five
-    hours, so Sunday night's stats sat unpublished). The workflow therefore
-    schedules its own next run from this answer instead of trusting cron.
-    Callers pass ``last_*`` as ``now`` for anything that ran this time.
+    GitHub drops scheduled runs under load, so the workflow schedules its own
+    next run from this answer instead of trusting cron. Callers pass ``last_*``
+    as ``now`` for anything that ran this time.
     """
     t = now + STEP
     while t <= now + HORIZON:
         _, probe_every = probe_cadence(games, t, games_with_stats)
         _, sync_every = sync_cadence(games, t)
-        if _due(last_probe_at, t, probe_every) or _due(last_sync_at, t, sync_every):
+        live = sync_every < FULL_SYNC_CADENCE and _due(last_sync_at, t, sync_every)
+        if (
+            _due(last_probe_at, t, probe_every)
+            or live
+            or _full_due(t, last_full_sync_at)
+        ):
             return t
         t += STEP
     return now + HORIZON
@@ -315,7 +232,7 @@ class Supabase:
         self.url = url.rstrip("/")
         self.key = key
 
-    def _request(self, method: str, path: str, *, params: Mapping[str, str] | None = None,
+    def _request(self, method: str, path: str, *, params: Any = None,
                  body: Any = None, prefer: str | None = None) -> Any:
         query = f"?{urlencode(params)}" if params else ""
         headers = {
@@ -333,12 +250,32 @@ class Supabase:
             payload = response.read()
         return json.loads(payload) if payload else None
 
-    def games(self, seasons: Iterable[int]) -> list[dict[str, Any]]:
+    def games(self, seasons: Iterable[int], since: date, until: date) -> list[dict[str, Any]]:
+        """Games dated in ``[since, until]``; the table holds 2,700 and PostgREST caps a page at 1,000."""
         listed = ",".join(str(s) for s in seasons)
-        return self._request("GET", "games", params={"select": "*", "season": f"in.({listed})", "limit": "1000"}) or []
+        query = [
+            ("select", "*"), ("season", f"in.({listed})"),
+            ("game_date", f"gte.{since.isoformat()}"), ("game_date", f"lte.{until.isoformat()}"),
+            ("limit", "1000"),
+        ]
+        return self._request("GET", "games", params=query) or []
 
     def last_sync_at(self) -> Optional[datetime]:
         rows = self._request("GET", "games", params={"select": "synced_at", "order": "synced_at.desc", "limit": "1"}) or []
+        return _parse_ts(rows[0].get("synced_at")) if rows else None
+
+    def last_full_sync_at(self, today: date) -> Optional[datetime]:
+        """Latest sync stamp on a game older than the score window.
+
+        The score-only sync touches yesterday onward, so only a full sync
+        refreshes older rows and their stamp tells the two apart.
+        """
+        rows = self._request("GET", "games", params={
+            "select": "synced_at",
+            "game_date": f"lt.{(today - timedelta(days=1)).isoformat()}",
+            "order": "synced_at.desc",
+            "limit": "1",
+        }) or []
         return _parse_ts(rows[0].get("synced_at")) if rows else None
 
     def last_probe_at(self) -> Optional[datetime]:
@@ -352,7 +289,7 @@ class Supabase:
         rows = self._request("GET", "player_game_logs", params={
             "select": "game_id",
             "game_id": f"in.({listed})",
-            "player_type": "eq.qb",
+            "player_type": "eq.g",
             "limit": "1000",
         }) or []
         return {str(row["game_id"]) for row in rows if row.get("game_id")}
@@ -368,16 +305,12 @@ class Supabase:
 
 
 def _parse_ts(value: Any) -> Optional[datetime]:
+    """Parse a Postgres timestamptz; pads odd fraction widths for Python < 3.11."""
     if not value:
         return None
-    parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    text = re.sub(r"\.(\d+)", lambda m: "." + m.group(1)[:6].ljust(6, "0"), str(value).replace("Z", "+00:00"))
+    parsed = datetime.fromisoformat(text)
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
-
-
-def fetch_games_csv() -> str:
-    request = Request(GAMES_CSV_URL, headers={"User-Agent": USER_AGENT})
-    with urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-        return response.read().decode("utf-8")
 
 
 def recent_game_ids(games: Iterable[Game], now: datetime) -> list[str]:
@@ -393,40 +326,44 @@ def run(now: datetime, *, force: bool, dry_run: bool) -> Decision:
     season = resolve_season(now)
     seasons = (season - 1, season)
 
-    games = games_from_rows(db.games(seasons))
-    decision = decide(
-        now=now,
-        games=games,
-        games_with_stats=db.games_with_stats(recent_game_ids(games, now)),
-        last_probe_at=db.last_probe_at(),
-        last_sync_at=db.last_sync_at(),
-        force=force,
-    )
-    last_sync_at = db.last_sync_at()
-    if decision.sync_games:
-        games = parse_games_csv(fetch_games_csv(), seasons)
-        if not dry_run:
-            db.upsert_games([g.as_row(now) for g in games])
-        logger.info("Synced %d games (%s)", len(games), decision.sync_reason)
-        last_sync_at = now
-        # A score that just landed can shorten the probe cadence.
-        decision = decide(
+    def decide_now(games: list[Game], *, last_sync: Optional[datetime], last_full: Optional[datetime]) -> Decision:
+        return decide(
             now=now,
             games=games,
             games_with_stats=db.games_with_stats(recent_game_ids(games, now)),
             last_probe_at=db.last_probe_at(),
-            last_sync_at=now,
+            last_sync_at=last_sync,
+            last_full_sync_at=last_full,
             force=force,
         )
-    with_stats = db.games_with_stats(recent_game_ids(games, now))
+
+    window = (now.date() - PLAN_LOOKBACK, now.date() + PLAN_LOOKAHEAD)
+    games = games_from_rows(db.games(seasons, *window))
+    last_sync, last_full = db.last_sync_at(), db.last_full_sync_at(now.date())
+    decision = decide_now(games, last_sync=last_sync, last_full=last_full)
+    if decision.sync_games and not dry_run:
+        if decision.sync_full:
+            count = sync_full(db, season, now)
+            last_full = now
+        else:
+            count = sync_recent(db, season, now)
+        logger.info("Synced %d games (%s)", count, decision.sync_reason)
+        last_sync = now
+        games = games_from_rows(db.games(seasons, *window))
+        # A score that just landed can shorten the probe cadence.
+        decision = decide_now(games, last_sync=now, last_full=last_full)
     upcoming = next_check_at(
         now=now,
         games=games,
-        games_with_stats=with_stats,
+        games_with_stats=db.games_with_stats(recent_game_ids(games, now)),
         last_probe_at=now if decision.probe else db.last_probe_at(),
-        last_sync_at=last_sync_at,
+        last_sync_at=last_sync,
+        last_full_sync_at=last_full,
     )
-    return Decision(decision.probe, decision.probe_reason, decision.sync_games, decision.sync_reason, upcoming)
+    return Decision(
+        decision.probe, decision.probe_reason, decision.sync_games, decision.sync_reason,
+        upcoming, decision.sync_full,
+    )
 
 
 def main() -> int:

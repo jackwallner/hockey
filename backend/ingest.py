@@ -20,7 +20,7 @@ Pipeline (REG and POST are stored and ranked separately):
      among qualified players, and upsert to Supabase ``player_snapshots`` on
      (id, season, season_type).
 
-Signature changes for ``refresh.py`` (to be adapted in the refresh pass).
+Signature changes from the football chassis (``refresh.py`` has adopted them).
 Still exported with the same name and return type:
   ``DEFAULT_SEASON``, ``resolve_season``, ``build_snapshot_rows``,
   ``qualification_scale``, ``_to_pandas``.
@@ -30,14 +30,14 @@ Changed:
   publishes one file per phase, so there is no shared core download to pass in.
   ``enrichment_status`` now receives the single key ``"summary"`` (NHL stats
   REST: ``ready`` / ``pending`` / ``degraded``); it replaces the NFL ``ngs`` and
-  ``pfr`` keys, and ``refresh.py`` should map it onto ``summary_status``.
+  ``pfr`` keys, and ``refresh.py`` maps it onto ``summary_status``.
   The ``shots`` key (MoneyPuck shots file) is owned by the game-details pass.
   ``build_snapshot_rows`` is unchanged in signature, but ``qual_scale`` now
   prorates by games played out of 82.
 Removed (NFL only): ``gsis_to_id``, ``passer_rating``, ``merge_ngs``,
-  ``merge_pfr_defense``, ``load_headshots``, ``NGS_FIRST_SEASON``. Other
-  modules that still import them (``ingest_game_logs``, ``ingest_game_details``,
-  ``ingest_enrichment``, ``rollup_recent_form``) are ported in later passes.
+  ``merge_pfr_defense``, ``load_headshots``, ``NGS_FIRST_SEASON``. The modules
+  that still import them (``ingest_game_details``, ``ingest_enrichment``) are
+  ported in a later pass.
   ``player_type_from_position(position)`` now takes one argument.
 
 Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY. STATCAST_SEASON overrides the
@@ -81,7 +81,14 @@ OLDEST_SUPPORTED_SEASON = 2008  # MoneyPuck's floor
 # for a real season; the app renders it as "All Time".
 ALL_TIME_SEASON = 0
 SOURCE = "moneypuck"
+# The schedule grew from 82 to 84 games per club with the 2026-27 season.
 LEAGUE_GAMES = 82
+LEAGUE_GAMES_FROM_2026 = 84
+
+
+def league_games(season: int) -> int:
+    """Regular-season games per club for ``season``."""
+    return LEAGUE_GAMES_FROM_2026 if season >= 2026 else LEAGUE_GAMES
 
 # --------------------------------------------------------------------------- #
 # Qualification thresholds (one place, see HOCKEY_CONTRACT.md "Qualification")
@@ -415,7 +422,7 @@ def qualification_scale(agg: pd.DataFrame, season: int) -> float:
         played = games.max()
     if pd.isna(played) or played <= 0:
         return QUAL_SCALE_FLOOR
-    return max(QUAL_SCALE_FLOOR, min(1.0, float(played) / LEAGUE_GAMES))
+    return max(QUAL_SCALE_FLOOR, min(1.0, float(played) / league_games(season)))
 
 
 def _col(df: pd.DataFrame, name: str) -> pd.Series:

@@ -1,17 +1,16 @@
-name: Nightly NFL Refresh
+name: NHL Refresh
 
 on:
   schedule:
-    # GitHub schedule dispatch is best effort.  In season the workflow fires
-    # every 15 minutes, and backend/refresh_schedule.py turns most firings into
-    # a no-op: it reads kickoff times from the games table and only lets the
-    # source probe run in post-game windows, while a final score is still
-    # missing its stats, during enrichment days, and once a day as a safety
-    # check.  The second schedule is the offseason daily check.
-    # Backup only. The primary cadence is the self-booked refresh-timer chain;
-    # odd minutes avoid GitHub's top-of-hour scheduling backlog.
-    - cron: "7,37 * * 9-12,1-2 *"
-    - cron: "13 10 * 3-8 *"
+    # Backup only. The primary cadence is the self-booked refresh-timer chain:
+    # each run asks backend/refresh_schedule.py when the next probe or schedule
+    # sync is due and books that moment. GitHub's cron is best effort, so these
+    # entries restart a broken chain. In season (October to June) it fires every
+    # 30 minutes and the planner turns most firings into a no-op; July to
+    # September it fires once a day. Odd minutes avoid GitHub's top-of-hour
+    # scheduling backlog.
+    - cron: "7,37 * * 10-12,1-6 *"
+    - cron: "13 10 * 7-9 *"
   workflow_dispatch:
     inputs:
       planned:
@@ -23,7 +22,7 @@ on:
         type: boolean
         default: false
       full_game_log_reingest:
-        description: "Compatibility alias for a full current-season refresh"
+        description: "Rebuild every final game log of the live season, not just new finals"
         type: boolean
         default: false
       backfill_seasons:
@@ -35,14 +34,11 @@ on:
         type: boolean
         default: false
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # STATCAST_SEASON is passed through empty unless the repo variable is set.
-  # Empty keeps the existing calendar resolver: year if month >= 9, otherwise
-  # year - 1.
+# STATCAST_SEASON is passed through empty unless the repo variable is set.
+# Empty keeps the calendar resolver: year if month >= 9, otherwise year - 1.
 
 concurrency:
-  group: nfl-data-refresh
+  group: nhl-data-refresh
   cancel-in-progress: false
 
 jobs:
@@ -63,9 +59,9 @@ jobs:
         uses: actions/checkout@v4
 
       # Stdlib only, on the runner's own python3, so a skipped firing costs a
-      # checkout and a few small requests.  It also keeps the games table
+      # checkout and a few small requests. It also keeps the games table
       # (schedule and final scores) in sync for the app's Games tab.
-      - name: Plan from the NFL schedule
+      - name: Plan from the NHL schedule
         id: plan
         shell: bash
         env:
@@ -86,7 +82,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Probe nflverse source generations
+      - name: Probe MoneyPuck source generations
         if: steps.plan.outputs.probe == 'true'
         id: source-probe
         shell: bash
@@ -110,8 +106,8 @@ jobs:
     permissions:
       contents: read
       issues: write
-    # Full current-season rebuilds are source-complete and still small.  Keep
-    # room for an explicit historical backfill or career rollup below.
+    # The refresh is incremental for game logs and small for everything else.
+    # Keep room for an explicit historical backfill or career rollup below.
     timeout-minutes: 180
     steps:
       - name: Check out repository
@@ -127,9 +123,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
-      - name: Run backend tests
-        run: PYTHONPATH=backend python -m pytest backend/tests
-
+      # The backend tests run in CI (ci.yml) on every push; repeating them here
+      # would only delay the publish.
       - name: Build and atomically publish current season
         shell: bash
         env:
@@ -138,14 +133,22 @@ jobs:
           STATCAST_SEASON: ${{ vars.STATCAST_SEASON }}
           REFRESH_ID: ${{ needs.probe.outputs.refresh_id }}
           SEASON: ${{ needs.probe.outputs.season }}
+          FULL_LOGS: ${{ inputs.full_game_log_reingest }}
         run: |
           set -o pipefail
-          python backend/refresh.py --refresh-id "$REFRESH_ID" --season "$SEASON" 2>&1 | tee refresh.log
+          args=()
+          if [ "$FULL_LOGS" = "true" ]; then
+            args+=(--full-logs)
+          fi
+          python backend/refresh.py --refresh-id "$REFRESH_ID" --season "$SEASON" "${args[@]}" 2>&1 | tee refresh.log
 
-      # Advanced game pages from play-by-play. Runs after the atomic publish
-      # (or its unchanged no-op) so a pbp-only upload still refreshes games.
+      # Game pages (cumulative xG race, team and player lines). Runs after the
+      # atomic publish (or its unchanged no-op). The football-era script is
+      # still in place until the game-details port lands, so a failure here
+      # must not fail the refresh.
       - name: Build advanced game details
         if: ${{ !cancelled() }}
+        continue-on-error: true
         shell: bash
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -155,9 +158,9 @@ jobs:
           set -o pipefail
           python backend/ingest_game_details.py --season "$SEASON" 2>&1 | tee game_details.log
 
-      # Player bio, contract, snaps and injuries, team power ratings and game
-      # projections (1.2.2+). New tables only, so a failure here never touches
-      # the published snapshots; the daily enrichment workflow retries it.
+      # Player profiles, team ratings and game projections. New tables only, so
+      # a failure here never touches the published snapshots; the nightly
+      # enrichment workflow retries it. Pending the enrichment port.
       - name: Build player profiles and team ratings
         if: ${{ !cancelled() }}
         continue-on-error: true
@@ -214,8 +217,6 @@ jobs:
         with:
           name: ingestion-failure-logs
           path: |
-            backend/tests/
-            backend/*.py
             source_probe.log
             refresh.log
             backfill.log
@@ -231,8 +232,8 @@ jobs:
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'NFL data refresh failed',
-              body: ':warning: NFL data refresh failed, check [run logs](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')'
+              title: 'NHL data refresh failed',
+              body: ':warning: NHL data refresh failed, check [run logs](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')'
             })
 
   # Book the next check. Runs whether or not this run probed or refreshed, so

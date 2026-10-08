@@ -1,15 +1,19 @@
-"""Probe nflverse release metadata without downloading data files.
+"""Probe MoneyPuck file metadata without downloading data files.
 
-The refresh workflow runs this module every 30 minutes while the NFL season
-is active.  A probe performs only tiny ``timestamp.json`` requests and HEAD
-requests for the assets used by the current-season builder.  It records the
-source generation through the Supabase RPC when credentials are available,
-then tells GitHub Actions whether a full refresh is needed.
+The refresh workflow runs this module whenever the schedule planner says a probe
+is worth it. A probe performs only HEAD requests for the MoneyPuck files the
+current-season builder reads: the season summary ``skaters.csv``,
+``goalies.csv`` and ``teams.csv`` (regular season and, once it exists, the
+playoffs) and ``shots_<season>.zip``. Each is fingerprinted by ETag,
+Last-Modified and Content-Length. The NHL web API has no cheap change marker,
+so its endpoints are polled by the builder and are not fingerprinted. The probe
+records the source generation through the Supabase RPC when credentials are
+available, then tells GitHub Actions whether a full refresh is needed.
 
-The probe intentionally does not decide that a season is complete.  A source
-can publish a valid early week while another recently finished game is still
-missing.  The full builder computes coverage from the schedule and the
-publisher protects any already-live games from regression.
+The probe intentionally does not decide that a season is complete. MoneyPuck
+can publish a night's files while another game is still missing; the builder
+measures coverage against the ``games`` table and the publisher protects any
+already-live games from regression.
 
 Environment:
     SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are optional for local probes
@@ -39,16 +43,15 @@ from urllib.parse import urlparse
 logger = logging.getLogger(__name__)
 UTC = timezone.utc
 
-SOURCE_BASE = "https://github.com/nflverse/nflverse-data/releases/download"
-SOURCE_REPOSITORY = "https://github.com/nflverse/nflverse-data"
+MONEYPUCK_SUMMARY = "https://moneypuck.com/moneypuck/playerData/seasonSummary/{season}/{phase}/{kind}.csv"
+MONEYPUCK_SHOTS = "https://peter-tanner.com/moneypuck/downloads/shots_{season}.zip"
 DEFAULT_TIMEOUT_SECONDS = 20
-USER_AGENT = "Gridiron-StatScout/source-probe"
+USER_AGENT = "Hockey StatScout (jackwallner+bb@gmail.com)"  # same as ingest.USER_AGENT
+PROJECT_HOST = "swlalptdamfccgjmpbyb.supabase.co"
 
 
 class HTTPClient(Protocol):
     """Small interface that keeps probe tests independent of the network."""
-
-    def get(self, url: str, *, timeout: int) -> "HTTPResponse": ...
 
     def head(self, url: str, *, timeout: int) -> "HTTPResponse": ...
 
@@ -57,70 +60,46 @@ class HTTPResponse(Protocol):
     status_code: int
     headers: Mapping[str, str]
 
-    def read(self) -> bytes: ...
-
 
 class UrllibResponse:
     """Adapter exposing the response fields used by ``UrllibHTTPClient``."""
 
-    def __init__(self, response: Any) -> None:
-        self._response = response
-        self.status_code = int(response.status)
-        self.headers = {str(k): str(v) for k, v in response.headers.items()}
-
-    def read(self) -> bytes:
-        return self._response.read()
+    def __init__(self, status: int, headers: Mapping[str, Any]) -> None:
+        self.status_code = int(status)
+        self.headers = {str(k): str(v) for k, v in headers.items()}
 
 
 class UrllibHTTPClient:
     """Dependency-free HTTP client for the lightweight probe job."""
 
-    def _request(self, method: str, url: str, timeout: int) -> UrllibResponse:
+    def head(self, url: str, *, timeout: int) -> UrllibResponse:
         request = Request(
             url,
-            method=method,
-            headers={
-                "Accept": "application/json, application/octet-stream, */*",
-                "User-Agent": USER_AGENT,
-            },
+            method="HEAD",
+            headers={"Accept": "*/*", "User-Agent": USER_AGENT},
         )
-        return UrllibResponse(urlopen(request, timeout=timeout))
-
-    def get(self, url: str, *, timeout: int) -> UrllibResponse:
-        return self._request("GET", url, timeout)
-
-    def head(self, url: str, *, timeout: int) -> UrllibResponse:
-        return self._request("HEAD", url, timeout)
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                return UrllibResponse(response.status, response.headers)
+        except HTTPError as error:  # 404 for a phase with no file yet is data, not a failure
+            return UrllibResponse(error.code, error.headers)
 
 
 @dataclass(frozen=True)
 class AssetSpec:
-    """One release asset and the tiny generation file that owns it."""
+    """One MoneyPuck file and whether the build cannot run without it."""
 
     name: str
-    tag: str
-    filename: str
+    url: str
     required: bool = False
-
-    @property
-    def timestamp_url(self) -> str:
-        return f"{SOURCE_BASE}/{self.tag}/timestamp.json"
-
-    @property
-    def asset_url(self) -> str:
-        return f"{SOURCE_BASE}/{self.tag}/{self.filename}"
 
 
 @dataclass(frozen=True)
 class AssetProbe:
     name: str
-    tag: str
-    filename: str
+    url: str
     required: bool
-    timestamp_url: str
-    asset_url: str
     status_code: int | None
-    timestamp: str | None
     etag: str | None
     last_modified: str | None
     content_length: str | None
@@ -129,7 +108,7 @@ class AssetProbe:
 
     @property
     def source_published_at(self) -> datetime | None:
-        return parse_source_timestamp(self.timestamp)
+        return parse_source_timestamp(self.last_modified)
 
     @property
     def available(self) -> bool:
@@ -167,76 +146,33 @@ def resolve_season(value: Optional[int] = None, *, now: datetime | None = None) 
 
 
 def current_asset_specs(season: int) -> tuple[AssetSpec, ...]:
-    """Assets that can affect current snapshots, logs, or Recent Form.
+    """MoneyPuck files that can affect snapshots, logs, Recent Form or ratings.
 
-    The three NGS assets and the PFR season table are optional inputs to the
-    core feed.  They still participate in the fingerprint, so an enrichment
-    publication triggers a refresh even when weekly player stats did not move.
+    The regular-season skaters, goalies and shots files gate readiness. The
+    teams file feeds ratings only, and every playoff file is absent until the
+    postseason starts, so none of those hold back the core feed. They still
+    join the fingerprint: a playoff file appearing starts a refresh.
     """
-    specs: list[AssetSpec] = [
-        AssetSpec(
-            name="stats_player_week",
-            tag="stats_player",
-            # ingest.py and ingest_game_logs.py both call the default weekly
-            # loader, which resolves to this asset.  Tracking the reg summary
-            # file would miss postseason and late weekly corrections.
-            filename=f"stats_player_week_{season}.parquet",
-            required=True,
-        ),
-        AssetSpec(
-            name="schedule",
-            tag="schedules",
-            filename="games.parquet",
-            required=True,
-        ),
-    ]
-    # Play-by-play feeds the advanced game pages (ingest_game_details.py).
-    # Optional: a late pbp upload must not hold back the core player feed.
-    specs.append(
-        AssetSpec(
-            name="pbp",
-            tag="pbp",
-            filename=f"play_by_play_{season}.parquet",
-        )
-    )
-    if season >= 2016:
-        specs.extend(
-            AssetSpec(
-                name=f"ngs_{stat_type}",
-                tag="nextgen_stats",
-                filename=f"ngs_{stat_type}.parquet",
-            )
-            for stat_type in ("passing", "rushing", "receiving")
-        )
-    if season >= 2018:
-        specs.append(
-            AssetSpec(
-                name="pfr_advstats_def",
-                tag="pfr_advstats",
-                filename="advstats_season_def.parquet",
-            )
-        )
+    specs: list[AssetSpec] = []
+    for phase in ("regular", "playoffs"):
+        for kind in ("skaters", "goalies", "teams"):
+            specs.append(AssetSpec(
+                name=f"{kind}_{phase}",
+                url=MONEYPUCK_SUMMARY.format(season=season, phase=phase, kind=kind),
+                required=phase == "regular" and kind != "teams",
+            ))
+    specs.append(AssetSpec("shots", MONEYPUCK_SHOTS.format(season=season), required=True))
     return tuple(specs)
 
 
 def parse_source_timestamp(value: str | None) -> datetime | None:
-    """Parse nflverse's ``YYYY-MM-DD HH:MM:SS EDT`` timestamp format."""
+    """Parse an HTTP ``Last-Modified`` date into UTC."""
     if not value:
         return None
-    text = str(value).strip()
-    # ``parsedate_to_datetime`` understands the common RFC form and timezone
-    # abbreviations such as GMT.  nflverse uses EDT/EST, which it treats as an
-    # unknown timezone, so normalize the two values first.
-    normalized = text.replace(" EDT", " -0400").replace(" EST", " -0500")
     try:
-        parsed = parsedate_to_datetime(normalized)
+        parsed = parsedate_to_datetime(str(value).strip())
     except (TypeError, ValueError, OverflowError):
-        parsed = None
-    if parsed is None:
-        try:
-            parsed = datetime.fromisoformat(normalized.replace("Z", "+00:00"))
-        except ValueError:
-            return None
+        return None
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)
     return parsed.astimezone(UTC)
@@ -262,108 +198,50 @@ def _error_detail(exc: BaseException) -> str:
     return detail[:500] if detail else type(exc).__name__
 
 
-def _read_timestamp(client: HTTPClient, spec: AssetSpec) -> tuple[str | None, str | None, str | None]:
-    try:
-        response = client.get(spec.timestamp_url, timeout=DEFAULT_TIMEOUT_SECONDS)
-        if not 200 <= response.status_code < 300:
-            return None, f"http_{response.status_code}", f"timestamp status {response.status_code}"
-        payload = json.loads(response.read().decode("utf-8"))
-        value = payload.get("last_updated")
-        if value is None:
-            return None, "invalid_timestamp", "timestamp.json has no last_updated"
-        return str(value), None, None
-    except Exception as exc:  # noqa: BLE001 - one unavailable asset must be recorded
-        return None, _error_code(exc), _error_detail(exc)
-
-
 def probe_asset(client: HTTPClient, spec: AssetSpec) -> AssetProbe:
-    """Probe one timestamp and one asset HEAD request."""
-    timestamp, timestamp_error, timestamp_detail = _read_timestamp(client, spec)
+    """Probe one file with a single HEAD request."""
     try:
-        response = client.head(spec.asset_url, timeout=DEFAULT_TIMEOUT_SECONDS)
-        status = int(response.status_code)
-        if not 200 <= status < 300:
-            return AssetProbe(
-                **asdict(
-                    AssetProbe(
-                        name=spec.name,
-                        tag=spec.tag,
-                        filename=spec.filename,
-                        required=spec.required,
-                        timestamp_url=spec.timestamp_url,
-                        asset_url=spec.asset_url,
-                        status_code=status,
-                        timestamp=timestamp,
-                        etag=_header(response.headers, "etag"),
-                        last_modified=_header(response.headers, "last-modified"),
-                        content_length=_header(response.headers, "content-length"),
-                        error_code=timestamp_error or f"http_{status}",
-                        error_detail=timestamp_detail or f"asset status {status}",
-                    )
-                )
-            )
-        return AssetProbe(
-            name=spec.name,
-            tag=spec.tag,
-            filename=spec.filename,
-            required=spec.required,
-            timestamp_url=spec.timestamp_url,
-            asset_url=spec.asset_url,
-            status_code=status,
-            timestamp=timestamp,
-            etag=_header(response.headers, "etag"),
-            last_modified=_header(response.headers, "last-modified"),
-            content_length=_header(response.headers, "content-length"),
-            error_code=timestamp_error,
-            error_detail=timestamp_detail,
-        )
+        response = client.head(spec.url, timeout=DEFAULT_TIMEOUT_SECONDS)
     except Exception as exc:  # noqa: BLE001 - return a durable pending status
         return AssetProbe(
-            name=spec.name,
-            tag=spec.tag,
-            filename=spec.filename,
-            required=spec.required,
-            timestamp_url=spec.timestamp_url,
-            asset_url=spec.asset_url,
-            status_code=None,
-            timestamp=timestamp,
-            etag=None,
-            last_modified=None,
-            content_length=None,
-            error_code=timestamp_error or _error_code(exc),
-            error_detail=timestamp_detail or _error_detail(exc),
+            name=spec.name, url=spec.url, required=spec.required, status_code=None,
+            etag=None, last_modified=None, content_length=None,
+            error_code=_error_code(exc), error_detail=_error_detail(exc),
         )
-
-
-# nflverse republishes games.parquet roughly every 30 minutes (odds, weather,
-# kickoff tweaks) even when no player stat moved. Completed games reach the app
-# only through stats_player_week, so the schedule gates readiness but does not
-# start a new data generation. Coverage still reads the schedule at build time.
-UNFINGERPRINTED_ASSETS = frozenset({"schedule"})
+    status = int(response.status_code)
+    ok = 200 <= status < 300
+    return AssetProbe(
+        name=spec.name,
+        url=spec.url,
+        required=spec.required,
+        status_code=status,
+        etag=_header(response.headers, "etag"),
+        last_modified=_header(response.headers, "last-modified"),
+        content_length=_header(response.headers, "content-length"),
+        error_code=None if ok else f"http_{status}",
+        error_detail=None if ok else f"asset status {status}",
+    )
 
 
 def fingerprint_assets(assets: Iterable[AssetProbe]) -> str:
-    """Return a stable content generation from release metadata.
+    """Return a stable content generation from file metadata.
 
-    ``date`` is deliberately absent.  GitHub response dates change on every
-    probe, while the source timestamp, ETag, Last-Modified, and length change
-    when an asset is replaced.  Including the status and all optional assets
-    also makes enrichment-only corrections trigger a refresh.
+    ``date`` is deliberately absent. Response dates change on every probe,
+    while the ETag, Last-Modified and length change when a file is regenerated.
+    The status stays in, so an optional file appearing (the playoffs) or a
+    required one vanishing starts a refresh.
     """
     values = [
         {
             "name": asset.name,
-            "tag": asset.tag,
-            "filename": asset.filename,
+            "url": asset.url,
             "required": asset.required,
             "status_code": asset.status_code,
-            "timestamp": asset.timestamp,
             "etag": asset.etag,
             "last_modified": asset.last_modified,
             "content_length": asset.content_length,
         }
         for asset in sorted(assets, key=lambda item: item.name)
-        if asset.name not in UNFINGERPRINTED_ASSETS
     ]
     encoded = json.dumps(values, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -375,24 +253,20 @@ def probe_sources(
     client: HTTPClient | None = None,
     checked_at: datetime | None = None,
 ) -> SourceProbeResult:
-    """Probe all current-season assets and return a JSON-safe result."""
+    """Probe all current-season files and return a JSON-safe result."""
     http = client or UrllibHTTPClient()
-    specs = current_asset_specs(season)
-    assets = tuple(probe_asset(http, spec) for spec in specs)
+    assets = tuple(probe_asset(http, spec) for spec in current_asset_specs(season))
     required_failures = [asset for asset in assets if asset.required and not asset.available]
     source_times = [asset.source_published_at for asset in assets if asset.source_published_at]
-    source_published_at = max(source_times).isoformat() if source_times else None
-    error_code = required_failures[0].error_code if required_failures else None
-    error_detail = required_failures[0].error_detail if required_failures else None
     return SourceProbeResult(
         season=season,
         checked_at=(checked_at or datetime.now(UTC)).astimezone(UTC).isoformat(),
         assets=assets,
         fingerprint=fingerprint_assets(assets),
-        source_published_at=source_published_at,
+        source_published_at=max(source_times).isoformat() if source_times else None,
         ready=not required_failures,
-        error_code=error_code,
-        error_detail=error_detail,
+        error_code=required_failures[0].error_code if required_failures else None,
+        error_detail=required_failures[0].error_detail if required_failures else None,
     )
 
 
@@ -431,7 +305,7 @@ def record_probe(result: SourceProbeResult, *, force: bool = False) -> SourcePro
     service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     if not base_url or not service_key:
         if os.environ.get("GITHUB_ACTIONS") == "true":
-            raise RuntimeError("Scheduled probe requires Football Supabase credentials")
+            raise RuntimeError("Scheduled probe requires Supabase credentials")
         if result.ready:
             return SourceProbeResult(
                 **{
@@ -442,7 +316,7 @@ def record_probe(result: SourceProbeResult, *, force: bool = False) -> SourcePro
                 }
             )
         return result
-    if urlparse(base_url).hostname != "qwkmpwnhrejsuplcwxrb.supabase.co":
+    if urlparse(base_url).hostname != PROJECT_HOST:
         raise RuntimeError("Refusing to update a different Supabase project")
 
     params = {

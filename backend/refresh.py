@@ -1,15 +1,23 @@
-"""Build and atomically publish one current NFL season refresh.
+"""Build and atomically publish one current NHL season refresh.
 
 The source probe creates a ``data_refresh_runs`` row before this command is
-started.  This command downloads the current season once, computes snapshots,
-per-game logs, and Recent Form in memory, stages all rows under that refresh
-ID, validates coverage, and asks Postgres to publish the three sets together.
-The serving tables are never modified directly by this path.
+started. This command builds the live season's snapshots, per-game logs and
+Recent Form in memory, stages all rows under that refresh ID, validates
+coverage, and asks Postgres to publish the three sets together. The serving
+tables are never modified directly by this path.
 
-The current season is deliberately rebuilt in full.  The 2026 feed is small,
-and a full read is the safest inexpensive way to capture late corrections and
-new NGS/PFR enrichment while the durable game identity remains date-compatible
-with the existing app schema.
+Snapshots are rebuilt in full from MoneyPuck and the NHL summary each time.
+Game logs are incremental: the serving rows already published for the season are
+kept, only finals in ``public.games`` with no rows yet are fetched (boxscore,
+play-by-play and the MoneyPuck shot file, see ``ingest_game_logs.py``), and the
+union is staged, because the publisher replaces a season's logs wholesale and
+refuses a revision that drops a game. ``--full-logs`` rebuilds every final (rows it
+produces replace the published ones; a final it cannot rebuild keeps its old rows).
+Recent Form is then computed over the union. Finals MoneyPuck has not published
+yet wait for the next refresh and show as partial coverage.
+
+Coverage: ``expected_games`` is the finals in the games table for the season and
+``observed_games`` the finals that have game-log rows.
 """
 
 from __future__ import annotations
@@ -22,31 +30,22 @@ import os
 import sys
 import time
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
-from typing import Any, Iterable, Optional
+from datetime import datetime, timezone
+from typing import Any, Iterable
 from urllib.parse import urlparse
 
-import nflreadpy as nfl
-import pandas as pd
-import polars as pl
 from dotenv import load_dotenv
 from supabase import create_client
 
 from ingest import (
     DEFAULT_SEASON,
-    _to_pandas as _snapshot_to_pandas,
     build_agg_for_season,
     build_snapshot_rows,
     qualification_scale,
-    resolve_season,
 )
-from ingest_game_logs import (
-    _load_ngs_lookups,
-    build_game_log_rows,
-    schedule_map,
-)
+from ingest_game_logs import build_new_rows, fetch_final_games
 from rollup_recent_form import _routable_logs, build_rows
-from source_probe import probe_sources
+from source_probe import PROJECT_HOST, probe_sources
 
 load_dotenv()
 
@@ -57,6 +56,13 @@ STAGE_TABLES = (
     "player_game_logs_refresh",
     "player_recent_form_refresh",
 )
+# The staging table's columns; serving rows carry extra provenance columns.
+LOG_COLUMNS = (
+    "player_id,season,season_type,game_id,game_date,week,player_type,team,"
+    "opponent,plays,touches,metrics,updated_at"
+)
+LOG_KEY = ("player_id", "season", "season_type", "game_date", "player_type")
+STAGE_BATCH = 500
 
 
 class CandidateNotReady(RuntimeError):
@@ -80,14 +86,8 @@ class Candidate:
     game_logs: tuple[dict[str, Any], ...]
     recent_form: tuple[dict[str, Any], ...]
     coverage: Coverage
-    ngs_status: str
-    pfr_status: str
-
-
-def _to_pandas(frame: Any) -> pd.DataFrame:
-    if isinstance(frame, pl.DataFrame):
-        return frame.to_pandas()
-    return frame
+    shots_status: str
+    summary_status: str
 
 
 def _source_status_rank(status: str) -> int:
@@ -104,74 +104,20 @@ def _merge_status(*statuses: str) -> str:
     return max(statuses, key=_source_status_rank, default="unknown")
 
 
-def _safe_date(value: Any) -> date | None:
-    if value is None or pd.isna(value):
-        return None
-    try:
-        return pd.to_datetime(value, errors="coerce").date()
-    except (TypeError, ValueError, OverflowError):
-        return None
-
-
-def _coverage(weekly: pd.DataFrame, schedule: pd.DataFrame, season: int, now: datetime) -> Coverage:
-    """Measure source coverage while allowing a week to arrive game by game."""
-    if weekly is None or weekly.empty:
-        return Coverage(None, None, 0, 0, "partial")
-
-    scheduled: dict[str, date] = {}
-    expected_ids: set[str] = set()
-    for _, row in schedule.iterrows():
-        if row.get("season") is not None and not pd.isna(row.get("season")):
-            try:
-                if int(row.get("season")) != season:
-                    continue
-            except (TypeError, ValueError):
-                continue
-        game_id = row.get("game_id")
-        game_date = _safe_date(row.get("gameday"))
-        if game_id is None or game_date is None:
-            continue
-        game_id = str(game_id)
-        scheduled[game_id] = game_date
-        game_type = str(row.get("game_type") or "").upper()
-        # The player weekly feed is regular/postseason data.  Exclude known
-        # preseason rows from the expected completed-game denominator, while
-        # retaining rows with a missing type for old schedule releases.
-        if game_type in {"PRE", "PRESEASON"}:
-            continue
-        # Same-day fixtures are not completed games. Prefer posted scores;
-        # old schedule formats without score columns fall back to prior dates.
-        has_scores = "home_score" in schedule.columns and "away_score" in schedule.columns
-        completed = (
-            pd.notna(row.get("home_score")) and pd.notna(row.get("away_score"))
-            if has_scores else game_date < now.date()
-        )
-        if completed:
-            expected_ids.add(game_id)
-
-    source_ids: set[str] = set()
-    if "game_id" in weekly.columns:
-        source_ids = {
-            str(value)
-            for value in weekly["game_id"].dropna().tolist()
-            if str(value).strip()
-        }
-    observed_ids = source_ids.intersection(scheduled)
-    expected_count = len(expected_ids)
-    observed_count = len(observed_ids)
-
-    source_rows = weekly
-    if observed_ids and "game_id" in weekly.columns:
-        source_rows = weekly[weekly["game_id"].astype(str).isin(observed_ids)]
-    max_week: int | None = None
-    if "week" in source_rows.columns:
-        weeks = pd.to_numeric(source_rows["week"], errors="coerce").dropna()
-        if not weeks.empty:
-            max_week = int(weeks.max())
-    dates = [scheduled[game_id] for game_id in observed_ids if game_id in scheduled]
-    max_date = max(dates).isoformat() if dates else None
-    status = "complete" if expected_count <= observed_count else "partial"
-    return Coverage(max_week, max_date, expected_count, observed_count, status)
+def compute_coverage(finals: list[dict[str, Any]], logs: list[dict[str, Any]]) -> Coverage:
+    """Finals in the games table against the finals that have game-log rows."""
+    final_ids = {str(game["game_id"]) for game in finals}
+    logged = {str(row["game_id"]) for row in logs if row.get("game_id")}
+    observed = final_ids & logged
+    weeks = [int(row["week"]) for row in logs if row.get("week") is not None]
+    dates = [str(row["game_date"])[:10] for row in logs]
+    return Coverage(
+        max_week=max(weeks) if weeks else None,
+        max_game_date=max(dates) if dates else None,
+        expected_games=len(final_ids),
+        observed_games=len(observed),
+        coverage_status="complete" if len(final_ids) <= len(observed) else "partial",
+    )
 
 
 def _validate_unique(rows: Iterable[dict[str, Any]], keys: tuple[str, ...], label: str) -> None:
@@ -185,73 +131,86 @@ def _validate_unique(rows: Iterable[dict[str, Any]], keys: tuple[str, ...], labe
         seen.add(key)
 
 
-def build_candidate(season: int, *, now: datetime | None = None) -> Candidate:
-    """Build all output rows without touching Supabase."""
-    now = (now or datetime.now(UTC)).astimezone(UTC)
-    logger.info("Loading weekly player stats and schedule for %s", season)
-    weekly = _snapshot_to_pandas(nfl.load_player_stats([season]))
-    schedule_frame = _snapshot_to_pandas(nfl.load_schedules([season]))
-    if weekly is None or weekly.empty:
-        raise CandidateNotReady(f"weekly player stats are empty for {season}")
-    sched = schedule_map(schedule_frame)
-    coverage = _coverage(weekly, schedule_frame, season, now)
-    logger.info(
-        "Source coverage: games=%d/%d max_week=%s max_game_date=%s (%s)",
-        coverage.observed_games,
-        coverage.expected_games,
-        coverage.max_week,
-        coverage.max_game_date,
-        coverage.coverage_status,
-    )
+def fetch_serving_logs(client: Any, season: int) -> list[dict[str, Any]]:
+    """The game-log rows currently published for the season."""
+    rows: list[dict[str, Any]] = []
+    offset = 0
+    while True:
+        page = (
+            client.table("player_game_logs")
+            .select(LOG_COLUMNS)
+            .eq("season", season)
+            .order("game_date")
+            .order("player_id")
+            .order("player_type")
+            .range(offset, offset + 999)
+            .execute()
+            .data
+        ) or []
+        rows.extend(page)
+        if len(page) < 1000:
+            return rows
+        offset += 1000
 
+
+def merge_logs(existing: list[dict[str, Any]], new: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Union keyed on the table's primary key; a freshly built row wins."""
+    merged = {tuple(row[k] for k in LOG_KEY): row for row in existing}
+    merged.update({tuple(row[k] for k in LOG_KEY): row for row in new})
+    return list(merged.values())
+
+
+def build_snapshots(season: int, now: datetime) -> tuple[list[dict[str, Any]], str]:
+    """REG and POST snapshot rows plus the merged NHL summary status."""
     live = season == DEFAULT_SEASON
-    snapshot_rows: list[dict[str, Any]] = []
-    phase_ngs: list[str] = []
-    phase_pfr: list[str] = []
+    rows: list[dict[str, Any]] = []
+    statuses: list[str] = []
     for phase in ("REG", "POST"):
         enrichment: dict[str, str] = {}
-        agg = build_agg_for_season(
-            season,
-            phase,
-            live=live,
-            weekly_frame=weekly,
-            enrichment_status=enrichment,
-        )
+        agg = build_agg_for_season(season, phase, live=live, enrichment_status=enrichment)
         if agg.empty:
             logger.info("No %s snapshot source rows for %s", phase, season)
             continue
         scale = qualification_scale(agg, season) if phase == "REG" else 1.0
-        rows = build_snapshot_rows(
-            agg,
-            season,
-            now,
-            phase,
-            qual_scale=scale,
-            live=live,
-        )
-        if rows:
-            snapshot_rows.extend(rows)
-        phase_ngs.append(enrichment.get("ngs", "unknown"))
-        phase_pfr.append(enrichment.get("pfr", "unknown"))
+        rows.extend(build_snapshot_rows(agg, season, now, phase, qual_scale=scale, live=live))
+        statuses.append(enrichment.get("summary", "unknown"))
+    return rows, _merge_status(*statuses) if statuses else "unknown"
 
+
+def build_candidate(
+    season: int,
+    *,
+    client: Any,
+    now: datetime | None = None,
+    full_logs: bool = False,
+) -> Candidate:
+    """Build all output rows without writing to Supabase."""
+    now = (now or datetime.now(UTC)).astimezone(UTC)
+    logger.info("Building snapshots for %s", season)
+    snapshot_rows, summary_status = build_snapshots(season, now)
     if not snapshot_rows:
         raise CandidateNotReady(f"no snapshot rows built for {season}")
 
-    log_enrichment: dict[str, str] = {}
-    ngs_pass, ngs_rush, ngs_rec = _load_ngs_lookups(season, log_enrichment)
-    game_log_rows = build_game_log_rows(
-        weekly,
-        sched,
-        season,
-        now,
-        ngs_pass,
-        ngs_rush,
-        ngs_rec,
+    existing = fetch_serving_logs(client, season)
+    shots_status = "ready"
+    try:
+        batch = build_new_rows(client, season, now, full=full_logs, live=season == DEFAULT_SEASON)
+        new_rows = batch.rows
+    except Exception:  # noqa: BLE001 - keep serving the logs already published
+        logger.exception("Could not build new game logs; keeping the published ones")
+        new_rows, shots_status = [], "degraded"
+    game_log_rows = merge_logs(existing, new_rows)
+    finals = fetch_final_games(client, season)
+    coverage = compute_coverage(finals, game_log_rows)
+    if shots_status == "ready" and coverage.coverage_status == "partial":
+        shots_status = "pending"
+    logger.info(
+        "Game logs: %d rows, games=%d/%d max_week=%s max_game_date=%s (%s, shots %s)",
+        len(game_log_rows), coverage.observed_games, coverage.expected_games,
+        coverage.max_week, coverage.max_game_date, coverage.coverage_status, shots_status,
     )
     if not game_log_rows:
         raise CandidateNotReady(f"no game-log rows built for {season}")
-    if coverage.observed_games == 0 or not coverage.max_game_date:
-        raise CandidateNotReady("Source games do not resolve to the current schedule")
     if any(row.get("season") != season for row in snapshot_rows + game_log_rows):
         raise CandidateNotReady("Candidate contains a different season")
 
@@ -259,25 +218,17 @@ def build_candidate(season: int, *, now: datetime | None = None) -> Candidate:
         (int(row["id"]), str(row.get("season_type") or "REG"))
         for row in snapshot_rows
     }
-    recent_rows = _routable_logs(build_rows(game_log_rows), snapshot_keys)
-    if not recent_rows:
-        raise CandidateNotReady(f"no Recent Form rows resolve for {season}")
-
     season_types = tuple(sorted({str(row.get("season_type") or "REG") for row in snapshot_rows}))
     game_log_rows = [
         row for row in game_log_rows
         if str(row.get("season_type") or "REG") in season_types
     ]
-    recent_rows = [
-        row for row in recent_rows
-        if str(row.get("season_type") or "REG") in season_types
-    ]
+    recent_rows = _routable_logs(build_rows(game_log_rows, now), snapshot_keys)
+    if not recent_rows:
+        raise CandidateNotReady(f"no Recent Form rows resolve for {season}")
+
     _validate_unique(snapshot_rows, ("id", "season", "season_type"), "snapshots")
-    _validate_unique(
-        game_log_rows,
-        ("player_id", "season", "season_type", "game_date", "player_type"),
-        "game logs",
-    )
+    _validate_unique(game_log_rows, LOG_KEY, "game logs")
     _validate_unique(
         recent_rows,
         ("player_id", "season", "season_type", "player_type", "window_weeks"),
@@ -290,8 +241,8 @@ def build_candidate(season: int, *, now: datetime | None = None) -> Candidate:
         game_logs=tuple(game_log_rows),
         recent_form=tuple(recent_rows),
         coverage=coverage,
-        ngs_status=_merge_status(*(phase_ngs + [log_enrichment.get("ngs", "unknown")])),
-        pfr_status=_merge_status(*phase_pfr) if phase_pfr else "unknown",
+        shots_status=shots_status,
+        summary_status=summary_status,
     )
 
 
@@ -299,11 +250,23 @@ def build_candidate(season: int, *, now: datetime | None = None) -> Candidate:
 VOLATILE_ROW_KEYS = frozenset({"updated_at", "refresh_id", "source_published_at", "published_at"})
 
 
+def _canonical(value: Any) -> Any:
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    if isinstance(value, dict):
+        return {k: _canonical(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_canonical(v) for v in value]
+    return value
+
+
 def content_hash(candidate: Candidate) -> str:
     """Hash the serving output, ignoring build timestamps.
 
-    Two builds of identical football produce the same hash, so a source
-    re-upload that changes no stat can be recorded without republishing.
+    Two builds of identical hockey produce the same hash, so a source
+    regeneration that changes no stat can be recorded without republishing.
+    Whole-number floats hash as integers: the same value read back from
+    Postgres and freshly built must not look different.
     """
     digest = hashlib.sha256()
     for label, rows in (
@@ -313,7 +276,7 @@ def content_hash(candidate: Candidate) -> str:
     ):
         normalized = sorted(
             json.dumps(
-                {k: v for k, v in row.items() if k not in VOLATILE_ROW_KEYS},
+                _canonical({k: v for k, v in row.items() if k not in VOLATILE_ROW_KEYS}),
                 sort_keys=True,
                 separators=(",", ":"),
                 default=str,
@@ -344,8 +307,8 @@ def _client():
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     if not url or not key:
         raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required")
-    if urlparse(url).hostname != "qwkmpwnhrejsuplcwxrb.supabase.co":
-        raise RuntimeError("Refusing to publish outside the Football Supabase project")
+    if urlparse(url).hostname != PROJECT_HOST:
+        raise RuntimeError("Refusing to publish outside the Hockey Supabase project")
     return create_client(url, key)
 
 
@@ -394,8 +357,8 @@ def _stage_rows(client: Any, table: str, refresh_id: str, rows: Iterable[dict[st
         return 0
     # Clear a previous attempt's payload before retrying the same refresh ID.
     client.table(table).delete().eq("refresh_id", refresh_id).execute()
-    for offset in range(0, len(values), 250):
-        client.table(table).insert(values[offset : offset + 250]).execute()
+    for offset in range(0, len(values), STAGE_BATCH):
+        client.table(table).insert(values[offset : offset + STAGE_BATCH]).execute()
     return len(values)
 
 
@@ -413,7 +376,13 @@ def _run_metadata(client: Any, refresh_id: str) -> dict[str, Any]:
     return rows[0]
 
 
-def publish(refresh_id: str, *, season: int | None = None, now: datetime | None = None) -> dict[str, Any]:
+def publish(
+    refresh_id: str,
+    *,
+    season: int | None = None,
+    now: datetime | None = None,
+    full_logs: bool = False,
+) -> dict[str, Any]:
     """Build, stage, validate, and atomically publish a refresh."""
     client = _client()
     metadata = _run_metadata(client, refresh_id)
@@ -424,7 +393,7 @@ def publish(refresh_id: str, *, season: int | None = None, now: datetime | None 
         source_before = probe_sources(target_season)
         if not source_before.ready or source_before.fingerprint != metadata["source_fingerprint"]:
             raise CandidateNotReady("Source generation changed after the probe; retry the new generation")
-        candidate = build_candidate(target_season, now=now)
+        candidate = build_candidate(target_season, client=client, now=now, full_logs=full_logs)
         source_after = probe_sources(target_season)
         if not source_after.ready or source_after.fingerprint != source_before.fingerprint:
             raise CandidateNotReady("Source changed during the build; keeping the live revision")
@@ -453,8 +422,8 @@ def publish(refresh_id: str, *, season: int | None = None, now: datetime | None 
                 "p_snapshot_rows": snapshot_count,
                 "p_game_log_rows": log_count,
                 "p_recent_form_rows": recent_count,
-                "p_ngs_status": candidate.ngs_status,
-                "p_pfr_status": candidate.pfr_status,
+                "p_shots_status": candidate.shots_status,
+                "p_summary_status": candidate.summary_status,
             },
         )
         client.table("data_refresh_runs").update({"content_hash": output_hash}).eq(
@@ -487,13 +456,15 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--refresh-id", required=True)
     parser.add_argument("--season", type=int, default=None)
+    parser.add_argument("--full-logs", action="store_true", help="Rebuild every final's game logs, not just new ones.")
     return parser.parse_args()
 
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     args = _parse_args()
-    publish(args.refresh_id, season=args.season)
+    publish(args.refresh_id, season=args.season, full_logs=args.full_logs)
     return 0
 
 

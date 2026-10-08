@@ -1,22 +1,20 @@
 """Drop per-game history down to the newest few seasons. Run by hand.
 
-`player_game_logs` and the `player_recent_form` rollup built from it were the
-two biggest tables in the database by a wide margin - 245 MB and 112 MB against
-74 MB for every season snapshot ever ingested - because they hold one row per
-player per game rather than one per player per season. All of that weight was
-paying for a feature the app offers on the newest seasons only: a "last 3
-games" board for 2017 is a curiosity, and nobody was opening it.
+`player_game_logs` and the `player_recent_form` rollup built from it are the
+two biggest tables in the database by a wide margin, because they hold one row
+per player per game (about 53,000 rows for one NHL season) rather than one per
+player per season. That weight pays for a feature the app offers on the newest
+seasons only: a 2-week form board for 2012-13 is a curiosity.
 
 Season snapshots are never touched. Those are the whole app (percentiles,
 leaderboards, Compare, the All Time rollup) and every year of them together is
 smaller than one year of game logs.
 
-**Not wired into the nightly workflow.** The one-off purge already took these
-tables to a single season, and nothing in the pipeline writes an older one -
-both `ingest_game_logs.py` and `rollup_recent_form.py` run against the resolved
-current season. At roughly 26 MB a season the tables cannot threaten the 500 MB
-budget for years, so this runs when an offseason decides it should, not every
-night. Nightly it would only ever be a no-op with a delete attached.
+**Not wired into the refresh workflow.** Nothing in the pipeline writes an
+older season: `ingest_game_logs.py` and `rollup_recent_form.py` run against the
+resolved current season (the 2025 logs are a one-off backfill). This runs when
+an offseason decides the free-tier size needs it, not on every refresh. On a
+schedule it would only ever be a no-op with a delete attached.
 
 `--keep` defaults to **two** seasons because that is what the app offers Recent
 Form on: the live season and the one before it (`DashboardViewModel`'s
@@ -26,9 +24,10 @@ The cut is "older than the Nth-newest season present in the table", not a
 calendar date, so it never anchors to a season the database has no rows for,
 and running it twice is a no-op.
 
-Deleting is cheap to undo if a historical window is ever wanted again: game
-logs re-ingest from nflverse with
-`python backend/ingest_game_logs.py --season N --full`, and the rollup rebuilds
+Deleting is cheap to undo if a historical window is ever wanted again: sync the
+schedule with `python backend/sync_games.py --season N --only`, re-ingest the
+logs from the NHL API and MoneyPuck with
+`python backend/ingest_game_logs.py --season N --full`, and rebuild the rollup
 with `python backend/rollup_recent_form.py --season N`.
 
 Note that DELETE alone does not shrink the database on disk - it marks rows

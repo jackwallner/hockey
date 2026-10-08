@@ -1,38 +1,47 @@
-"""Pre-aggregate per-game logs into rolling last-N-weeks windows.
+"""Pre-aggregate per-game logs into league-anchored 2, 4 and 8 week windows.
 
-Reads public.player_game_logs and writes public.player_recent_form: one row
-per (player, phase, side of the ball, window length), holding the shared
-league window ending on the latest available week, the equal-length window before
-it, and the delta between them — the THEN / NOW / delta shape ported from the
-baseball app's Baseball Savant-style rolling leaderboard.
+Reads public.player_game_logs and writes public.player_recent_form: one row per
+(player, phase, player type, window length), holding the current window, the
+equal-length window before it, and the delta between them (the THEN / NOW /
+delta shape ported from the baseball app's rolling leaderboard).
 
-Ported from baseball's rollup_recent_form.py with one structural change: the
-NFL plays a single game a week, so a calendar-day window is meaningless here.
-Windows use the league's latest week as a shared anchor, N in (3, 5, 8).
-Players without an appearance in the current span are omitted. This keeps an
-early-season performance from remaining on Trends after an injury or benching.
-Regular season and postseason are anchored and ranked separately.
+Windows are measured in days off a league anchor, not off each player's own
+games. The anchor is the latest ``game_date`` with any log row for that season
+and phase; the current span for an ``N``-week window is
+``(anchor - 7N days, anchor]`` and the previous span is the equal-length block
+before it. A player without an appearance in the current span is omitted, so a
+hot streak in October does not linger on Trends after an injury. Regular season
+and postseason are anchored and ranked separately.
 
 Game logs store raw counts, never pre-divided rates (see ingest_game_logs.py),
-so window rates here are recomputed from summed numerators and denominators
-rather than averaged from per-game rates — exact rather than approximate, and
-the reason a metric with a zero denominator is omitted rather than reported
-as a misleading 0.
+so every rate here is recomputed from summed numerators and denominators, which
+is exact where averaging per-game rates is not. A metric whose denominator is
+zero across the window is omitted rather than reported as a misleading 0.
+
+Keys are the contract's. Skaters: points_per_60, goals_per_60, ixg_per_60, gax,
+shooting_pct, shots_per_60, hd_shots_per_60, blocks_per_60, hits_per_60 and the
+totals goals, assists, points, shots_on_goal, ixg, games. Goalies: sv_pct, gaa,
+gsax, gsax_per_60, hd_sv_pct, shots_against_per_60 and the totals saves,
+goals_against, games, wins. ``shots_per_60`` counts shot attempts, matching the
+season ``Shots/60``; ``shooting_pct`` is 0 to 100 and ``sv_pct`` a fraction,
+matching the season snapshot values.
 
 Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (same as ingest.py).
 """
+
+from __future__ import annotations
 
 import argparse
 import logging
 import os
 import sys
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import date, datetime, timedelta, timezone
+from typing import Any, Callable, Optional
 
 from dotenv import load_dotenv
 from supabase import create_client
 
-from ingest import passer_rating, resolve_season
+from ingest import resolve_season
 
 load_dotenv()
 
@@ -42,61 +51,17 @@ UTC = timezone.utc
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
-WINDOW_WEEKS = (3, 5, 8)
+WINDOW_WEEKS = (2, 4, 8)
+PAGE_SIZE = 1000
+UPSERT_BATCH = 500
 
-# Counting stats summed straight across the window. Game-log metric key -> the
-# recent-form output key, chosen to match the season metric id suffix in
-# NFL_CONTRACT.md so the client can point a "recent" bar at either table with
-# one shared key.
-SUM_KEYS: dict[str, str] = {
-    "passing_yards": "pass_yards",
-    "passing_tds": "pass_tds",
-    "interceptions": "interceptions",
-    "completions": "completions",
-    "attempts": "attempts",
-    "sacks_suffered": "sacks_suffered",
-    "carries": "carries",
-    "rushing_yards": "rush_yards",
-    "rushing_tds": "rush_tds",
-    "rushing_first_downs": "rush_first_downs",
-    "receptions": "receptions",
-    "targets": "targets",
-    "receiving_yards": "rec_yards",
-    "receiving_tds": "rec_tds",
-    "receiving_yac": "yac",
-    "def_sacks": "sacks",
-    "def_interceptions": "def_ints",
-    "def_pass_defended": "passes_defended",
-    "def_fumbles_forced": "forced_fumbles",
-    "def_tackles_for_loss": "tfl",
-    "def_qb_hits": "qb_hits",
-}
-# Tackles is solo + assisted combined into one output key, not a 1:1 column.
-TACKLE_KEYS = ("def_tackles_solo", "def_tackle_assists")
-# Fumble rate covers ball security on either a carry or a catch.
-FUMBLE_KEYS = ("rushing_fumbles", "receiving_fumbles")
-
-# Optional NGS-derived per-game rates (see ingest_game_logs.py's optional
-# weekly NGS join). Only present in a game log when that join succeeded;
-# metric -> the raw-count game-log key that weights it across a window, the
-# same "aggregate the rate weighted by its own denominator" approach the
-# baseball app uses for its own per-game rate metrics.
-WEIGHTED_NGS: dict[str, str] = {
-    "cpoe": "attempts",
-    "avg_time_to_throw": "attempts",
-    "avg_separation": "targets",
-    "avg_yac_above_expectation": "targets",
-    "rush_yoe": "carries",
-}
-
-# Decimal places per metric, per the rollup contract. Counting stats default
-# to 0 (see _places).
+# Decimal places per output key; totals not listed are whole numbers.
 _PLACES: dict[str, int] = {
-    "cmp_pct": 1, "ypa": 1, "int_rate": 1, "sack_rate": 1, "passer_rating": 1,
-    "passing_epa": 2, "ypc": 1, "rushing_epa": 1, "fumble_rate": 1,
-    "catch_pct": 1, "receiving_epa": 1, "racr": 2,
-    "cpoe": 1, "avg_time_to_throw": 2, "avg_separation": 1,
-    "avg_yac_above_expectation": 1, "rush_yoe": 1,
+    "points_per_60": 2, "goals_per_60": 2, "ixg_per_60": 2, "gax": 2,
+    "shooting_pct": 1, "shots_per_60": 1, "hd_shots_per_60": 1,
+    "blocks_per_60": 1, "hits_per_60": 1, "ixg": 2,
+    "sv_pct": 3, "gaa": 2, "gsax": 2, "gsax_per_60": 2, "hd_sv_pct": 3,
+    "shots_against_per_60": 1,
 }
 
 
@@ -115,10 +80,9 @@ def _client():
 
 def _num(log: dict, key: str) -> float:
     """Read one raw-count metric off a game-log row's ``metrics`` blob."""
-    metrics = log.get("metrics") or {}
-    val = metrics.get(key)
+    value = (log.get("metrics") or {}).get(key)
     try:
-        return float(val) if val is not None else 0.0
+        return float(value) if value is not None else 0.0
     except (TypeError, ValueError):
         return 0.0
 
@@ -127,310 +91,225 @@ def _total(logs: list[dict], key: str) -> float:
     return sum(_num(log, key) for log in logs)
 
 
-def _aggregate(logs: list[dict]) -> dict[str, Any]:
-    """Collapse a player's window of game rows into one set of metrics.
+def _rate(numer: float, denom: float, key: str, scale: float = 1.0) -> Optional[float]:
+    """``scale * numer / denom`` rounded for ``key``; None on a zero denominator."""
+    if denom <= 0:
+        return None
+    return round(scale * numer / denom, _places(key))
 
-    Counting stats sum straight across the games. Rates are rebuilt from
-    those sums (or, for the optional NGS metrics, from a value/denominator
-    weighted average) rather than averaged from per-game rates, so the result
-    matches a from-scratch recompute exactly. A rate whose denominator is zero
-    across the window is omitted, not reported as 0 — the app needs to be
-    able to tell "didn't throw a pass this window" from "threw for 0 yards".
-    """
+
+def _put(result: dict[str, Any], key: str, value: Optional[float]) -> None:
+    if value is not None:
+        result[key] = value
+
+
+def _aggregate_skater(logs: list[dict]) -> dict[str, Any]:
+    hours = _total(logs, "toi_seconds") / 3600
+    goals = _total(logs, "goals")
+    ixg = _total(logs, "ixg")
+    sog = _total(logs, "shots_on_goal")
+    result: dict[str, Any] = {
+        "goals": int(round(goals)),
+        "assists": int(round(_total(logs, "assists"))),
+        "points": int(round(_total(logs, "points"))),
+        "shots_on_goal": int(round(sog)),
+        "ixg": round(ixg, _places("ixg")),
+        "gax": round(goals - ixg, _places("gax")),
+        "games": len(logs),
+    }
+    per_hour = {
+        "points_per_60": "points", "goals_per_60": "goals", "ixg_per_60": "ixg",
+        "shots_per_60": "shot_attempts", "hd_shots_per_60": "hd_shots",
+        "blocks_per_60": "blocks", "hits_per_60": "hits",
+    }
+    for out_key, game_key in per_hour.items():
+        _put(result, out_key, _rate(_total(logs, game_key), hours, out_key))
+    _put(result, "shooting_pct", _rate(goals, sog, "shooting_pct", 100))
+    return result
+
+
+def _aggregate_goalie(logs: list[dict]) -> dict[str, Any]:
+    hours = _total(logs, "toi_seconds") / 3600
+    against = _total(logs, "goals_against")
+    shots = _total(logs, "shots_against")
+    gsax = _total(logs, "xga") - against
+    result: dict[str, Any] = {
+        "saves": int(round(_total(logs, "saves"))),
+        "goals_against": int(round(against)),
+        "games": len(logs),
+        "wins": int(round(_total(logs, "decision_win"))),
+    }
+    if shots > 0:
+        result["sv_pct"] = round(1 - against / shots, _places("sv_pct"))
+    hd_shots = _total(logs, "hd_shots_against")
+    if hd_shots > 0:
+        result["hd_sv_pct"] = round(1 - _total(logs, "hd_goals_against") / hd_shots, _places("hd_sv_pct"))
+    if hours > 0:
+        result["gsax"] = round(gsax, _places("gsax"))
+        _put(result, "gaa", _rate(against, hours, "gaa"))
+        _put(result, "gsax_per_60", _rate(gsax, hours, "gsax_per_60"))
+        _put(result, "shots_against_per_60", _rate(shots, hours, "shots_against_per_60"))
+    return result
+
+
+def _aggregate(logs: list[dict], player_type: str = "f") -> dict[str, Any]:
+    """Collapse a player's window of game rows into one set of metrics."""
     if not logs:
         return {}
-
-    result: dict[str, Any] = {}
-    for game_key, out_key in SUM_KEYS.items():
-        result[out_key] = int(round(_total(logs, game_key)))
-    result["tackles"] = int(round(sum(_total(logs, k) for k in TACKLE_KEYS)))
-
-    attempts = _total(logs, "attempts")
-    sacks_suffered = _total(logs, "sacks_suffered")
-    carries = _total(logs, "carries")
-    receptions = _total(logs, "receptions")
-    targets = _total(logs, "targets")
-    pass_yards = _total(logs, "passing_yards")
-    completions = _total(logs, "completions")
-    interceptions = _total(logs, "interceptions")
-    pass_tds = _total(logs, "passing_tds")
-    rush_yards = _total(logs, "rushing_yards")
-    rec_yards = _total(logs, "receiving_yards")
-    receiving_air_yards = _total(logs, "receiving_air_yards")
-    fumbles = sum(_total(logs, k) for k in FUMBLE_KEYS)
-    passing_epa_sum = _total(logs, "passing_epa")
-    rushing_epa_sum = _total(logs, "rushing_epa")
-    receiving_epa_sum = _total(logs, "receiving_epa")
-
-    if attempts > 0:
-        result["cmp_pct"] = round(100 * completions / attempts, _places("cmp_pct"))
-        result["ypa"] = round(pass_yards / attempts, _places("ypa"))
-        result["int_rate"] = round(100 * interceptions / attempts, _places("int_rate"))
-        rating = passer_rating(completions, attempts, pass_yards, pass_tds, interceptions)
-        if rating is not None:
-            result["passer_rating"] = rating
-
-    dropbacks = attempts + sacks_suffered
-    if dropbacks > 0:
-        result["sack_rate"] = round(100 * sacks_suffered / dropbacks, _places("sack_rate"))
-        result["passing_epa"] = round(passing_epa_sum / dropbacks, _places("passing_epa"))
-
-    if carries > 0:
-        result["ypc"] = round(rush_yards / carries, _places("ypc"))
-        # Rush EPA is a window TOTAL, not a rate — reported whenever the
-        # player actually carried the ball in the window, not divided by
-        # anything.
-        result["rushing_epa"] = round(rushing_epa_sum, _places("rushing_epa"))
-
-    touches = carries + receptions
-    if touches > 0:
-        result["fumble_rate"] = round(100 * fumbles / touches, _places("fumble_rate"))
-
-    if targets > 0:
-        result["catch_pct"] = round(100 * receptions / targets, _places("catch_pct"))
-        # Same total-not-rate treatment as rushing_epa, gated on targets
-        # (the player was actually a receiving option) rather than divided.
-        result["receiving_epa"] = round(receiving_epa_sum, _places("receiving_epa"))
-
-    if receiving_air_yards:
-        result["racr"] = round(rec_yards / receiving_air_yards, _places("racr"))
-
-    # Optional NGS-derived rates: only present when ingest's weekly NGS join
-    # populated them, so most game logs simply won't have these keys and the
-    # loop below is a no-op for those players.
-    for metric, denom_key in WEIGHTED_NGS.items():
-        numer = 0.0
-        denom = 0.0
-        for log in logs:
-            metrics = log.get("metrics") or {}
-            value = metrics.get(metric)
-            if value is None:
-                continue
-            weight = _num(log, denom_key)
-            if weight <= 0:
-                continue
-            numer += float(value) * weight
-            denom += weight
-        if denom > 0:
-            result[metric] = round(numer / denom, _places(metric))
-
-    return result
+    return _aggregate_goalie(logs) if player_type == "g" else _aggregate_skater(logs)
 
 
 def _delta(now: dict[str, Any], then: dict[str, Any]) -> dict[str, Any]:
     """Change from the prior window to the current one, for shared metrics."""
-    out: dict[str, Any] = {}
-    for metric, value in now.items():
-        if metric in then:
-            out[metric] = round(float(value) - float(then[metric]), _places(metric))
-    return out
+    return {
+        metric: round(float(value) - float(then[metric]), _places(metric))
+        for metric, value in now.items()
+        if metric in then
+    }
 
 
-def build_rows(logs: list[dict]) -> list[dict]:
-    """Build every active (player, phase, side, week-window) row."""
-    anchors: dict[tuple[int, str], int] = {}
+def _day(value: Any) -> date:
+    return date.fromisoformat(str(value)[:10])
+
+
+def _anchors(logs: list[dict]) -> dict[tuple[int, str], tuple[date, Optional[int]]]:
+    """Per (season, phase): the latest game date and that date's league week."""
+    anchors: dict[tuple[int, str], tuple[date, Optional[int]]] = {}
     for log in logs:
-        week = log.get("week")
-        if week is None:
-            continue
         context = (int(log["season"]), str(log.get("season_type") or "REG"))
-        anchors[context] = max(anchors.get(context, 0), int(week))
+        day = _day(log["game_date"])
+        if context not in anchors or day > anchors[context][0]:
+            anchors[context] = (day, log.get("week"))
+    return anchors
+
+
+def _week_of(day: date, anchor: date, anchor_week: Optional[int]) -> Optional[int]:
+    """League week of ``day`` given the anchor's own week (7-day blocks from Monday)."""
+    if anchor_week is None:
+        return None
+    blocks = (anchor - timedelta(days=anchor.weekday()) - (day - timedelta(days=day.weekday()))).days // 7
+    return max(1, int(anchor_week) - blocks)
+
+
+def build_rows(logs: list[dict], now: Optional[datetime] = None) -> list[dict]:
+    """Build every active (player, phase, type, window) row."""
+    stamp = (now or datetime.now(UTC)).isoformat()
+    anchors = _anchors(logs)
 
     by_player: dict[tuple[int, str, str], list[dict]] = {}
     for log in logs:
-        phase = str(log.get("season_type") or "REG")
-        key = (log["player_id"], phase, log["player_type"])
+        key = (log["player_id"], str(log.get("season_type") or "REG"), log["player_type"])
         by_player.setdefault(key, []).append(log)
 
     rows: list[dict] = []
     for (player_id, season_type, player_type), player_logs in by_player.items():
-        player_logs = sorted(
-            player_logs,
-            key=lambda r: (r["game_date"], r.get("week") or 0),
-            reverse=True,
-        )
-        season = player_logs[0]["season"]
-        anchor = anchors.get((int(season), season_type))
-        if anchor is None:
-            continue
-
+        player_logs = sorted(player_logs, key=lambda r: str(r["game_date"]), reverse=True)
+        season = int(player_logs[0]["season"])
+        anchor, anchor_week = anchors[(season, season_type)]
         for window in WINDOW_WEEKS:
-            current_start = anchor - window + 1
-            prior_start = anchor - (window * 2) + 1
-            prior_end = current_start - 1
-            current = [
-                log for log in player_logs
-                if current_start <= int(log.get("week") or -1) <= anchor
-            ]
-            prior = [
-                log for log in player_logs
-                if prior_start <= int(log.get("week") or -1) <= prior_end
-            ]
+            span = timedelta(days=7 * window)
+            current = [r for r in player_logs if anchor - span < _day(r["game_date"]) <= anchor]
+            prior = [r for r in player_logs if anchor - 2 * span < _day(r["game_date"]) <= anchor - span]
             if not current:
                 continue
-            team = current[0].get("team")
-
-            now_metrics = _aggregate(current)
-            then_metrics = _aggregate(prior)
-
+            now_metrics = _aggregate(current, player_type)
+            then_metrics = _aggregate(prior, player_type)
             rows.append({
                 "player_id": player_id,
                 "season": season,
                 "season_type": season_type,
                 "player_type": player_type,
                 "window_weeks": window,
-                "as_of": current[0]["game_date"],
-                "start_week": current_start,
-                "end_week": anchor,
-                "team": team,
+                "as_of": str(current[0]["game_date"])[:10],
+                "start_week": _week_of(anchor - span + timedelta(days=1), anchor, anchor_week),
+                "end_week": anchor_week,
+                "team": current[0].get("team"),
                 "games": len(current),
                 "plays": sum(int(r.get("plays") or 0) for r in current),
                 "touches": sum(int(r.get("touches") or 0) for r in current),
                 "metrics": now_metrics,
                 "prior_metrics": then_metrics,
                 "delta": _delta(now_metrics, then_metrics),
-                "updated_at": datetime.now(UTC).isoformat(),
+                "updated_at": stamp,
             })
-
     return rows
 
 
-def _fetch_logs(client, season: int) -> list[dict]:
-    """Page through every game log for the season.
-
-    Unlike baseball's date-limited fetch, this pulls the whole season so both
-    the current and prior shared week windows are available for either phase.
-    A full NFL season of game logs is still small enough to page cheaply.
-    """
+def _paged(fetch_page: Callable[[int, int], list[dict]]) -> list[dict]:
     rows: list[dict] = []
-    page_size = 1000
     offset = 0
     while True:
-        resp = (
-            client.table("player_game_logs")
-            .select("*")
-            .eq("season", season)
-            .order("game_date", desc=True)
-            .range(offset, offset + page_size - 1)
-            .execute()
-        )
-        page = resp.data or []
+        page = fetch_page(offset, offset + PAGE_SIZE - 1) or []
         rows.extend(page)
-        if len(page) < page_size:
-            break
-        offset += page_size
-    return rows
+        if len(page) < PAGE_SIZE:
+            return rows
+        offset += PAGE_SIZE
 
 
-def _fetch_snapshot_player_ids(client, season: int) -> set[tuple[int, str]]:
-    """Player and phase keys the app can resolve into a profile."""
-    rows: list[dict] = []
-    page_size = 1000
-    offset = 0
-    while True:
-        resp = (
-            client.table("player_snapshots")
-            .select("id,season_type")
-            .eq("season", season)
-            .range(offset, offset + page_size - 1)
-            .execute()
-        )
-        page = resp.data or []
-        rows.extend(page)
-        if len(page) < page_size:
-            break
-        offset += page_size
-    return {
-        (int(row["id"]), str(row.get("season_type") or "REG"))
-        for row in rows
-    }
+def fetch_logs(client: Any, season: int) -> list[dict]:
+    """Every game log for the season (both phases), in a stable order."""
+    return _paged(lambda lo, hi: (
+        client.table("player_game_logs")
+        .select("*")
+        .eq("season", season)
+        .order("game_date", desc=True)
+        .order("player_id")
+        .order("player_type")
+        .range(lo, hi)
+        .execute()
+        .data
+    ))
+
+
+def fetch_snapshot_keys(client: Any, season: int) -> set[tuple[int, str]]:
+    """(player id, phase) pairs the app can resolve into a profile."""
+    rows = _paged(lambda lo, hi: (
+        client.table("player_snapshots")
+        .select("id,season_type")
+        .eq("season", season)
+        .order("id")
+        .order("season_type")
+        .range(lo, hi)
+        .execute()
+        .data
+    ))
+    return {(int(row["id"]), str(row.get("season_type") or "REG")) for row in rows}
 
 
 def _routable_logs(logs: list[dict], snapshot_ids: set[Any]) -> list[dict]:
-    """Drop feed rows that cannot resolve to a player profile in the app."""
+    """Drop rows that cannot resolve to a player profile in the app.
+
+    Works on game logs (``player_id``) and recent-form rows alike.
+    """
     return [
         row for row in logs
         if int(row["player_id"]) in snapshot_ids
-        or (
-            int(row["player_id"]),
-            str(row.get("season_type") or "REG"),
-        ) in snapshot_ids
+        or (int(row["player_id"]), str(row.get("season_type") or "REG")) in snapshot_ids
     ]
 
 
-def _upsert(client, rows: list[dict]) -> None:
-    if not rows:
-        return
-    batch_size = 500
-    for i in range(0, len(rows), batch_size):
-        batch = rows[i : i + batch_size]
-        try:
-            client.table("player_recent_form").upsert(
-                batch,
-                on_conflict=(
-                    "player_id,season,season_type,player_type,window_weeks"
-                ),
-            ).execute()
-        except Exception:
-            logger.exception("Upsert failed for batch starting at %d", i)
-            raise
-
-
-def _table_exists(client) -> bool:
-    """True once the player_recent_form migration has been applied.
-
-    Between shipping this script and applying the migration, the table
-    legitimately doesn't exist yet. Failing the whole nightly for that would
-    also fail the snapshot and game-log ingests that share the job, so this
-    one condition is a warn-and-skip. Every other error still fails loudly.
-    """
-    try:
-        client.table("player_recent_form").select("player_id").limit(1).execute()
-        return True
-    except Exception as exc:  # noqa: BLE001 — inspecting the provider's message
-        message = str(exc)
-        if "player_recent_form" in message and (
-            "PGRST205" in message
-            or "does not exist" in message
-            or "schema cache" in message
-        ):
-            return False
-        raise
+def _upsert(client: Any, rows: list[dict]) -> None:
+    for i in range(0, len(rows), UPSERT_BATCH):
+        client.table("player_recent_form").upsert(
+            rows[i:i + UPSERT_BATCH],
+            on_conflict="player_id,season,season_type,player_type,window_weeks",
+        ).execute()
 
 
 def run(season: Optional[int] = None) -> None:
     season = resolve_season(season)
     client = _client()
 
-    if not _table_exists(client):
-        logger.warning(
-            "public.player_recent_form is missing — apply "
-            "supabase/migrations/20260727000000_create_player_recent_form.sql. "
-            "Skipping the rollup so the rest of the nightly still completes."
-        )
-        return
-
     logger.info("Fetching game logs for %d...", season)
-    logs = _fetch_logs(client, season)
+    logs = fetch_logs(client, season)
     logger.info("  %d game-log rows", len(logs))
-
     if not logs:
-        logger.warning("No game logs for %d — nothing to roll up.", season)
+        logger.warning("No game logs for %d; nothing to roll up.", season)
         return
 
-    snapshot_ids = _fetch_snapshot_player_ids(client, season)
-    logs = _routable_logs(logs, snapshot_ids)
-    logger.info("  %d routable game-log rows", len(logs))
-
-    rows = build_rows(logs)
+    rows = build_rows(_routable_logs(logs, fetch_snapshot_keys(client, season)))
     logger.info("Built %d recent-form rows", len(rows))
-
-    (
-        client.table("player_recent_form")
-        .delete()
-        .eq("season", season)
-        .execute()
-    )
+    client.table("player_recent_form").delete().eq("season", season).execute()
     _upsert(client, rows)
     logger.info("Done.")
 
@@ -442,9 +321,6 @@ def _parse_args() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
-    args = _parse_args()
-    run(season=args.season)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    run(season=_parse_args().season)

@@ -1,5 +1,5 @@
--- Run against a disposable database initialized with schema.sql and both
--- refresh migrations. Everything is rolled back at the end.
+-- Run against a disposable database initialized with every migration in
+-- supabase/migrations. Everything is rolled back at the end.
 begin;
 do $$
 declare first_id uuid; reupload uuid; changed_id uuid; result jsonb; live_published timestamptz;
@@ -10,12 +10,15 @@ begin
 
   first_id := (public.record_data_refresh_probe(2026,'fp-1',p_force => true)->>'refresh_id')::uuid;
   insert into public.player_snapshots_refresh(refresh_id,id,name,team,season,season_type,player_type)
-    values (first_id,1,'Fixture','SEA',2026,'REG','qb');
+    values (first_id,1,'Fixture','EDM',2026,'REG','f');
   insert into public.player_game_logs_refresh(refresh_id,player_id,season,season_type,game_id,game_date,week,player_type)
-    values (first_id,1,2026,'REG','2026_01_SEA_NE','2026-09-10',1,'qb');
+    values (first_id,1,2026,'REG','2026020001','2026-10-10',1,'f');
   insert into public.player_recent_form_refresh(refresh_id,player_id,season,season_type,player_type,window_weeks,as_of)
-    values (first_id,1,2026,'REG','qb',3,'2026-09-10');
-  perform public.update_data_refresh_build(first_id,array['REG'],1,'2026-09-10',1,1,1,1,1,'ready','pending');
+    values (first_id,1,2026,'REG','f',2,'2026-10-10');
+  perform public.update_data_refresh_build(
+    first_id,array['REG'],1,'2026-10-10',1,1,1,1,1,
+    p_shots_status => 'pending', p_summary_status => 'ready'
+  );
   update public.data_refresh_runs set content_hash = 'hash-a' where refresh_id = first_id;
   result := public.publish_data_refresh(first_id);
   if result->>'status' not in ('published','degraded') then raise exception 'publish failed: %', result; end if;

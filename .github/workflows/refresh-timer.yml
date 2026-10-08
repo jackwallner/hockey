@@ -1,8 +1,8 @@
-name: NFL Refresh Timer
+name: NHL Refresh Timer
 
 # Sleeps until the next moment the schedule planner asked for, then starts the
-# refresh workflow. GitHub's cron is best effort and skipped five straight hours
-# on the 2026 opening Sunday, so each refresh run books its own successor here.
+# refresh workflow. GitHub's cron is best effort and has skipped hours at a time,
+# so each refresh run books its own successor here.
 # Only the newest timer survives: a newer plan cancels the older sleep.
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
         default: "900"
 
 concurrency:
-  group: nfl-refresh-timer
+  group: nhl-refresh-timer
   cancel-in-progress: true
 
 jobs:

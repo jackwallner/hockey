@@ -1,20 +1,16 @@
-name: NFL Enrichment
+name: NHL Enrichment
 
-# Injury reports, snap counts and contracts publish on their own daily
-# schedules, not with the weekly stat files the refresh probe watches, so
-# player profiles and team ratings also rebuild here twice a day in season and
-# once a day off season. Writes only the enrichment tables.
+# Player profiles, team ratings and game projections rebuild once a night in
+# season (October to June), after MoneyPuck's overnight regeneration. Writes only
+# the enrichment tables. The job body still runs the football-era script and is
+# replaced by the enrichment port.
 on:
   schedule:
-    - cron: "41 8,20 * 9-12,1-2 *"
-    - cron: "41 9 * 3-8 *"
+    - cron: "0 11 * 10-12,1-6 *"
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 concurrency:
-  group: nfl-enrichment
+  group: nhl-enrichment
   cancel-in-progress: false
 
 jobs:
