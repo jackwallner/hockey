@@ -16,8 +16,10 @@ paths:
   `PREPARE_FOR_SUBMISSION`. No build uploaded yet.
 - Products: `com.jackwallner.hockey.pro.yearly` ($9.99/yr, 1-week trial),
   `com.jackwallner.hockey.pro.monthly` ($1.99/mo, 1-week trial),
-  `com.jackwallner.hockey.pro` ($19.99 lifetime). Created in RevenueCat; the
-  ASC side is created by the fleet pricing tooling (`~/ios/pricing`).
+  `com.jackwallner.hockey.pro` ($19.99 lifetime). Created in RevenueCat
+  (`proj5c659dbc`) and in ASC on 2026-10-08 (subs `6820647519` monthly,
+  `6820648105` yearly, with 1-week FREE_TRIAL intros; lifetime at $19.99 in
+  175 territories). PPP ladders still to apply with `~/ios/pricing`.
 - The first IAP submission must ride with the version (Guideline 2.1(b)),
   and the "Add for Review" step is UI-only: see the `ios-dev` skill.
 

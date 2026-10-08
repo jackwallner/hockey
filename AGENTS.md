@@ -53,7 +53,6 @@ an event-aware GitHub Actions refresh.
 |---|---|---|
 | `.claude/rules/backend-pipeline.md` | sources, schema, refresh cadence, bundle regeneration | backend/, supabase/, data scripts |
 | `.claude/rules/app-store-release.md` | release state, draft-version helper, build numbers | project.yml, fastlane/, scripts/asc-* |
-| `.claude/rules/screenshot-history.md` | duplicate-screenshot history (inherited) | screenshot uploads |
 
 ---
 Shared iOS conventions (build, simulator, release scripts, ASC key, review funnel, signing, gotchas):

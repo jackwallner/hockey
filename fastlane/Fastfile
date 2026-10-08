@@ -33,7 +33,7 @@ platform :ios do
       key_filepath: ENV["ASC_KEY_PATH"]
     )
 
-    app = Spaceship::ConnectAPI::App.find("com.jackwallner.football")
+    app = Spaceship::ConnectAPI::App.find("com.jackwallner.hockey")
     version = app.get_edit_app_store_version
     UI.user_error!("No editable version found") unless version
 
@@ -42,7 +42,7 @@ platform :ios do
     # These were hardcoded, and they were the *baseball* app's: "Visual Statcast
     # percentile rankings and MLB Savant-style metrics ... Hitting, Pitching,
     # Fielding, and Running", left behind when this repo was forked. Running this
-    # lane would have pushed MLB copy onto a live NFL listing, in eleven locales,
+    # lane would have pushed MLB copy onto a live NHL listing, in eleven locales,
     # with nothing on screen to suggest it had happened. The metadata directory is
     # the single source of truth for every other locale already; there is no
     # reason for these eleven to be the exception.
@@ -102,21 +102,20 @@ platform :ios do
         demo_user: "N/A - no login or account system",
         demo_password: "",
         notes: <<~NOTES
-          The App Store name is Football Next: StatScout. The app is named Gridiron StatScout in-app and StatScout on the Home Screen. It is a read-only NFL statistics viewer with no accounts or sign-in.
+          The App Store name is Hockey Next: StatScout. The app is named Hockey StatScout in-app and StatScout on the Home Screen. It is a read-only NHL statistics viewer with no accounts or sign-in.
 
           Core flow:
           1. Launch the app and open the Stats tab for current-season player rankings.
-          2. Filter by position, choose a statistic, and open a player profile for percentile rankings, standard stats, bio, injury status, contract value, and game log.
-          3. Open Games for the schedule, posted scores, box scores, and advanced EPA breakdowns.
-          4. Open Teams for records, standings, team power ratings, and projected margins.
-          5. Contract Value is available in player profiles and on the Stats board. The top-ranked player is free; the full board is part of StatScout+.
-          6. Following, player comparisons, Trends, Recent Form, and historical views are available from their tabs or player/team pages.
+          2. Filter by Forwards, Defensemen or Goalies, choose a statistic, and open a player profile for percentile rankings, standard stats, bio and game log.
+          3. Open Games for the nightly schedule, final scores, box scores and the expected-goals breakdown of each game.
+          4. Open Teams for records, standings, team power ratings and projected margins.
+          5. Following, player comparisons, Trends, Recent Form and historical views are available from their tabs or player/team pages.
 
           StatScout+ features (IAP via RevenueCat):
-          - Trends, Recent Form, player comparisons, team scouting, historical seasons back to 2000, and All-Time career percentiles
+          - Trends, Recent Form, player comparisons, team scouting, historical seasons back to 2008-09, and All-Time career percentiles
           - Restore Purchases is available in Settings; purchases can be tested with an Apple sandbox account
 
-          Data: public nflverse / nflreadpy NFL statistics, refreshed nightly. Not affiliated with the NFL, any NFL team, or the NFLPA. No league, team, or player imagery is used.
+          Data: expected goals and shot data from MoneyPuck.com (public, attributed in Settings), schedule, box scores and bios from public NHL data, refreshed after every night's games. Not affiliated with the NHL, any NHL team, the NHLPA or MoneyPuck. No league, team, or player imagery is used.
 
           The app has no accounts, social features, live scores, play-by-play, betting odds, wagers, or fantasy team management. Game projections are informational estimates, not betting odds.
         NOTES
