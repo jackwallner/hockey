@@ -2,8 +2,10 @@ name: NHL Enrichment
 
 # Player profiles, team ratings and game projections rebuild once a night in
 # season (October to June), after MoneyPuck's overnight regeneration. Writes only
-# the enrichment tables. The job body still runs the football-era script and is
-# replaced by the enrichment port.
+# the enrichment tables (backend/ingest_enrichment.py, team ratings in
+# backend/team_ratings.py). Player bios come from one NHL call per player, so
+# backend/.cache is restored between runs; a bio younger than 30 days is not
+# fetched again.
 on:
   schedule:
     - cron: "0 11 * 10-12,1-6 *"
@@ -33,7 +35,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
-      - name: Build player profiles and team ratings
+      - name: Compute cache week
+        id: week
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore cached bios and finished-season files
+        uses: actions/cache@v4
+        with:
+          path: backend/.cache
+          key: nhl-cache-${{ steps.week.outputs.week }}
+          restore-keys: nhl-cache-
+
+      - name: Build player profiles, team ratings and projections
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

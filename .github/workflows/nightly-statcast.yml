@@ -123,6 +123,19 @@ jobs:
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
+      - name: Compute cache week
+        id: week
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Player bios (30-day TTL) and finished-season downloads, so the
+      # enrichment step below does not refetch about 700 bios on every run.
+      - name: Restore cached bios and finished-season files
+        uses: actions/cache@v4
+        with:
+          path: backend/.cache
+          key: nhl-cache-${{ steps.week.outputs.week }}
+          restore-keys: nhl-cache-
+
       # The backend tests run in CI (ci.yml) on every push; repeating them here
       # would only delay the publish.
       - name: Build and atomically publish current season
@@ -142,10 +155,10 @@ jobs:
           fi
           python backend/refresh.py --refresh-id "$REFRESH_ID" --season "$SEASON" "${args[@]}" 2>&1 | tee refresh.log
 
-      # Game pages (cumulative xG race, team and player lines). Runs after the
-      # atomic publish (or its unchanged no-op). The football-era script is
-      # still in place until the game-details port lands, so a failure here
-      # must not fail the refresh.
+      # Game pages (cumulative xG race, team and player lines): builds finals
+      # that have no game_details row yet and re-ranks the stored ones. Runs
+      # after the atomic publish (or its unchanged no-op); a failure here must
+      # not fail the refresh, the next run picks the missing games up.
       - name: Build advanced game details
         if: ${{ !cancelled() }}
         continue-on-error: true
@@ -158,9 +171,9 @@ jobs:
           set -o pipefail
           python backend/ingest_game_details.py --season "$SEASON" 2>&1 | tee game_details.log
 
-      # Player profiles, team ratings and game projections. New tables only, so
+      # Player profiles, team ratings and game projections. Separate tables, so
       # a failure here never touches the published snapshots; the nightly
-      # enrichment workflow retries it. Pending the enrichment port.
+      # enrichment workflow retries it.
       - name: Build player profiles and team ratings
         if: ${{ !cancelled() }}
         continue-on-error: true

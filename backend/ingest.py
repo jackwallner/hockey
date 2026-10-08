@@ -31,13 +31,10 @@ Changed:
   ``enrichment_status`` now receives the single key ``"summary"`` (NHL stats
   REST: ``ready`` / ``pending`` / ``degraded``); it replaces the NFL ``ngs`` and
   ``pfr`` keys, and ``refresh.py`` maps it onto ``summary_status``.
-  The ``shots`` key (MoneyPuck shots file) is owned by the game-details pass.
   ``build_snapshot_rows`` is unchanged in signature, but ``qual_scale`` now
   prorates by games played out of 82.
 Removed (NFL only): ``gsis_to_id``, ``passer_rating``, ``merge_ngs``,
-  ``merge_pfr_defense``, ``load_headshots``, ``NGS_FIRST_SEASON``. The modules
-  that still import them (``ingest_game_details``, ``ingest_enrichment``) are
-  ported in a later pass.
+  ``merge_pfr_defense``, ``load_headshots``, ``NGS_FIRST_SEASON``.
   ``player_type_from_position(position)`` now takes one argument.
 
 Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY. STATCAST_SEASON overrides the

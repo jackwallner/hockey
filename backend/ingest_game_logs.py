@@ -89,7 +89,7 @@ GOALIE_KEYS = (
 SHOT_COLUMNS = ("game_id", "xGoal", "goal", "shooterPlayerId", "goalieIdForShot")
 STORE_PLACES = 3
 
-_shots_memo: dict[int, pd.DataFrame] = {}
+_shots_memo: dict[tuple[int, tuple[str, ...]], pd.DataFrame] = {}
 
 
 # --------------------------------------------------------------------------- #
@@ -303,26 +303,41 @@ def build_game_rows(
 # --------------------------------------------------------------------------- #
 # Network
 # --------------------------------------------------------------------------- #
-def load_shot_tables(season: int, live: bool) -> Optional[ShotTables]:
-    """MoneyPuck shot file for the season, grouped; None when it is not published.
+def load_shots_frame(
+    season: int, live: bool, columns: Iterable[str] = SHOT_COLUMNS
+) -> Optional[pd.DataFrame]:
+    """MoneyPuck shot file for the season, ``columns`` only; None when absent.
 
-    Downloaded once per process. Finished seasons also live in
+    Downloaded once per process and column set. Finished seasons also live in
     ``backend/.cache/`` so a re-ingest does not download 20 MB again.
     """
-    if season not in _shots_memo:
+    wanted = tuple(columns)
+    key = (season, wanted)
+    if key not in _shots_memo:
         content = http_get(SHOTS_URL.format(season=season), cache=not live)
         if not content:
             return None
         with zipfile.ZipFile(io.BytesIO(content)) as archive:
             name = next(n for n in archive.namelist() if n.endswith(".csv"))
-            frame = pd.read_csv(archive.open(name), usecols=lambda c: c in SHOT_COLUMNS)
+            frame = pd.read_csv(archive.open(name), usecols=lambda c: c in wanted)
         logger.info("MoneyPuck shots %s: %d rows", season, len(frame))
-        _shots_memo[season] = frame
-    return build_shot_tables(_shots_memo[season])
+        _shots_memo[key] = frame
+    return _shots_memo[key]
 
 
-def fetch_gamecenter(game_id: str, kind: str) -> Optional[dict[str, Any]]:
-    content = http_get(NHL_API.format(game_id=game_id, kind=kind))
+def load_shot_tables(season: int, live: bool) -> Optional[ShotTables]:
+    """MoneyPuck shot file for the season, grouped; None when it is not published."""
+    frame = load_shots_frame(season, live)
+    return None if frame is None else build_shot_tables(frame)
+
+
+def fetch_gamecenter(game_id: str, kind: str, cache: bool = False) -> Optional[dict[str, Any]]:
+    """One NHL gamecenter payload (``boxscore``, ``play-by-play``, ``right-rail``).
+
+    ``cache`` keeps the response in ``backend/.cache/``; only finished seasons
+    pass it, since a final game's payloads no longer change.
+    """
+    content = http_get(NHL_API.format(game_id=game_id, kind=kind), cache=cache)
     return json.loads(content) if content else None
 
 
@@ -333,7 +348,7 @@ def fetch_final_games(client: Any, season: int) -> list[dict[str, Any]]:
     while True:
         page = (
             client.table("games")
-            .select("game_id,season,season_type,game_date,week,away_team,home_team")
+            .select("game_id,season,season_type,game_date,week,away_team,home_team,away_score,home_score,overtime")
             .eq("season", season)
             .not_.is_("home_score", "null")
             .not_.is_("away_score", "null")

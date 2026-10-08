@@ -5,9 +5,9 @@ iOS app. The contract is `project-docs/architecture/HOCKEY_CONTRACT.md`;
 implementation notes are in `.claude/rules/backend-pipeline.md`.
 
 Status: snapshots, the historical backfill, the career rollup, the historical
-bundle export, the games sync, game logs, Recent Form, the source probe and the
-event-aware refresh are implemented. Game details and enrichment are ported in
-a later pass (the last section; the code still describes the football chassis).
+bundle export, the games sync, game logs, Recent Form, game details, enrichment
+(player profiles, team ratings, projections), the source probe and the
+event-aware refresh are all implemented.
 
 ## Local setup
 
@@ -61,12 +61,18 @@ backend/.venv/bin/python backend/source_probe.py --force --json
 backend/.venv/bin/python backend/refresh.py --refresh-id <id> --season 2026
 ```
 
-Tests (the two football-era files, `test_enrichment.py` and
-`test_game_details.py`, fail until the enrichment and game-details port):
+Game details and enrichment (after the game logs and snapshots exist):
 
 ```bash
-backend/.venv/bin/python -m pytest backend/tests -q \
-  --ignore=backend/tests/test_enrichment.py --ignore=backend/tests/test_game_details.py
+backend/.venv/bin/python backend/ingest_game_details.py --season 2025 --full   # ~20 min, then cached
+backend/.venv/bin/python backend/ingest_game_details.py --season 2026          # new finals + re-rank
+backend/.venv/bin/python backend/ingest_enrichment.py --season 2026            # ~12 min on a cold bio cache
+```
+
+Tests:
+
+```bash
+backend/.venv/bin/python -m pytest backend/tests -q
 ```
 
 The SQL fixtures `backend/tests/publisher_integration.sql` and
@@ -158,9 +164,21 @@ MoneyPuck.com. Schedule, box scores and bios from the NHL."
   and `summary_status` (NHL stats summary); `ngs_status` and `pfr_status` stay
   `unknown`.
 
-## Ported in a later pass
+## Game details and enrichment
 
-- **Game details and enrichment** (`ingest_game_details.py`,
-  `ingest_enrichment.py`, `team_ratings.py`): cumulative xG race, player
-  profiles, team ratings and projections still describe the football
-  implementation in the code.
+- **Game details** (`ingest_game_details.py`): one `game_details` row per final
+  game from the MoneyPuck shots file plus the NHL boxscore, play-by-play and
+  `right-rail` (power play and faceoff totals). `team_stats`, `players`,
+  `win_probability` (the cumulative xG race, `[t, away_xg, home_xg, away_goals,
+  home_goals]`) and `big_plays` follow the contract; rated numbers carry
+  `{value, pct}` ranked across the season's games of the same phase. Incremental
+  by default: new finals are built and every stored row is re-ranked from its
+  stored values, rewriting only rows whose percentiles moved. `--full` rebuilds.
+  Runs after the publish in `nightly-statcast.yml`.
+- **Enrichment** (`ingest_enrichment.py`, `team_ratings.py`): `player_profiles`
+  (NHL landing bios cached 30 days in `backend/.cache/players/`, ice time from
+  `player_game_logs`, power-play and penalty-kill time from MoneyPuck),
+  `team_ratings` (goals per game against an average club, every constant in the
+  `team_ratings.py` docstring) and `game_projections` (home margin in goals and
+  a logistic win probability for each unplayed game). Runs nightly from
+  `enrichment.yml` and after each refresh.
