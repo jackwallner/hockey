@@ -206,7 +206,7 @@ struct OnboardingCards: View {
 
     var body: some View {
         ZStack {
-            GridironPalette.canvas.ignoresSafeArea()
+            RinkPalette.canvas.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 HStack {
@@ -214,8 +214,8 @@ struct OnboardingCards: View {
                     Button("Skip") {
                         withAnimation { hasCompletedOnboarding = true }
                     }
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(RinkPalette.turf)
                     .padding(.trailing, 20)
                     .opacity(isLastPage ? 0 : 1)
                     .allowsHitTesting(!isLastPage)
@@ -287,16 +287,16 @@ struct OnboardingCards: View {
                 // fills this slot in place instead of being inserted, so nothing
                 // above the button shifts either.
                 Text(trialError ?? " ")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.performanceLow)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.performanceLow)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .frame(height: 32, alignment: .top)
 
                 if let disclosure = trialDisclosure {
                     Text(disclosure)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -307,8 +307,8 @@ struct OnboardingCards: View {
                     Link("Terms", destination: StatScoutLegal.termsURL)
                     Link("Privacy", destination: StatScoutLegal.privacyURL)
                 }
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
             }
             .opacity(showsUpsellBlock ? 1 : 0)
             .allowsHitTesting(showsUpsellBlock)
@@ -329,11 +329,11 @@ struct OnboardingCards: View {
                                 ProgressView().tint(.white)
                             }
                         }
-                        .font(GridironType.bodyBold)
+                        .font(RinkType.bodyBold)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(GridironPalette.turf)
+                        .background(RinkPalette.turf)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                     .buttonStyle(.plain)
@@ -344,11 +344,11 @@ struct OnboardingCards: View {
                     withAnimation { currentPage += 1 }
                 } label: {
                     Text("Continue")
-                        .font(GridironType.bodyBold)
+                        .font(RinkType.bodyBold)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
-                        .background(GridironPalette.turf)
+                        .background(RinkPalette.turf)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
@@ -363,12 +363,12 @@ struct OnboardingCards: View {
                     HStack(spacing: 8) {
                         ProgressView()
                             .progressViewStyle(.circular)
-                            .tint(GridironPalette.inkSecondary)
+                            .tint(RinkPalette.inkSecondary)
                             .scaleEffect(0.7)
                         Text(viewModel.loadingMessage)
-                            .font(GridironType.micro)
+                            .font(RinkType.micro)
                     }
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                 } else if isLastPage && !store.isPro {
                     Button {
                         // Surface the outcome through the same trialError line the
@@ -385,8 +385,8 @@ struct OnboardingCards: View {
                         }
                     } label: {
                         Text(isRestoring ? "Restoring…" : "Restore Purchases")
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                     }
                     .buttonStyle(.plain)
                     .disabled(isRestoring)
@@ -409,11 +409,11 @@ struct OnboardingCards: View {
         } label: {
             if prominent {
                 Text("Get Started")
-                    .font(GridironType.bodyBold)
+                    .font(RinkType.bodyBold)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(GridironPalette.turf)
+                    .background(RinkPalette.turf)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             } else {
                 // Borderless free-tier exit: same text as the boxed version,
@@ -421,8 +421,8 @@ struct OnboardingCards: View {
                 // must stay clearly visible) while the turf trial button is the
                 // prominent action.
                 Text("Get Started")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(RinkPalette.ink)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
             }
@@ -466,10 +466,10 @@ struct OnboardingCards: View {
             title: "Your Pocket\nScout",
             description: "NFL percentile rankings built for a fast mobile view. Every player, every metric, updated soon after games finish.",
             bullets: [
-                BulletItem(text: "Every player ranked from week one", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "EPA, CPOE, YAC, RYOE, and more", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Fresh stats soon after every game", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "No account or sign-up", icon: "checkmark.circle.fill", color: GridironPalette.turf)
+                BulletItem(text: "Every player ranked from week one", icon: "checkmark.circle.fill", color: RinkPalette.turf),
+                BulletItem(text: "EPA, CPOE, YAC, RYOE, and more", icon: "checkmark.circle.fill", color: RinkPalette.turf),
+                BulletItem(text: "Fresh stats soon after every game", icon: "checkmark.circle.fill", color: RinkPalette.turf),
+                BulletItem(text: "No account or sign-up", icon: "checkmark.circle.fill", color: RinkPalette.turf)
             ]
         ),
         OnboardingPage(
@@ -477,11 +477,11 @@ struct OnboardingCards: View {
             title: "Find Insights\nFast",
             description: "Scores, leaders and movement across the league in seconds, with the numbers behind every game.",
             bullets: [
-                BulletItem(text: "Games: scores and box scores", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Stats: leaders, best and worst", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Trends: heating up, cooling off", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Teams: any roster, any season", icon: "checkmark.circle.fill", color: GridironPalette.turf),
-                BulletItem(text: "Compare: two players side by side", icon: "checkmark.circle.fill", color: GridironPalette.turf)
+                BulletItem(text: "Games: scores and box scores", icon: "checkmark.circle.fill", color: RinkPalette.turf),
+                BulletItem(text: "Stats: leaders, best and worst", icon: "checkmark.circle.fill", color: RinkPalette.turf),
+                BulletItem(text: "Trends: heating up, cooling off", icon: "checkmark.circle.fill", color: RinkPalette.turf),
+                BulletItem(text: "Teams: any roster, any season", icon: "checkmark.circle.fill", color: RinkPalette.turf),
+                BulletItem(text: "Compare: two players side by side", icon: "checkmark.circle.fill", color: RinkPalette.turf)
             ]
         ),
         OnboardingPage(
@@ -489,10 +489,10 @@ struct OnboardingCards: View {
             title: "Go Deeper\nwith StatScout+",
             description: "Season numbers tell you who's good. StatScout+ tells you who's good right now, and lets you prove it.",
             bullets: [
-                BulletItem(text: "Trends: the league ranked by form", icon: "flame.fill", color: GridironPalette.turf),
-                BulletItem(text: "Last 3 / 5 / 8 games, any player", icon: "chart.bar.fill", color: GridironPalette.turf),
-                BulletItem(text: "Head-to-head on every percentile", icon: "person.2.fill", color: GridironPalette.turf),
-                BulletItem(text: "Seasons back to 2000, year over year", icon: "calendar.badge.clock", color: GridironPalette.turf)
+                BulletItem(text: "Trends: the league ranked by form", icon: "flame.fill", color: RinkPalette.turf),
+                BulletItem(text: "Last 3 / 5 / 8 games, any player", icon: "chart.bar.fill", color: RinkPalette.turf),
+                BulletItem(text: "Head-to-head on every percentile", icon: "person.2.fill", color: RinkPalette.turf),
+                BulletItem(text: "Seasons back to 2000, year over year", icon: "calendar.badge.clock", color: RinkPalette.turf)
             ]
         )
     ]
@@ -528,23 +528,23 @@ struct OnboardingCard: View {
                     .frame(width: 200, height: 104)
                 ZStack {
                     Circle()
-                        .fill(GridironPalette.midnight)
+                        .fill(RinkPalette.midnight)
                         .frame(width: 84, height: 84)
                     Image(systemName: icon)
                         .font(.system(size: 36, weight: .semibold))
                         .foregroundStyle(.white)
                 }
-                .shadow(color: GridironPalette.midnight.opacity(0.25), radius: 12, y: 4)
+                .shadow(color: RinkPalette.midnight.opacity(0.25), radius: 12, y: 4)
             }
 
             Text(title)
-                .font(GridironType.playerName)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.playerName)
+                .foregroundStyle(RinkPalette.ink)
                 .multilineTextAlignment(.center)
 
             Text(description)
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.body)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
@@ -555,8 +555,8 @@ struct OnboardingCard: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(bullet.color)
                         Text(bullet.text)
-                            .font(GridironType.body)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(RinkType.body)
+                            .foregroundStyle(RinkPalette.ink)
                             // Wrap, never truncate. A benefit that ends in an
                             // ellipsis is worse than one set on two lines.
                             .fixedSize(horizontal: false, vertical: true)
@@ -590,7 +590,7 @@ private struct StatcastBarBackdrop: View {
         HStack(alignment: .bottom, spacing: 6) {
             ForEach(Array(percentiles.enumerated()), id: \.offset) { _, pct in
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(GridironPalette.color(forPercentile: pct).opacity(0.55))
+                    .fill(RinkPalette.color(forPercentile: pct).opacity(0.55))
                     .frame(width: 14, height: CGFloat(pct) * 1.1)
             }
         }
@@ -603,22 +603,22 @@ struct ConfigMissingView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 44, weight: .bold))
-                .foregroundStyle(GridironPalette.turf)
+                .foregroundStyle(RinkPalette.turf)
             Text("StatScout can't load")
-                .font(GridironType.playerName)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.playerName)
+                .foregroundStyle(RinkPalette.ink)
             Text("This build is missing its data-feed configuration. Please install the latest TestFlight build or contact support.")
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.body)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
             if let supportURL = URL(string: "https://jackwallner.github.io/football/support.html") {
                 Link("Contact Support", destination: supportURL)
                     .buttonStyle(.borderedProminent)
-                    .tint(GridironPalette.turf)
+                    .tint(RinkPalette.turf)
             }
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
     }
 }

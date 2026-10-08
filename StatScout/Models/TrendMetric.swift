@@ -12,13 +12,14 @@ struct TrendMetric: Identifiable, Hashable, Sendable {
     let unit: String
     /// Also drives the delta formatting on the row.
     let decimals: Int
-    /// True where a falling number is the improvement: a quarterback's INT% or
-    /// sack rate, a back's fumble rate.
+    /// True where a falling number is the improvement: a goalie's GAA or
+    /// goals against.
     let lowerIsBetter: Bool
 
     var id: String { key }
 
     func format(_ value: Double) -> String {
+        if label.hasSuffix("SV%") { return RecentMetricKey.savePercentage(value) }
         if decimals == 0 {
             return Int(value.rounded()).formatted(.number.grouping(.automatic)) + unit
         }
@@ -27,33 +28,24 @@ struct TrendMetric: Identifiable, Hashable, Sendable {
 
     // MARK: - Advanced
 
-    static let qbAdvanced: [TrendMetric] = [
-        .init(key: "passing_epa", label: "EPA/Play", unit: "", decimals: 2, lowerIsBetter: false),
-        .init(key: "cpoe", label: "CPOE", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "ypa", label: "Y/A", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "cmp_pct", label: "Cmp%", unit: "%", decimals: 1, lowerIsBetter: false),
-        .init(key: "passer_rating", label: "Rating", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "int_rate", label: "INT%", unit: "%", decimals: 1, lowerIsBetter: true),
-        .init(key: "sack_rate", label: "Sack%", unit: "%", decimals: 1, lowerIsBetter: true),
-        .init(key: "avg_time_to_throw", label: "Time to Throw", unit: " s", decimals: 2, lowerIsBetter: false),
+    /// Forwards and defensemen read the same board. The rollup has no per-game
+    /// on-ice shares (xGF%, CF% need a shift-level feed), so the advanced list
+    /// is individual expected goals and the rates built on it.
+    static let skaterAdvanced: [TrendMetric] = [
+        .init(key: "points_per_60", label: "P/60", unit: "", decimals: 2, lowerIsBetter: false),
+        .init(key: "ixg_per_60", label: "ixG/60", unit: "", decimals: 2, lowerIsBetter: false),
+        .init(key: "gax", label: "GAx", unit: "", decimals: 1, lowerIsBetter: false),
+        .init(key: "shots_per_60", label: "Shots/60", unit: "", decimals: 1, lowerIsBetter: false),
+        .init(key: "hd_shots_per_60", label: "HD Shots/60", unit: "", decimals: 1, lowerIsBetter: false),
+        .init(key: "shooting_pct", label: "Sh%", unit: "%", decimals: 1, lowerIsBetter: false),
+        .init(key: "goals_per_60", label: "G/60", unit: "", decimals: 2, lowerIsBetter: false),
     ]
 
-    static let rbAdvanced: [TrendMetric] = [
-        .init(key: "ypc", label: "Y/C", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "rush_yoe", label: "RYOE", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "rushing_epa", label: "Rush EPA", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "catch_pct", label: "Catch%", unit: "%", decimals: 1, lowerIsBetter: false),
-        .init(key: "fumble_rate", label: "Fumble%", unit: "%", decimals: 1, lowerIsBetter: true),
-    ]
-
-    /// Receivers and tight ends read the same board. Separating them would
-    /// halve two already-small pools without changing what any metric means.
-    static let receivingAdvanced: [TrendMetric] = [
-        .init(key: "receiving_epa", label: "Rec EPA", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "catch_pct", label: "Catch%", unit: "%", decimals: 1, lowerIsBetter: false),
-        .init(key: "avg_separation", label: "Separation", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "avg_yac_above_expectation", label: "YAC+", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "racr", label: "RACR", unit: "", decimals: 2, lowerIsBetter: false),
+    static let goalieAdvanced: [TrendMetric] = [
+        .init(key: "gsax", label: "GSAx", unit: "", decimals: 1, lowerIsBetter: false),
+        .init(key: "gsax_per_60", label: "GSAx/60", unit: "", decimals: 2, lowerIsBetter: false),
+        .init(key: "hd_sv_pct", label: "HD SV%", unit: "", decimals: 3, lowerIsBetter: false),
+        .init(key: "shots_against_per_60", label: "SA/60", unit: "", decimals: 1, lowerIsBetter: false),
     ]
 
     // MARK: - Standard
@@ -61,68 +53,42 @@ struct TrendMetric: Identifiable, Hashable, Sendable {
     /// The counting line, summed across the window rather than averaged from
     /// per-game rates. It answers a different question from the advanced
     /// metrics: what actually happened, not how well it was done.
-    static let qbStandard: [TrendMetric] = [
-        .init(key: "pass_yards", label: "Pass Yds", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "pass_tds", label: "Pass TD", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "completions", label: "Cmp", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "attempts", label: "Att", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "interceptions", label: "INT", unit: "", decimals: 0, lowerIsBetter: true),
-        .init(key: "rush_yards", label: "Rush Yds", unit: "", decimals: 0, lowerIsBetter: false),
+    static let skaterStandard: [TrendMetric] = [
+        .init(key: "points", label: "P", unit: "", decimals: 0, lowerIsBetter: false),
+        .init(key: "goals", label: "G", unit: "", decimals: 0, lowerIsBetter: false),
+        .init(key: "assists", label: "A", unit: "", decimals: 0, lowerIsBetter: false),
+        .init(key: "shots_on_goal", label: "SOG", unit: "", decimals: 0, lowerIsBetter: false),
+        .init(key: "ixg", label: "ixG", unit: "", decimals: 1, lowerIsBetter: false),
+        .init(key: "hd_shots", label: "HD Shots", unit: "", decimals: 0, lowerIsBetter: false),
+        .init(key: "blocks", label: "Blocks", unit: "", decimals: 0, lowerIsBetter: false),
+        .init(key: "hits", label: "Hits", unit: "", decimals: 0, lowerIsBetter: false),
     ]
 
-    static let rbStandard: [TrendMetric] = [
-        .init(key: "rush_yards", label: "Rush Yds", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "rush_tds", label: "Rush TD", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "carries", label: "Car", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "rush_first_downs", label: "Rush 1D", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "receptions", label: "Rec", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "rec_yards", label: "Rec Yds", unit: "", decimals: 0, lowerIsBetter: false),
-    ]
-
-    static let receivingStandard: [TrendMetric] = [
-        .init(key: "rec_yards", label: "Rec Yds", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "receptions", label: "Rec", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "rec_tds", label: "Rec TD", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "targets", label: "Tgt", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "yac", label: "YAC", unit: "", decimals: 0, lowerIsBetter: false),
-    ]
-
-    /// Defence has no advanced list: the weekly feed carries no snap counts or
-    /// coverage charting, so every defensive metric the rollup can build is a
-    /// count. Rather than invent a thin "advanced" tab out of the same numbers,
-    /// the board drops the Advanced / Standard control entirely for this side.
-    static let defStandard: [TrendMetric] = [
-        .init(key: "tackles", label: "Tackles", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "sacks", label: "Sacks", unit: "", decimals: 1, lowerIsBetter: false),
-        .init(key: "def_ints", label: "INT", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "passes_defended", label: "PD", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "tfl", label: "TFL", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "qb_hits", label: "QB Hits", unit: "", decimals: 0, lowerIsBetter: false),
-        .init(key: "forced_fumbles", label: "FF", unit: "", decimals: 0, lowerIsBetter: false),
+    static let goalieStandard: [TrendMetric] = [
+        .init(key: "sv_pct", label: "SV%", unit: "", decimals: 3, lowerIsBetter: false),
+        .init(key: "gaa", label: "GAA", unit: "", decimals: 2, lowerIsBetter: true),
+        .init(key: "saves", label: "Saves", unit: "", decimals: 0, lowerIsBetter: false),
+        .init(key: "goals_against", label: "GA", unit: "", decimals: 0, lowerIsBetter: true),
+        .init(key: "wins", label: "W", unit: "", decimals: 0, lowerIsBetter: false),
+        .init(key: "shutouts", label: "SO", unit: "", decimals: 0, lowerIsBetter: false),
     ]
 
     static func advanced(for side: TrendSide) -> [TrendMetric] {
         switch side {
-        case .qb:  return qbAdvanced
-        case .rb:  return rbAdvanced
-        case .wr, .te: return receivingAdvanced
-        case .def: return []
+        case .forward, .defense: return skaterAdvanced
+        case .goalie: return goalieAdvanced
         }
     }
 
     static func standard(for side: TrendSide) -> [TrendMetric] {
         switch side {
-        case .qb:  return qbStandard
-        case .rb:  return rbStandard
-        case .wr, .te: return receivingStandard
-        case .def: return defStandard
+        case .forward, .defense: return skaterStandard
+        case .goalie: return goalieStandard
         }
     }
 
     static func list(for side: TrendSide, mode: TrendStatMode) -> [TrendMetric] {
         let picked = mode == .advanced ? advanced(for: side) : standard(for: side)
-        // Defence has no advanced list; fall through rather than showing an
-        // empty picker.
         return picked.isEmpty ? standard(for: side) : picked
     }
 }
@@ -139,42 +105,44 @@ enum TrendStatMode: String, CaseIterable, Identifiable, Sendable {
     var label: String { self == .advanced ? "Advanced" : "Standard" }
 }
 
-/// Which position group the Trends board is ranking.
+/// Which cohort the Trends board is ranking.
 ///
-/// Mixing groups is not an option: Y/A means nothing to a safety, and a
-/// receiver's Catch% is not a quarterback's.
+/// Mixing cohorts is not an option: a defenseman's point pace is not a
+/// winger's, and a goalie shares no metric with either.
 enum TrendSide: String, CaseIterable, Identifiable, Sendable {
-    case qb
-    case rb
-    case wr
-    case te
-    case def
+    case forward = "f"
+    case defense = "d"
+    case goalie = "g"
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .qb:  return "Quarterbacks"
-        case .rb:  return "Running Backs"
-        case .wr:  return "Receivers"
-        case .te:  return "Tight Ends"
-        case .def: return "Defense"
+        case .forward: return "Forwards"
+        case .defense: return "Defensemen"
+        case .goalie: return "Goalies"
         }
     }
 
-    /// Compact label for the five equal-width position tabs.
+    /// Compact label for the equal-width cohort tabs.
     var shortLabel: String {
         switch self {
-        case .qb:  return "QB"
-        case .rb:  return "RB"
-        case .wr:  return "WR"
-        case .te:  return "TE"
-        case .def: return "DEF"
+        case .forward: return "F"
+        case .defense: return "D"
+        case .goalie: return "G"
         }
     }
 
     /// Matches `player_recent_form.player_type`.
     var playerType: String { rawValue }
+
+    var positionGroup: PlayerPositionGroup {
+        switch self {
+        case .forward: return .forward
+        case .defense: return .defense
+        case .goalie: return .goalie
+        }
+    }
 
     /// Whether this side has a meaningful advanced/standard split at all.
     var hasAdvancedMetrics: Bool { !TrendMetric.advanced(for: self).isEmpty }

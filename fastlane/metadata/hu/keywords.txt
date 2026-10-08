@@ -1,1 +1,0 @@
-nfl,statisztika,játékosok,epa,cpoe,yac,összehasonlítás,passz,futás,elkapás,védelem,rangsor

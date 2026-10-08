@@ -5,11 +5,12 @@ import Foundation
 ///
 /// Mirrors the rolling-leaderboard shape the baseball app uses: the current
 /// window, the equal-length window immediately before it, and the change
-/// between them. The delta is the interesting column, a 9.1 Y/A means more when
-/// you can see it was 6.2 over the three games before that.
+/// between them. The delta is the interesting column, a 3.1 P/60 means more
+/// when you can see it was 1.4 over the two weeks before that.
 ///
-/// MLB uses calendar days. NFL uses shared week ranges, so an injured player
-/// who has not appeared recently does not surface on a current Trends board.
+/// Windows are shared league date ranges anchored on the latest game played,
+/// so an injured player who has not appeared recently does not surface on a
+/// current Trends board.
 struct RecentForm: Codable, Hashable, Sendable, Identifiable {
     let playerId: Int
     let season: Int
@@ -19,15 +20,15 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
     /// Date of the last game in the window. Lets the UI say "through Feb 8"
     /// rather than implying the window runs to today.
     let asOf: Date?
-    /// NFL week numbers of the first and last game in the window, so a label
-    /// can read "Weeks 15-17" instead of a date range.
+    /// League week numbers of the first and last game in the window. Kept for
+    /// the row shape; the label shown to users is the date range.
     let startWeek: Int?
     let endWeek: Int?
     let team: String?
     let games: Int
-    /// Offensive involvement: pass attempts + carries + targets.
+    /// Ice time in the window, whole minutes (the column keeps its NFL name).
     let plays: Int
-    /// Ball touches: completions + carries + receptions.
+    /// Shot attempts (skaters) or shots against (goalies) in the window.
     let touches: Int
     let metrics: [String: Double]
     let priorMetrics: [String: Double]
@@ -115,21 +116,18 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
         try c.encode(delta, forKey: .delta)
     }
 
-    /// Weeks covered, e.g. "Weeks 15-17" or "Week 17". Nil when the rollup
-    /// predates the week columns.
+    /// Dates covered, e.g. "Sep 24 - Oct 7". Nil when the rollup carries no
+    /// anchor date.
     var weekRangeLabel: String? {
-        guard let startWeek, let endWeek else { return nil }
-        // The rollup anchors a window on the league's latest week and counts
-        // back, so a three-week window in Week 1 starts at "Week -1". No games
-        // exist before Week 1; label the weeks that do.
-        let first = max(1, startWeek)
-        return first >= endWeek ? "Week \(endWeek)" : "Weeks \(first)-\(endWeek)"
+        guard let asOf else { return nil }
+        let start = Calendar.current.date(byAdding: .day, value: -(windowWeeks * 7 - 1), to: asOf) ?? asOf
+        let style = Date.FormatStyle().month(.abbreviated).day()
+        return "\(start.formatted(style)) - \(asOf.formatted(style))"
     }
 
-    /// Small samples make wild deltas. Volume means different things by
-    /// position, so the floor does too: a quarterback throws thirty times in a
-    /// bad game, a tight end can have a real week on four targets. Defenders
-    /// have no play count in the weekly feed at all, so they gate on games.
+    /// Small samples make wild deltas. A skater needs an hour of ice time in
+    /// the window (three or four games) before a rate is worth ranking; a
+    /// goalie needs two starts' worth.
     var isSmallSample: Bool { isSmallSample(minimumGames: 2) }
 
     /// The same volume floor with a different game minimum. The early-season
@@ -137,11 +135,8 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
     func isSmallSample(minimumGames: Int) -> Bool {
         if games < minimumGames { return true }
         switch playerType {
-        case "qb":  return plays < 30
-        case "rb":  return plays < 18
-        case "wr":  return plays < 12
-        case "te":  return plays < 10
-        default:    return false
+        case "g":  return plays < 100
+        default:   return plays < 60
         }
     }
 }
@@ -163,68 +158,65 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
 enum RecentMetricKey {
     static func key(for label: String) -> String? {
         switch label {
-        // Passing.
-        case "Pass Yds": return "pass_yards"
-        case "Pass TD": return "pass_tds"
-        case "Cmp%": return "cmp_pct"
-        case "Y/A": return "ypa"
-        case "INT%": return "int_rate"
-        case "Rating": return "passer_rating"
-        case "EPA/Play": return "passing_epa"
-        case "CPOE": return "cpoe"
-        case "Time to Throw": return "avg_time_to_throw"
-        case "Sack%": return "sack_rate"
-        // Rushing.
-        case "Rush Yds": return "rush_yards"
-        case "Rush TD": return "rush_tds"
-        case "Y/C": return "ypc"
-        case "Rush EPA": return "rushing_epa"
-        case "Rush 1D": return "rush_first_downs"
-        case "Fumble%": return "fumble_rate"
-        case "RYOE": return "rush_yoe"
-        // Receiving.
-        case "Rec": return "receptions"
-        case "Rec Yds": return "rec_yards"
-        case "Rec TD": return "rec_tds"
-        case "YAC": return "yac"
-        case "RACR": return "racr"
-        case "Rec EPA": return "receiving_epa"
-        case "Catch%": return "catch_pct"
-        case "Separation": return "avg_separation"
-        case "YAC+": return "avg_yac_above_expectation"
-        // Defense.
-        case "Tackles": return "tackles"
-        case "Sacks": return "sacks"
-        case "INT": return "def_ints"
-        case "PD": return "passes_defended"
-        case "FF": return "forced_fumbles"
-        case "TFL": return "tfl"
-        case "QB Hits": return "qb_hits"
+        // Scoring.
+        case "G": return "goals"
+        case "A": return "assists"
+        case "P": return "points"
+        case "P/60": return "points_per_60"
+        case "Primary P": return "primary_points"
+        case "SOG": return "shots_on_goal"
+        case "Sh%": return "shooting_pct"
+        // Shot Quality.
+        case "ixG": return "ixg"
+        case "GAx": return "gax"
+        case "ixG/60": return "ixg_per_60"
+        case "Shots/60": return "shots_per_60"
+        case "Shot Att": return "shot_attempts"
+        case "HD Shots": return "hd_shots"
+        // Play Driving (counting stats only; on-ice shares have no per-game feed).
+        case "Blocks": return "blocks"
+        case "Hits": return "hits"
+        case "Takeaways": return "takeaways"
+        case "Giveaways": return "giveaways"
+        // Goaltending.
+        case "GSAx": return "gsax"
+        case "GSAx/60": return "gsax_per_60"
+        case "SV%": return "sv_pct"
+        case "GAA": return "gaa"
+        case "HD SV%": return "hd_sv_pct"
+        case "xGA/60": return "xga_per_60"
+        case "Saves": return "saves"
+        case "GA": return "goals_against"
+        case "W": return "wins"
+        case "SO": return "shutouts"
         default: return nil
         }
     }
 
     /// True where a falling number is the improvement.
     static func lowerIsBetter(_ label: String) -> Bool {
-        label == "INT%" || label == "Sack%" || label == "Fumble%"
+        ["GAA", "GA", "Giveaways", "Rebound%"].contains(label)
     }
 
-    /// How many decimals the metric's delta moves in. Yardage and counting
-    /// stats are whole, percentages and per-attempt rates are tenths, EPA per
-    /// play is hundredths.
+    /// How many decimals the metric's delta moves in. Counting stats are
+    /// whole, expected-goal totals are tenths, per-60 rates hundredths and
+    /// save percentages thousandths.
     static func decimals(for label: String) -> Int {
         switch label {
-        case "EPA/Play", "RACR", "Time to Throw": return 2
-        case "Cmp%", "INT%", "Sack%", "Fumble%", "Catch%", "Y/A", "Y/C",
-             "Rating", "CPOE", "Rush EPA", "Rec EPA", "RYOE",
-             "Separation", "YAC+": return 1
-        default: return 0
+        case "SV%", "HD SV%", "xG/Shot": return 3
+        case "P/60", "ixG/60", "GSAx/60", "xGA/60", "xGF/60", "GAA", "Game Score": return 2
+        case "ixG", "GAx", "GSAx", "Rel xGF%", "Rel CF%", "Shots/60": return 1
+        default:
+            return label.hasSuffix("%") ? 1 : 0
         }
     }
 
-    /// Matches the player page's conventions: a percentage carries its sign, a
-    /// rate its decimals, and a yardage total its thousands separator.
+    /// Matches the player page's conventions: a save percentage reads ".915",
+    /// a share reads "54.2%", a rate carries its decimals and a count none.
     static func format(_ value: Double, label: String) -> String {
+        if label.hasSuffix("SV%") {
+            return savePercentage(value)
+        }
         let places = decimals(for: label)
         if label.hasSuffix("%") { return String(format: "%.1f%%", value) }
         if places == 0 {
@@ -233,24 +225,32 @@ enum RecentMetricKey {
         }
         return String(format: "%.\(places)f", value)
     }
+
+    /// 0.915 or 91.5 -> ".915". The rollup stores save percentage as a fraction.
+    static func savePercentage(_ value: Double) -> String {
+        let fraction = value > 1.5 ? value / 100 : value
+        let text = String(format: "%.3f", fraction)
+        return text.hasPrefix("0") ? String(text.dropFirst()) : text
+    }
 }
 
-/// Per-player and per-team game-count windows.
+/// Per-player and per-team windows. The same league-anchored week ranges the
+/// Trends board uses, so a card and the board never disagree about "recent".
 enum RecentWindow: Int, CaseIterable, Identifiable, Sendable {
-    case three = 3
-    case five = 5
+    case two = 2
+    case four = 4
     case eight = 8
 
     var id: Int { rawValue }
-    var label: String { "Last \(rawValue) games" }
-    var segmentLabel: String { "\(rawValue) games" }
-    var shortLabel: String { "\(rawValue)G" }
+    var label: String { "Last \(rawValue) weeks" }
+    var segmentLabel: String { "\(rawValue) wks" }
+    var shortLabel: String { "\(rawValue)W" }
 }
 
 /// League-anchored windows used only by Trends.
 enum TrendWindow: Int, CaseIterable, Identifiable, Sendable {
-    case three = 3
-    case five = 5
+    case two = 2
+    case four = 4
     case eight = 8
 
     var id: Int { rawValue }

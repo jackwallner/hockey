@@ -31,7 +31,7 @@ enum RevenueCatConfig {
     // RevenueCat "Football" project (proj9c303632), App Store app app039a312379.
     // Public SDK key (appl_...) - used only in device Release / TestFlight / App
     // Store builds; simulator runs skip Purchases.configure (see configureIfNeeded).
-    static let apiKey = "appl_ivmIolnYwgJaeylzJwULBKiNrIx"
+    static let apiKey = "appl_dasBLRrgkhHOPdqYKQMmsLLzEJI"
     static let proEntitlement = "Football Pro"
     static let fallbackEntitlement = "pro"
 }
@@ -42,20 +42,20 @@ enum StatScoutSeason {
     /// cache partition, and the free-tier gate all read this.
     ///
     /// Derived from the calendar rather than pinned to a literal, using the
-    /// same rule `backend/ingest.py::resolve_season` uses: an NFL season is
-    /// named for the year it kicks off in, so anything from September on
-    /// belongs to this year and anything before it to last year. A hard-coded
+    /// same rule `backend/ingest.py::resolve_season` uses: an NHL season is
+    /// named for the year it opens in (2026 is 2026-27), so anything from
+    /// September on belongs to this year and anything before it to last year. A hard-coded
     /// year meant a shipped build stopped seeing new data the moment the next
     /// season started, and only a new App Store release could fix it - the
     /// pipeline would be writing 2026 rows that no installed copy would ask
     /// for.
     ///
-    /// Floored at 2025 so this can never resolve to a season older than the
+    /// Floored at 2026 so this can never resolve to a season older than the
     /// one the app shipped with, whatever the device clock says.
     static let current: Int = {
         let now = Calendar.current.dateComponents([.year, .month], from: .now)
-        guard let year = now.year, let month = now.month else { return 2025 }
-        return max(2025, month >= 9 ? year : year - 1)
+        guard let year = now.year, let month = now.month else { return 2026 }
+        return max(2026, month >= 9 ? year : year - 1)
     }()
 
     /// The only season available without Pro, and the one every screen opens on.
@@ -69,18 +69,17 @@ enum StatScoutSeason {
 
     /// Oldest season with per-game history, and so the floor for Recent Form.
     ///
-    /// `player_game_logs` and the rollup built from it were purged back to 2025
-    /// once; nothing older exists to rank. Without this floor, "the live season
-    /// and the one before it" resolves to a year with no rows the moment the
-    /// live season is the oldest one there is, and Trends offers a menu entry
-    /// that can only ever draw an empty board.
+    /// `player_game_logs` and the rollup built from it hold the live season
+    /// and the one before it (2025-26 onward). Without this floor, "the live
+    /// season and the one before it" resolves to a year with no rows the
+    /// moment the live season is the oldest one there is, and Trends offers a
+    /// menu entry that can only ever draw an empty board.
     static let earliestRecentForm = 2025
 
-    /// Oldest season in the dataset. nflverse player stats run back to 1999;
-    /// StatScout starts at 2000 for a clean round-number historical range.
-    /// The bundled players-historical.plist ships all of it, so the season
-    /// menus can list every year without waiting on a fetch.
-    static let earliest = 2000
+    /// Oldest season in the dataset. MoneyPuck's expected-goals data starts
+    /// with 2008-09. The bundled players-historical.plist ships all of it, so
+    /// the season menus can list every year without waiting on a fetch.
+    static let earliest = 2008
     /// Sentinel season for the career / all-time rollup.
     ///
     /// The pipeline writes one extra snapshot per player under `season = 0`,
@@ -909,19 +908,19 @@ final class StoreService: NSObject, ObservableObject {
         // ones make every screenshot taken through this path a picture of copy
         // nobody will ever be shown.
         let monthly = TestStoreProduct(
-            localizedTitle: "Gridiron Pro Monthly", price: 1.99, currencyCode: "USD",
+            localizedTitle: "Rink Pro Monthly", price: 1.99, currencyCode: "USD",
             localizedPriceString: "$1.99", productIdentifier: StatScoutProduct.monthly,
-            productType: .autoRenewableSubscription, localizedDescription: "Gridiron Pro, billed monthly.",
+            productType: .autoRenewableSubscription, localizedDescription: "Rink Pro, billed monthly.",
             subscriptionPeriod: .init(value: 1, unit: .month), introductoryDiscount: weekTrial(), locale: locale)
         let yearly = TestStoreProduct(
-            localizedTitle: "Gridiron Pro Yearly", price: 9.99, currencyCode: "USD",
+            localizedTitle: "Rink Pro Yearly", price: 9.99, currencyCode: "USD",
             localizedPriceString: "$9.99", productIdentifier: StatScoutProduct.yearly,
-            productType: .autoRenewableSubscription, localizedDescription: "Gridiron Pro, billed yearly.",
+            productType: .autoRenewableSubscription, localizedDescription: "Rink Pro, billed yearly.",
             subscriptionPeriod: .init(value: 1, unit: .year), introductoryDiscount: weekTrial(), locale: locale)
         let lifetime = TestStoreProduct(
-            localizedTitle: "Gridiron Pro Lifetime", price: 19.99, currencyCode: "USD",
+            localizedTitle: "Rink Pro Lifetime", price: 19.99, currencyCode: "USD",
             localizedPriceString: "$19.99", productIdentifier: StatScoutProduct.lifetime,
-            productType: .nonConsumable, localizedDescription: "Gridiron Pro, one-time purchase.",
+            productType: .nonConsumable, localizedDescription: "Rink Pro, one-time purchase.",
             subscriptionPeriod: nil, introductoryDiscount: nil, locale: locale)
         products = [
             Package(identifier: "$rc_annual", packageType: .annual,

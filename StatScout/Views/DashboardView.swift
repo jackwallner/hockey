@@ -47,7 +47,7 @@ struct DashboardView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(GridironPalette.canvas)
+        .background(RinkPalette.canvas)
         .sheet(isPresented: $showingAbout) {
             NavigationStack {
                 AboutView(
@@ -108,8 +108,8 @@ struct DashboardView: View {
                 Text(note)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
+            .font(RinkType.micro)
+            .foregroundStyle(RinkPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.top, 10)
@@ -124,20 +124,20 @@ struct DashboardView: View {
                         Image(systemName: "crown.fill")
                             .font(.system(size: 10))
                         Text(store.upgradeCTALabel)
-                            .font(GridironType.micro)
+                            .font(RinkType.micro)
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(GridironPalette.turf)
+                    .background(RinkPalette.turf)
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
             Button(action: { showingAbout = true }) {
                 Text("About StatScout")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .padding(.vertical, 8)
             }
             .buttonStyle(.plain)
@@ -165,7 +165,7 @@ struct DashboardView: View {
     /// height, so the one control that decides what the whole screen is about
     /// looked like nothing else in the app.
     private var positionSelector: some View {
-        GridironTabs(
+        RinkTabs(
             tabs: PlayerPositionGroup.allCases.map(\.rawValue),
             selected: Binding(
                 get: { viewModel.selectedPosition.rawValue },
@@ -222,8 +222,8 @@ struct DashboardView: View {
             }
         }
         .padding(.trailing, 12)
-        .frame(height: GridironControl.height + 2)
-        .padding(.top, GridironGeo.controlRowGap)
+        .frame(height: RinkControl.height + 2)
+        .padding(.top, RinkGeo.controlRowGap)
     }
 
     /// True while the search row is open or a query is still applied, so the
@@ -238,7 +238,7 @@ struct DashboardView: View {
             if !isSearching { viewModel.searchText = "" }
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         } label: {
-            GridironChip(systemImage: "magnifyingglass", isActive: isActiveSearch)
+            RinkChip(systemImage: "magnifyingglass", isActive: isActiveSearch)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Search players or teams")
@@ -253,8 +253,8 @@ struct DashboardView: View {
                     viewModel.searchText = ""
                 }
             }
-            .font(GridironType.small)
-            .foregroundStyle(GridironPalette.turf)
+            .font(RinkType.small)
+            .foregroundStyle(RinkPalette.turf)
         }
         .padding(.horizontal, 12)
         .padding(.top, 8)
@@ -288,44 +288,44 @@ struct DashboardView: View {
                 ForEach(Array(teams.prefix(3).enumerated()), id: \.element) { index, team in
                     if index > 0 {
                         Rectangle()
-                            .fill(GridironPalette.divider)
-                            .frame(height: GridironGeo.hairline)
+                            .fill(RinkPalette.divider)
+                            .frame(height: RinkGeo.hairline)
                     }
                     NavigationLink(value: TeamDestination(abbr: team)) {
                         HStack(spacing: 10) {
                             ZStack {
                                 Circle()
-                                    .fill(NFLTeamColor.color(team))
+                                    .fill(TeamColor.color(team))
                                     .frame(width: 28, height: 28)
                                 Text(displayTeamAbbr(team))
-                                    .font(GridironType.micro)
+                                    .font(RinkType.micro)
                                     .foregroundStyle(.white)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.6)
                             }
                             Text(teamFullName(team))
-                                .font(GridironType.bodyBold)
-                                .foregroundStyle(GridironPalette.ink)
+                                .font(RinkType.bodyBold)
+                                .foregroundStyle(RinkPalette.ink)
                             Text("TEAM PAGE")
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(RinkType.micro)
+                                .foregroundStyle(RinkPalette.inkTertiary)
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .foregroundStyle(RinkPalette.inkTertiary)
                         }
-                        .padding(.horizontal, GridironGeo.padCard)
-                        .frame(height: GridironGeo.rowHeight)
+                        .padding(.horizontal, RinkGeo.padCard)
+                        .frame(height: RinkGeo.rowHeight)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(RinkPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                    .stroke(RinkPalette.hairline, lineWidth: 0.5)
             )
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
@@ -362,7 +362,7 @@ struct DashboardView: View {
                         Task { await viewModel.load() }
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(GridironPalette.inkTertiary)
+                    .tint(RinkPalette.inkTertiary)
                 }
                 .padding(.vertical, 24)
                 .frame(minHeight: 200)
@@ -376,8 +376,8 @@ struct DashboardView: View {
                 VStack(spacing: 12) {
                     ProgressView()
                     Text("Loading \(SeasonLabel.text(viewModel.selectedSeason))…")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                 }
                 .padding(.vertical, 40)
                 .frame(maxWidth: .infinity, minHeight: 200)
@@ -415,7 +415,7 @@ struct DashboardView: View {
                             Task { await viewModel.load() }
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(GridironPalette.inkTertiary)
+                        .tint(RinkPalette.inkTertiary)
                     }
                 }
                 .padding(.vertical, 24)
@@ -440,11 +440,11 @@ struct DashboardView: View {
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 8)
@@ -462,21 +462,21 @@ struct DashboardView: View {
         VStack(spacing: 14) {
             ProgressView(value: min(max(viewModel.loadingProgress, 0), 1), total: 1)
                 .progressViewStyle(.linear)
-                .tint(GridironPalette.turf)
+                .tint(RinkPalette.turf)
             Text(viewModel.loadingMessage)
-                .font(GridironType.bodyBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.bodyBold)
+                .foregroundStyle(RinkPalette.ink)
             Text("\(Int(min(max(viewModel.loadingProgress, 0), 1) * 100))%")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
         }
         .padding(22)
         .frame(maxWidth: 300)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .shadow(color: .black.opacity(0.08), radius: 16, y: 8)
         .padding(.horizontal, 24)
@@ -486,20 +486,20 @@ struct DashboardView: View {
         HStack(spacing: 10) {
             ProgressView(value: min(max(viewModel.loadingProgress, 0), 1), total: 1)
                 .progressViewStyle(.linear)
-                .tint(GridironPalette.turf)
+                .tint(RinkPalette.turf)
                 .frame(maxWidth: .infinity)
             Text(viewModel.loadingMessage)
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .lineLimit(1)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(GridironPalette.surface)
+        .background(RinkPalette.surface)
         .clipShape(Capsule())
         .overlay(
             Capsule()
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
     }

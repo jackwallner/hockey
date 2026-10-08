@@ -265,7 +265,7 @@ struct TeamView: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .scrollDismissesKeyboard(.interactively)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         .refreshable {
             await viewModel?.load()
         }
@@ -327,14 +327,14 @@ struct TeamView: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 } label: {
                     Text(tab.rawValue)
-                        .font(GridironType.smallBold)
+                        .font(RinkType.smallBold)
                         .minimumScaleFactor(0.85)
                         .lineLimit(1)
-                        .foregroundStyle(isSelected ? .white : GridironPalette.ink)
+                        .foregroundStyle(isSelected ? .white : RinkPalette.ink)
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
-                        .background(isSelected ? GridironPalette.turf : GridironPalette.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                        .background(isSelected ? RinkPalette.turf : RinkPalette.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
                 }
                 .buttonStyle(.plain)
             }
@@ -381,7 +381,7 @@ struct TeamView: View {
 
     private var rosterContent: some View {
         VStack(spacing: 0) {
-            GridironPickerRow {
+            RinkPickerRow {
                 sidePicker.segmentCount(RosterSide.allCases.count)
                 rosterModePicker.segmentCount(RosterMode.allCases.count)
             }
@@ -389,7 +389,7 @@ struct TeamView: View {
                 .padding(.top, 12)
 
             if isRosterRecent {
-                GridironSegmented(
+                RinkSegmented(
                     segments: RecentWindow.allCases.map {
                         .init(value: $0, label: $0.segmentLabel)
                     },
@@ -400,7 +400,7 @@ struct TeamView: View {
             }
 
             if rosterSide.categories.count > 1 {
-                GridironTabs(
+                RinkTabs(
                     tabs: rosterSide.categories.map(\.rawValue),
                     selected: Binding(
                         get: { (selectedCategory ?? rosterSide.categories[0]).rawValue },
@@ -447,17 +447,17 @@ struct TeamView: View {
             } label: {
                 HStack(spacing: 6) {
                     Text(sortLabel)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.smallBold)
+                        .foregroundStyle(RinkPalette.ink)
                     Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(RinkPalette.turf)
                 }
                 .padding(.horizontal, 12)
                 .frame(height: 30)
-                .background(GridironPalette.surface)
+                .background(RinkPalette.surface)
                 .clipShape(Capsule())
-                .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+                .overlay(Capsule().stroke(RinkPalette.hairline, lineWidth: 0.5))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Sorted by \(sortLabel), \(sortDescending ? "highest first" : "lowest first")")
@@ -473,11 +473,11 @@ struct TeamView: View {
                 let active = isSearching || !searchText.isEmpty
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(active ? .white : GridironPalette.inkSecondary)
+                    .foregroundStyle(active ? .white : RinkPalette.inkSecondary)
                     .frame(width: 30, height: 30)
-                    .background(active ? GridironPalette.turf : GridironPalette.surface)
+                    .background(active ? RinkPalette.turf : RinkPalette.surface)
                     .clipShape(Capsule())
-                    .overlay(Capsule().stroke(active ? Color.clear : GridironPalette.hairline, lineWidth: 0.5))
+                    .overlay(Capsule().stroke(active ? Color.clear : RinkPalette.hairline, lineWidth: 0.5))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Search")
@@ -489,7 +489,7 @@ struct TeamView: View {
     }
 
     private var sidePicker: some View {
-        GridironSegmented(
+        RinkSegmented(
             segments: RosterSide.allCases.map { .init(value: $0, label: $0.rawValue) },
             selection: $rosterSide
         )
@@ -502,7 +502,7 @@ struct TeamView: View {
     @ViewBuilder
     private var rosterModePicker: some View {
         if supportsRecent {
-            GridironSegmented(
+            RinkSegmented(
                 segments: RosterMode.allCases.map {
                     .init(value: $0, label: $0.rawValue, isLocked: !store.isPro && $0 == .recent)
                 },
@@ -565,7 +565,7 @@ struct TeamView: View {
                 }
             }
         } label: {
-            GridironChip(
+            RinkChip(
                 title: "Filters",
                 systemImage: "line.3.horizontal.decrease.circle",
                 trailing: .chevron,
@@ -585,8 +585,8 @@ struct TeamView: View {
                     searchText = ""
                 }
             }
-            .font(GridironType.small)
-            .foregroundStyle(GridironPalette.turf)
+            .font(RinkType.small)
+            .foregroundStyle(RinkPalette.turf)
         }
         .padding(.horizontal, 12)
         .padding(.top, 8)
@@ -614,8 +614,8 @@ struct TeamView: View {
                 HStack(spacing: 10) {
                     ProgressView().scaleEffect(0.75)
                     Text("Loading the last \(rosterWindow.rawValue) games…")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
@@ -651,11 +651,11 @@ struct TeamView: View {
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -687,7 +687,7 @@ struct TeamView: View {
         } label: {
             HStack(spacing: 4) {
                 Text(teamFullName(team))
-                    .font(GridironType.bodyBold)
+                    .font(RinkType.bodyBold)
                     .foregroundStyle(.white)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 11, weight: .bold))
@@ -700,7 +700,7 @@ struct TeamView: View {
         .accessibilityHint("Switch to another team")
     }
 
-    private static let allTeamAbbrs: [String] = nflTeamAbbreviations
+    private static let allTeamAbbrs: [String] = leagueTeamAbbreviations
 
     private var allTeams: [String] {
         Self.allTeamAbbrs.sorted { teamFullName($0).localizedCompare(teamFullName($1)) == .orderedAscending }
@@ -735,7 +735,7 @@ struct TeamView: View {
             // here as well tipped the bar into sweeping the trailing item into a
             // "..." overflow. The pill still says which phase it is, just in the
             // shortest form that reads as a season type.
-            GridironNavPill(
+            RinkNavPill(
                 title: SeasonLabel.text(viewModel.selectedSeason)
                     + (viewModel.selectedPhase == .playoffs ? " · Playoffs" : "")
             )

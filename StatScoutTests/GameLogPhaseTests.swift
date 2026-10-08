@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 /// Regular-season and playoff games must never end up in the same window.
 ///

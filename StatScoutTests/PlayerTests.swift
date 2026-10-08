@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 final class PlayerTests: XCTestCase {
     func testOverallPercentileDoubleAverage() {
@@ -146,20 +146,20 @@ final class PlayerTests: XCTestCase {
 }
 
 
-final class FootballMetricRegistryTests: XCTestCase {
+final class HockeyMetricRegistryTests: XCTestCase {
     func testAdvancedAndTraditionalClassification() {
         let epa = Metric(id: "epa", label: "EPA/Play", value: "0.18", percentile: 90, category: .passing)
         let yards = Metric(id: "yards", label: "Pass Yds", value: "4,000", percentile: 85, category: .passing)
 
-        XCTAssertEqual(FootballMetricRegistry.kind(for: epa), .advanced)
-        XCTAssertEqual(FootballMetricRegistry.kind(for: yards), .traditional)
+        XCTAssertEqual(HockeyMetricRegistry.kind(for: epa), .advanced)
+        XCTAssertEqual(HockeyMetricRegistry.kind(for: yards), .traditional)
     }
 
     /// Defence used to be traditional-only, and this test asserted that. It now
     /// asserts the opposite, because PFR's advanced defensive table (2018+) is
     /// merged in: pressure generated and what the defender allowed in coverage.
     func testDefenseHasAdvancedDefinitions() {
-        let defenseDefinitions = FootballMetricRegistry.definitions.filter { $0.positions.contains(.defense) }
+        let defenseDefinitions = HockeyMetricRegistry.definitions.filter { $0.positions.contains(.defense) }
         XCTAssertFalse(defenseDefinitions.isEmpty)
         XCTAssertTrue(defenseDefinitions.contains { $0.kind == .advanced })
         XCTAssertTrue(defenseDefinitions.contains { $0.kind == .traditional })
@@ -170,14 +170,14 @@ final class FootballMetricRegistryTests: XCTestCase {
     /// in the league at the top of the board.
     func testCoverageMetricsAreLowerIsBetter() {
         for label in ["Cmp% Allowed", "Yds/Tgt Allowed", "Rating Allowed", "Missed Tkl%"] {
-            let definition = FootballMetricRegistry.definition(for: label, category: .defense)
+            let definition = HockeyMetricRegistry.definition(for: label, category: .defense)
             XCTAssertNotNil(definition, "missing \(label)")
             XCTAssertEqual(definition?.higherIsBetter, false, "\(label) should rank lower-is-better")
         }
         // Pass-rush counting stats go the other way.
         for label in ["Pressures", "Hurries", "QB KD"] {
             XCTAssertEqual(
-                FootballMetricRegistry.definition(for: label, category: .defense)?.higherIsBetter,
+                HockeyMetricRegistry.definition(for: label, category: .defense)?.higherIsBetter,
                 true,
                 "\(label) should rank higher-is-better"
             )
@@ -210,8 +210,8 @@ final class FootballMetricRegistryTests: XCTestCase {
 
     func testUnknownMetricIsPreserved() {
         let unknown = Metric(id: "unknown", label: "New Metric", value: "1.0", percentile: 50, category: .passing)
-        XCTAssertEqual(FootballMetricRegistry.kind(for: unknown), .advanced)
-        XCTAssertTrue(FootballMetricRegistry.isSupported(unknown, by: .qb))
-        XCTAssertEqual(FootballMetricRegistry.sorted([unknown]), [unknown])
+        XCTAssertEqual(HockeyMetricRegistry.kind(for: unknown), .advanced)
+        XCTAssertTrue(HockeyMetricRegistry.isSupported(unknown, by: .qb))
+        XCTAssertEqual(HockeyMetricRegistry.sorted([unknown]), [unknown])
     }
 }

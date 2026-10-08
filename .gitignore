@@ -37,3 +37,4 @@ fastlane/metadata.bak.*/
 
 # App Review contact phone stays local (never in a public repo)
 fastlane/metadata*/review_information/phone_number.txt
+backend/.cache/

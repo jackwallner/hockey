@@ -135,7 +135,7 @@ struct HotColdView: View {
                 }
                 .safeAreaInset(edge: .top, spacing: 0) {
                     header
-                        .background(GridironPalette.canvas)
+                        .background(RinkPalette.canvas)
                 }
             } else {
                 VStack(spacing: 0) {
@@ -152,7 +152,7 @@ struct HotColdView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(GridironPalette.canvas)
+        .background(RinkPalette.canvas)
         .modifier(
             SeasonPhaseNavBar(
                 title: "Trends",
@@ -211,8 +211,8 @@ struct HotColdView: View {
                     Spacer(minLength: 0)
                     if let through = throughLabel {
                         Text(through)
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                     }
                 }
 
@@ -220,17 +220,17 @@ struct HotColdView: View {
                 // fill differs, because here the choice itself encodes hot vs
                 // cold.
                 if !isEarlySeason {
-                    GridironSegmented(
+                    RinkSegmented(
                         segments: [
                             .init(value: false, label: "Heating up", systemImage: "flame.fill"),
                             .init(value: true, label: "Cooling off", systemImage: "snowflake"),
                         ],
                         selection: $showingCold,
-                        selectedFill: { $0 ? GridironPalette.performanceLow : GridironPalette.performanceHigh }
+                        selectedFill: { $0 ? RinkPalette.performanceLow : RinkPalette.performanceHigh }
                     )
                 }
 
-                GridironSegmented(
+                RinkSegmented(
                     segments: TrendWindow.allCases.map { .init(value: $0, label: $0.segmentLabel) },
                     selection: $viewModel.recentWindow
                 )
@@ -238,8 +238,8 @@ struct HotColdView: View {
                 Text(isEarlySeason
                      ? "Too early for movement: a \(viewModel.recentWindow.rawValue)-week comparison starts in Week \(movementStartWeek). Until then, the best of the season so far."
                      : "League weeks, compared with the same span before them. Players inactive for the current span are excluded.")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -248,7 +248,7 @@ struct HotColdView: View {
             // no gap the stat chip sat welded to the bottom of the tab strip
             // and read as part of it. Same 10pt Stats puts above its own
             // control row.
-            .padding(.top, GridironGeo.controlRowGap)
+            .padding(.top, RinkGeo.controlRowGap)
         }
         .fixedSize(horizontal: false, vertical: true)
     }
@@ -287,7 +287,7 @@ struct HotColdView: View {
 
     /// Matches the persistent underlined position row at the top of Stats.
     private var positionSelector: some View {
-        GridironTabs(
+        RinkTabs(
             tabs: TrendSide.allCases.map(\.shortLabel),
             selected: Binding(
                 get: { side.shortLabel },
@@ -343,7 +343,7 @@ struct HotColdView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(GridironPalette.turf)
+                .tint(RinkPalette.turf)
             }
             .padding(.vertical, 32)
         } else if isEarlySeason, !earlyRanked.isEmpty {
@@ -374,7 +374,7 @@ struct HotColdView: View {
     /// security boundary, so the rows behind it were never real numbers.
     private var lockedContent: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: isEarlySeason ? earlyTitle : boardTitle)
+            RinkSectionBar(title: isEarlySeason ? earlyTitle : boardTitle)
 
             leaderRow
 
@@ -409,11 +409,11 @@ struct HotColdView: View {
                     )
                 }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -439,15 +439,15 @@ struct HotColdView: View {
                     ProgressView().scaleEffect(0.7)
                 }
                 Text(viewModel.isRecentFormLoading ? "Loading the board…" : "No movement to rank yet")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, GridironGeo.padInline)
-            .frame(height: GridironGeo.rowHeight)
-            .background(GridironPalette.surface)
+            .padding(.horizontal, RinkGeo.padInline)
+            .frame(height: RinkGeo.rowHeight)
+            .background(RinkPalette.surface)
             .overlay(
-                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                 alignment: .bottom
             )
         }
@@ -463,16 +463,16 @@ struct HotColdView: View {
 
     private func earlySection(forms: [RecentForm]) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: earlyTitle)
+            RinkSectionBar(title: earlyTitle)
             ForEach(Array(forms.enumerated()), id: \.element.id) { index, form in
                 earlyRow(form: form, rank: index + 1, index: index)
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -486,33 +486,33 @@ struct HotColdView: View {
         let value = form.metrics[metric.key].map { metric.format($0) } ?? "-"
         let rowContent = HStack(spacing: 10) {
             Text("\(rank)")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.statSmall)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 26, alignment: .leading)
                 .monospacedDigit()
             PlayerHeadshot(team: player?.team ?? form.team ?? "", initials: player?.initials ?? "-", size: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text(player?.name ?? "Player \(form.playerId)")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(RinkPalette.ink)
                     .lineLimit(1)
                 Text([displayTeamAbbr(player?.team ?? form.team ?? ""), volumeText(form)].joined(separator: " · "))
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(value)
-                .font(GridironType.statMed)
-                .foregroundStyle(GridironPalette.turf)
+                .font(RinkType.statMed)
+                .foregroundStyle(RinkPalette.turf)
                 .monospacedDigit()
                 .frame(width: 72, alignment: .trailing)
         }
-        .padding(.horizontal, GridironGeo.padInline)
-        .frame(height: GridironGeo.rowHeight)
-        .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .padding(.horizontal, RinkGeo.padInline)
+        .frame(height: RinkGeo.rowHeight)
+        .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
         .overlay(
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+            Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
             alignment: .bottom
         )
         .contentShape(Rectangle())
@@ -538,16 +538,16 @@ struct HotColdView: View {
 
     private func section(title: String, forms: [RecentForm], ranked: Bool) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: title)
+            RinkSectionBar(title: title)
             ForEach(Array(forms.enumerated()), id: \.element.id) { index, form in
                 row(form: form, rank: ranked ? index + 1 : nil, index: index)
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -566,8 +566,8 @@ struct HotColdView: View {
         let rowContent = HStack(spacing: 10) {
             if let rank {
                 Text("\(rank)")
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.statSmall)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                     .frame(width: 26, alignment: .leading)
                     .monospacedDigit()
             }
@@ -581,8 +581,8 @@ struct HotColdView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Text(player?.name ?? "Player \(form.playerId)")
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.bodyBold)
+                        .foregroundStyle(RinkPalette.ink)
                         .lineLimit(1)
                     if favorites.isFavorite(playerId: form.playerId) {
                         Image(systemName: "star.fill")
@@ -598,8 +598,8 @@ struct HotColdView: View {
                         "\(metric.format(then)) → \(metric.format(now))",
                         form.weekRangeLabel ?? "\(form.games)G",
                     ].joined(separator: " · "))
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .lineLimit(1)
                 }
             }
@@ -608,11 +608,11 @@ struct HotColdView: View {
             TrendArrow(delta: delta, decimals: metric.decimals, lowerIsBetter: metric.lowerIsBetter)
                 .frame(width: 56, alignment: .trailing)
         }
-        .padding(.horizontal, GridironGeo.padInline)
-        .frame(height: GridironGeo.rowHeight)
-        .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .padding(.horizontal, RinkGeo.padInline)
+        .frame(height: RinkGeo.rowHeight)
+        .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
         .overlay(
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+            Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
             alignment: .bottom
         )
         .contentShape(Rectangle())
@@ -646,17 +646,17 @@ struct HotColdView: View {
     private func teaserRow(_ teaser: TeaserRow, index: Int) -> some View {
         HStack(spacing: 10) {
             Text("\(index + 1)")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.statSmall)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 26, alignment: .leading)
             PlayerHeadshot(team: teaser.team, initials: teaser.initials, size: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text(teaser.name)
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(RinkPalette.ink)
                 Text("\(metric.format(teaser.then)) → \(metric.format(teaser.now)) · Weeks \(teaser.startWeek)-\(teaser.endWeek)")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             TrendArrow(
@@ -666,9 +666,9 @@ struct HotColdView: View {
             )
             .frame(width: 56, alignment: .trailing)
         }
-        .padding(.horizontal, GridironGeo.padInline)
-        .frame(height: GridironGeo.rowHeight)
-        .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .padding(.horizontal, RinkGeo.padInline)
+        .frame(height: RinkGeo.rowHeight)
+        .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
     }
 
     struct TeaserRow {

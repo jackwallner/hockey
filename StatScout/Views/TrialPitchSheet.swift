@@ -124,7 +124,7 @@ struct TrialPitchSheet: View {
 
             footer
         }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         // A fixed height rather than a fraction, because what has to fit is a
         // fixed amount of content: hero, three benefits, CTA and the auto-renew
         // disclosure. A fraction that looked right on a 6.3" phone clipped the
@@ -154,17 +154,17 @@ struct TrialPitchSheet: View {
             HStack(spacing: 10) {
                 Image(systemName: trigger.icon)
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(GridironPalette.turf)
+                    .foregroundStyle(RinkPalette.turf)
                 Text(trigger.title)
-                    .font(GridironType.pageTitle)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.pageTitle)
+                    .foregroundStyle(RinkPalette.ink)
                     .lineLimit(2)
                     .minimumScaleFactor(0.8)
             }
 
             Text(trigger.subtitle)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
@@ -178,16 +178,16 @@ struct TrialPitchSheet: View {
                 HStack(spacing: 12) {
                     Image(systemName: benefit.icon)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(RinkPalette.turf)
                         .frame(width: 24)
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(benefit.title)
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.ink)
                         Text(benefit.detail)
-                            .font(GridironType.small)
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                            .font(RinkType.small)
+                            .foregroundStyle(RinkPalette.inkSecondary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -198,17 +198,17 @@ struct TrialPitchSheet: View {
 
                 if index < benefits.count - 1 {
                     Rectangle()
-                        .fill(GridironPalette.divider)
-                        .frame(height: GridironGeo.hairline)
+                        .fill(RinkPalette.divider)
+                        .frame(height: RinkGeo.hairline)
                 }
             }
         }
         .padding(.horizontal, 14)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -228,19 +228,19 @@ struct TrialPitchSheet: View {
                 Link("Privacy", destination: StatScoutLegal.privacyURL)
                 Button("Maybe later") { dismiss() }
             }
-            .font(GridironType.micro)
+            .font(RinkType.micro)
             .tracking(0.3)
-            .foregroundStyle(GridironPalette.inkSecondary)
+            .foregroundStyle(RinkPalette.inkSecondary)
         }
         .padding(.horizontal, 20)
         .padding(.top, 12)
         .padding(.bottom, 10)
         .background(
-            GridironPalette.surface
+            RinkPalette.surface
                 .overlay(
                     Rectangle()
-                        .fill(GridironPalette.divider)
-                        .frame(height: GridironGeo.hairline),
+                        .fill(RinkPalette.divider)
+                        .frame(height: RinkGeo.hairline),
                     alignment: .top
                 )
                 .ignoresSafeArea(edges: .bottom)

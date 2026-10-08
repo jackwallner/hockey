@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 /// Covers the roster-pooling rules the team comparison relies on. The important
 /// property is that a rate is weighted by the volume it was measured over: an
@@ -26,31 +26,31 @@ final class MetricAggregationTests: XCTestCase {
 
     func testPassingRatesWeightByAttempts() {
         XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "EPA/Play", category: .passing),
+            HockeyMetricRegistry.aggregation(for: "EPA/Play", category: .passing),
             .weighted(.attempts)
         )
         XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "Sack%", category: .passing),
+            HockeyMetricRegistry.aggregation(for: "Sack%", category: .passing),
             .weighted(.attempts)
         )
         // Volume stats still add up.
         XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "Pass Yds", category: .passing),
+            HockeyMetricRegistry.aggregation(for: "Pass Yds", category: .passing),
             .sum
         )
     }
 
     func testRushingTotalsSumAndRatesWeightByCarries() {
         XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "RYOE", category: .rushing),
+            HockeyMetricRegistry.aggregation(for: "RYOE", category: .rushing),
             .sum
         )
         XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "Rush EPA", category: .rushing),
+            HockeyMetricRegistry.aggregation(for: "Rush EPA", category: .rushing),
             .sum
         )
         XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "EPA/Rush", category: .rushing),
+            HockeyMetricRegistry.aggregation(for: "EPA/Rush", category: .rushing),
             .weighted(.carries)
         )
     }
@@ -58,11 +58,11 @@ final class MetricAggregationTests: XCTestCase {
     func testTargetSharesSumWhileTargetRatesWeight() {
         // A roster's target shares are shares of one offence, so they add.
         XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "Target Share", category: .receiving),
+            HockeyMetricRegistry.aggregation(for: "Target Share", category: .receiving),
             .sum
         )
         XCTAssertEqual(
-            FootballMetricRegistry.aggregation(for: "EPA/Tgt", category: .receiving),
+            HockeyMetricRegistry.aggregation(for: "EPA/Tgt", category: .receiving),
             .weighted(.targets)
         )
     }

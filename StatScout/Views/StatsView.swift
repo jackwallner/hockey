@@ -32,7 +32,7 @@ struct StatsView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
             }
-            GridironSegmented(
+            RinkSegmented(
                 segments: [
                     .init(value: false, label: "League leaders"),
                     .init(value: true, label: "Following", systemImage: "star.fill"),
@@ -49,7 +49,7 @@ struct StatsView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(GridironPalette.canvas)
+        .background(RinkPalette.canvas)
         .modifier(
             SeasonPhaseNavBar(
                 title: "Stats",

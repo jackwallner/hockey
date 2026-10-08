@@ -1,15 +1,17 @@
 import Foundation
 
-/// One NFL game from `public.games`, the published nflverse schedule.
+/// One NHL game from `public.games`, synced from the league schedule.
 ///
-/// Scores are null until nflverse posts a final. There is no live score feed:
-/// a game past kickoff with no score is "in progress", not 0-0.
+/// Scores are null until the game is final. In-progress scores are not
+/// published: a game past its start time with no score is "in progress", not 0-0.
 struct Game: Codable, Hashable, Identifiable, Sendable {
     let id: String
     let season: Int
     let seasonPhase: SeasonPhase
-    /// REG, WC, DIV, CON or SB.
+    /// REG, or the playoff round: R1, R2, CF or SCF.
     let gameType: String
+    /// League week, counted from the week of opening night. Used for anchoring
+    /// and coverage captions only; the app groups games by date.
     let week: Int
     let kickoff: Date?
     let gameDate: Date
@@ -124,19 +126,21 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
         isHome(team) ? homeScore : awayScore
     }
 
-    /// "W", "L" or "T" for a final, from `team`'s side.
+    /// "W", "L" or "OTL" for a final, from `team`'s side. An overtime or
+    /// shootout loss earns a point, so the standings vocabulary keeps it apart.
     func result(for team: String) -> String? {
         guard let mine = score(of: team), let theirs = score(of: opponent(of: team)) else { return nil }
-        if mine == theirs { return "T" }
-        return mine > theirs ? "W" : "L"
+        if mine > theirs { return "W" }
+        return overtime ? "OTL" : "L"
     }
 
-    /// "W 36-31", team score first.
+    /// "W 4-3 OT", team score first.
     func resultLine(for team: String) -> String? {
         guard let result = result(for: team),
               let mine = score(of: team),
               let theirs = score(of: opponent(of: team)) else { return nil }
-        return "\(result) \(mine)-\(theirs)\(overtime ? " OT" : "")"
+        let shown = result == "OTL" ? "L" : result
+        return "\(shown) \(mine)-\(theirs)\(overtime ? " OT" : "")"
     }
 
     /// "vs HOU" at home, "at HOU" away.
@@ -145,7 +149,7 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
     }
 
     var roundLabel: String {
-        GameWeek.label(week: week, gameType: gameType)
+        GameDay.roundLabel(gameType: gameType)
     }
 
     func status(now: Date = .now) -> GameStatus {
@@ -154,7 +158,7 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
         if now < kickoff { return .upcoming }
         // No live scores in the feed. Past a normal game length with no posted
         // final, say the score is on its way rather than "in progress" forever.
-        return now.timeIntervalSince(kickoff) < 4.5 * 3_600 ? .inProgress : .awaitingScore
+        return now.timeIntervalSince(kickoff) < 3.25 * 3_600 ? .inProgress : .awaitingScore
     }
 }
 
@@ -174,71 +178,85 @@ enum GameStatus: Equatable, Sendable {
     }
 }
 
-/// A selectable week of the schedule: regular-season weeks, then playoff rounds.
-struct GameWeek: Hashable, Identifiable, Sendable {
-    let week: Int
+/// A selectable day of the schedule. Hockey plays most nights, so the unit a
+/// fan thinks in is the date, not the week.
+struct GameDay: Hashable, Identifiable, Sendable {
+    /// Start of the day in the phone's calendar.
+    let date: Date
     let phase: SeasonPhase
-    let label: String
 
-    var id: String { "\(phase.rawValue)-\(week)" }
+    var id: String { "\(phase.rawValue)-\(Self.key(date))" }
 
-    /// Short chip text: "Wk 1", "WC", "SB".
-    var shortLabel: String {
-        phase == .regular ? "Wk \(week)" : label
+    /// "Today", "Yesterday", "Tomorrow", else "Tue, Oct 7".
+    func label(now: Date = .now) -> String {
+        let calendar = Calendar.current
+        if calendar.isDate(date, inSameDayAs: now) { return "Today" }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
+           calendar.isDate(date, inSameDayAs: yesterday) { return "Yesterday" }
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: now),
+           calendar.isDate(date, inSameDayAs: tomorrow) { return "Tomorrow" }
+        return date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
 
-    static func label(week: Int, gameType: String) -> String {
+    var label: String { label(now: .now) }
+
+    /// Short chip text: "Oct 7".
+    var shortLabel: String { date.formatted(.dateTime.month(.abbreviated).day()) }
+
+    static func roundLabel(gameType: String) -> String {
         switch gameType.uppercased() {
-        case "WC": return "Wild Card"
-        case "DIV": return "Divisional"
-        case "CON": return "Conference"
-        case "SB": return "Super Bowl"
-        default: return "Week \(week)"
+        case "R1": return "Round 1"
+        case "R2": return "Round 2"
+        case "CF": return "Conference Final"
+        case "SCF": return "Stanley Cup Final"
+        default: return "Regular Season"
         }
     }
 
-    static func weeks(in games: [Game]) -> [GameWeek] {
-        var seen: [String: GameWeek] = [:]
+    static func key(_ date: Date) -> String {
+        date.formatted(.iso8601.year().month().day())
+    }
+
+    /// The local calendar day a game belongs to, from its start time when
+    /// known. A 7:00 PM Pacific start is the same night everywhere in North
+    /// America, which is what the schedule date already says.
+    static func day(of game: Game) -> Date {
+        Calendar.current.startOfDay(for: game.kickoff ?? game.gameDate)
+    }
+
+    static func days(in games: [Game]) -> [GameDay] {
+        var seen: [String: GameDay] = [:]
         for game in games {
-            let week = GameWeek(
-                week: game.week,
-                phase: game.seasonPhase,
-                label: game.seasonPhase == .regular ? "Week \(game.week)" : label(week: game.week, gameType: game.gameType)
-            )
-            seen[week.id] = week
+            let day = GameDay(date: day(of: game), phase: game.seasonPhase)
+            seen[day.id] = day
         }
-        return seen.values.sorted {
-            ($0.phase == .regular ? 0 : 1, $0.week) < ($1.phase == .regular ? 0 : 1, $1.week)
-        }
+        return seen.values.sorted { $0.date < $1.date }
     }
 
-    /// The week a fan means by "this week".
+    /// The day a fan means by "tonight".
     ///
-    /// A week stays current until a day before the next week's first kickoff:
-    /// Monday night's result, and the whole weekend's finals, stay on screen
-    /// through Wednesday, when the talk is still about them, and the next slate
-    /// takes over on the eve of Thursday night. It used to hand over 36 hours
-    /// after the last kickoff, which put a list of future kickoff times with no
-    /// scores in it on the front door from Wednesday morning. Before the season
-    /// it is the first week; after it, the last.
-    static func current(in games: [Game], now: Date = .now) -> GameWeek? {
-        let weeks = weeks(in: games)
-        for (index, week) in weeks.enumerated() {
-            guard index + 1 < weeks.count,
-                  let nextFirst = firstKickoff(of: weeks[index + 1], in: games) else { return week }
-            if now < nextFirst.addingTimeInterval(-24 * 3_600) { return week }
+    /// Today's slate while there is one. Until mid-afternoon the previous
+    /// night's finals are what people are talking about, so before 2 PM local
+    /// yesterday's games stay on the front door if nothing has started yet
+    /// today. With no games today, the most recent day with games; before
+    /// the season, the first.
+    static func current(in games: [Game], now: Date = .now) -> GameDay? {
+        let days = days(in: games)
+        guard !days.isEmpty else { return nil }
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: now)
+        let hour = calendar.component(.hour, from: now)
+        if let todays = days.first(where: { calendar.isDate($0.date, inSameDayAs: today) }) {
+            let started = todays.games(from: games).contains { ($0.kickoff ?? $0.gameDate) <= now }
+            if started || hour >= 14 { return todays }
+            if let yesterday = days.last(where: { $0.date < today }) { return yesterday }
+            return todays
         }
-        return weeks.last
-    }
-
-    private static func firstKickoff(of week: GameWeek, in games: [Game]) -> Date? {
-        games.filter { $0.week == week.week && $0.seasonPhase == week.phase }
-            .compactMap(\.kickoff)
-            .min()
+        return days.last { $0.date < today } ?? days.first
     }
 
     func games(from games: [Game]) -> [Game] {
-        games.filter { $0.week == week && $0.seasonPhase == phase }
+        games.filter { Self.day(of: $0) == date && $0.seasonPhase == phase }
     }
 }
 
@@ -253,13 +271,13 @@ extension Game {
         }
     }
 
-    /// "Sun 1:00 PM" in the phone's zone.
+    /// "Tue 7:00 PM" in the phone's zone.
     var kickoffLabel: String {
         guard let kickoff else { return gameDate.formatted(DataCoverage.gameDayStyle) }
         return kickoff.formatted(.dateTime.weekday(.abbreviated).hour().minute())
     }
 
-    /// "Sun, Sep 13".
+    /// "Tue, Oct 7".
     var dayLabel: String {
         guard let kickoff else { return gameDate.formatted(DataCoverage.gameDayStyle) }
         return kickoff.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())

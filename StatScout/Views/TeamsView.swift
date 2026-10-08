@@ -41,7 +41,7 @@ struct TeamsView: View {
         viewModel.selectedSeason == viewModel.freeSeason && viewModel.selectedPhase == .regular
     }
 
-    private static let allTeams: [String] = nflTeamAbbreviations
+    private static let allTeams: [String] = leagueTeamAbbreviations
 
     /// Eight divisions of four, in standings order. Grouping this way is what
     /// lets all thirty-two clubs fit one screen without scrolling, and it's how
@@ -106,7 +106,7 @@ struct TeamsView: View {
                     teamsLoadingState
                 } else {
                     if showsLeagueTables {
-                        GridironSegmented(
+                        RinkSegmented(
                             segments: [
                                 .init(value: TeamsMode.clubs, label: "Clubs"),
                                 .init(value: TeamsMode.standings, label: "Standings"),
@@ -133,7 +133,7 @@ struct TeamsView: View {
             .padding(.top, 12)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         // Same header as Stats and Trends, from the one shared modifier, so the
         // season you are reading never moves when you change tabs.
         .modifier(
@@ -188,13 +188,13 @@ struct TeamsView: View {
         VStack(spacing: 12) {
             Image(systemName: "shield.lefthalf.filled.slash")
                 .font(.system(size: 28, weight: .regular))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(RinkPalette.inkTertiary)
             Text("Teams needs a single season")
-                .font(GridironType.cardTitle)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.cardTitle)
+                .foregroundStyle(RinkPalette.ink)
             Text("Career totals follow the player, not the club: a career line carries whichever team he finished with, so an all-time roster would credit a franchise with yards earned somewhere else. Pick a season to see its teams.")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Button {
@@ -202,11 +202,11 @@ struct TeamsView: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
                 Text("Show " + SeasonLabel.text(latestUnlockedSeason))
-                    .font(GridironType.smallBold)
+                    .font(RinkType.smallBold)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 18)
                     .padding(.vertical, 9)
-                    .background(GridironPalette.turf)
+                    .background(RinkPalette.turf)
                     .clipShape(Capsule())
             }
             .buttonStyle(.plain)
@@ -214,11 +214,11 @@ struct TeamsView: View {
         .padding(.vertical, 36)
         .padding(.horizontal, 24)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
     }
@@ -235,14 +235,14 @@ struct TeamsView: View {
             ForEach(0..<6, id: \.self) { _ in
                 HStack(spacing: 12) {
                     Circle()
-                        .fill(GridironPalette.surfaceAlt)
+                        .fill(RinkPalette.surfaceAlt)
                         .frame(width: 36, height: 36)
                     VStack(alignment: .leading, spacing: 6) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(GridironPalette.surfaceAlt)
+                            .fill(RinkPalette.surfaceAlt)
                             .frame(width: 140, height: 12)
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(GridironPalette.surfaceAlt)
+                            .fill(RinkPalette.surfaceAlt)
                             .frame(width: 40, height: 10)
                     }
                     Spacer()
@@ -252,11 +252,11 @@ struct TeamsView: View {
             }
         }
         .padding(.horizontal, 12)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .redacted(reason: .placeholder)
@@ -274,8 +274,8 @@ struct TeamsView: View {
             if let fav = pinnedFavorite {
                 HStack {
                     Text("FAVORITE TEAM")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                     Spacer()
                 }
                 .padding(.horizontal, 16)
@@ -295,17 +295,17 @@ struct TeamsView: View {
 
             HStack {
                 Text("ALL TEAMS")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                 Spacer()
                 if searchText.isEmpty {
                     Text("\(filteredTeams.count) teams")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                 } else {
                     Button("Clear") { searchText = "" }
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                 }
             }
             .padding(.horizontal, 16)
@@ -349,8 +349,8 @@ struct TeamsView: View {
                 VStack(spacing: 6) {
                     HStack {
                         Text(division.name.uppercased())
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                         Spacer()
                     }
                     HStack(spacing: 8) {
@@ -382,13 +382,13 @@ struct TeamsView: View {
                             .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(Color.yellow)
                             .padding(2)
-                            .background(GridironPalette.surface, in: Circle())
+                            .background(RinkPalette.surface, in: Circle())
                             .offset(x: 3, y: -3)
                     }
                 }
                 if let status = weekStatus(abbr) {
                     Text(status.text)
-                        .font(GridironType.micro)
+                        .font(RinkType.micro)
                         .foregroundStyle(status.color)
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
@@ -422,10 +422,10 @@ struct TeamsView: View {
               viewModel.selectedPhase == .regular else { return nil }
         if let game = viewModel.currentGame(forTeam: abbr),
            [.inProgress, .awaitingScore].contains(game.status()) {
-            return ("Live", "playing \(game.matchupLabel(for: abbr))", GridironPalette.performanceLow)
+            return ("Live", "playing \(game.matchupLabel(for: abbr))", RinkPalette.performanceLow)
         }
         if let record = viewModel.record(forTeam: abbr) {
-            return (record, "record \(record)", GridironPalette.inkSecondary)
+            return (record, "record \(record)", RinkPalette.inkSecondary)
         }
         return legacyWeekStatus(abbr)
     }
@@ -434,20 +434,20 @@ struct TeamsView: View {
     private func legacyWeekStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
         guard let week = viewModel.currentGameWeek else { return nil }
         guard let game = viewModel.currentGame(forTeam: abbr) else {
-            return week.phase == .regular ? ("Bye", "bye week", GridironPalette.inkTertiary) : nil
+            return week.phase == .regular ? ("Bye", "bye week", RinkPalette.inkTertiary) : nil
         }
         switch game.status() {
         case .final:
             let line = game.resultLine(for: abbr) ?? "Final"
-            let color = game.result(for: abbr) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh
+            let color = game.result(for: abbr) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh
             return (line, "\(line) \(game.matchupLabel(for: abbr))", color)
         case .inProgress, .awaitingScore:
-            return ("Live", "playing \(game.matchupLabel(for: abbr))", GridironPalette.performanceLow)
+            return ("Live", "playing \(game.matchupLabel(for: abbr))", RinkPalette.performanceLow)
         case .upcoming:
             return (
                 game.kickoff?.formatted(.dateTime.weekday(.abbreviated)) ?? "TBD",
                 "\(game.matchupLabel(for: abbr)), \(game.dayLabel)",
-                GridironPalette.inkSecondary
+                RinkPalette.inkSecondary
             )
         }
     }
@@ -460,9 +460,9 @@ private struct TeamAbbrDisk: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(NFLTeamColor.color(abbr))
+            Circle().fill(TeamColor.color(abbr))
             Text(displayTeamAbbr(abbr))
-                .font(GridironType.smallBold)
+                .font(RinkType.smallBold)
                 .foregroundStyle(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
@@ -490,7 +490,7 @@ struct FavoriteTeamCard: View {
                 HStack(spacing: 14) {
                     ZStack {
                         Circle()
-                            .fill(NFLTeamColor.color(abbr))
+                            .fill(TeamColor.color(abbr))
                             .frame(width: 52, height: 52)
                             .shadow(color: Color.black.opacity(0.08), radius: 4, y: 2)
                         Text(abbr)
@@ -500,11 +500,11 @@ struct FavoriteTeamCard: View {
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("YOUR TEAM")
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.turf)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.turf)
                         Text(teamFullName(abbr))
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.ink)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
@@ -513,16 +513,16 @@ struct FavoriteTeamCard: View {
 
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .padding(.trailing, 36)
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity)
-                .background(GridironPalette.surfaceAlt)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(RinkPalette.surfaceAlt)
+                .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
                 .overlay(
-                    RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                        .stroke(GridironPalette.turf, lineWidth: 1.5)
+                    RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                        .stroke(RinkPalette.turf, lineWidth: 1.5)
                 )
             }
             .buttonStyle(.plain)
@@ -534,8 +534,8 @@ struct FavoriteTeamCard: View {
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(Color.yellow)
                     .padding(8)
-                    .background(Circle().fill(GridironPalette.surface))
-                    .overlay(Circle().stroke(GridironPalette.hairline, lineWidth: 0.5))
+                    .background(Circle().fill(RinkPalette.surface))
+                    .overlay(Circle().stroke(RinkPalette.hairline, lineWidth: 0.5))
             }
             .buttonStyle(.borderless)
             .accessibilityLabel("Remove favorite")
@@ -553,35 +553,35 @@ struct TeamRowContent: View {
     var body: some View {
         HStack(spacing: 0) {
             Circle()
-                .fill(NFLTeamColor.color(abbr))
+                .fill(TeamColor.color(abbr))
                 .frame(width: 36, height: 36)
                 .overlay(
                     Text(abbr)
-                        .font(GridironType.smallBold)
+                        .font(RinkType.smallBold)
                         .foregroundStyle(.white)
                 )
                 .padding(.trailing, 12)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(teamFullName(abbr))
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(RinkPalette.ink)
                     .lineLimit(1)
 
                 Text(abbr)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkTertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(RinkPalette.inkTertiary)
         }
         .padding(.leading, 12)
         .frame(height: 56)
         .contentShape(Rectangle())
-        .background(isFavorite ? GridironPalette.surfaceAlt : GridironPalette.surface)
+        .background(isFavorite ? RinkPalette.surfaceAlt : RinkPalette.surface)
     }
 }
 
@@ -595,10 +595,10 @@ struct TeamTile: View {
         VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(NFLTeamColor.color(abbr))
+                    .fill(TeamColor.color(abbr))
                     .frame(width: 44, height: 44)
                 Text(abbr)
-                    .font(GridironType.smallBold)
+                    .font(RinkType.smallBold)
                     .foregroundStyle(.white)
 
                 if isFavorite {
@@ -619,20 +619,20 @@ struct TeamTile: View {
             }
 
             Text(teamFullName(abbr))
-                .font(GridironType.smallBold)
-                .foregroundStyle(isFavorite ? GridironPalette.turf : GridironPalette.ink)
+                .font(RinkType.smallBold)
+                .foregroundStyle(isFavorite ? RinkPalette.turf : RinkPalette.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .padding(.horizontal, 6)
-        .background(isFavorite ? GridironPalette.surfaceAlt : GridironPalette.surface)
+        .background(isFavorite ? RinkPalette.surfaceAlt : RinkPalette.surface)
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(isFavorite ? GridironPalette.turf : GridironPalette.hairline, lineWidth: isFavorite ? 2 : 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(isFavorite ? RinkPalette.turf : RinkPalette.hairline, lineWidth: isFavorite ? 2 : 0.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
     }
 }
 

@@ -1,1 +1,0 @@
-Els taulers de posició ara s’obren amb l’estadística predeterminada de cada posició. En canviar de posició, només es conserva l’estadística que has triat.

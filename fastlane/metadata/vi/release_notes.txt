@@ -1,1 +1,0 @@
-Bảng vị trí giờ đây mở với thống kê mặc định của từng vị trí. Khi đổi vị trí, chỉ thống kê bạn đã chọn mới được giữ lại.

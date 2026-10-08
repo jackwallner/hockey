@@ -1,1 +1,0 @@
-Preglednice položajev se zdaj odprejo s privzeto statistiko za posamezni položaj. Ob menjavi položaja se ohrani samo statistika, ki ste jo izbrali.

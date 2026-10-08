@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export current and historical NFL snapshots from Supabase for the iOS bundle.
+"""Export current and historical NHL snapshots from Supabase for the iOS bundle.
 
 Ahead of a September rollover, run this with next season's number to fold the
 outgoing season into the historical archive before it becomes historical:
@@ -28,8 +28,8 @@ def _resolve_season() -> int:
     """The season the pipeline is currently writing.
 
     Same rule as backend/ingest.py::resolve_season and the app's
-    StatScoutSeason.current: an NFL season is named for the year it kicks off
-    in, so September onward belongs to this year. This used to fall back to a
+    StatScoutSeason.current: an NHL season is named for the year it starts in
+    (2026 is 2026-27), so September onward belongs to this year. This used to fall back to a
     literal 2025, which would have silently exported the 2026 season as
     "historical" and shipped a bundle with no current year in it.
     """
@@ -40,12 +40,20 @@ def _resolve_season() -> int:
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 KEY = os.environ["SUPABASE_ANON_KEY"]
 CURRENT_SEASON = int(os.environ.get("STATCAST_SEASON") or _resolve_season())
-OLDEST_SUPPORTED_SEASON = 2000
+OLDEST_SUPPORTED_SEASON = 2008
 # Career rollup sentinel, written by backend/rollup_all_time.py. It ships in the
 # historical bundle so "All Time" works on first launch rather than waiting on a
 # fetch, the same as every other past season.
 ALL_TIME_SEASON = 0
-REQUIRED_TYPES = {"qb", "rb", "wr", "te", "def"}
+REQUIRED_TYPES = {"f", "d", "g"}
+CATEGORIES = {"Scoring", "Shot Quality", "Play Driving", "Goaltending"}
+
+
+def minimum_teams(season: int) -> int:
+    """League size that season: 30 to 2016-17, 31 with Vegas, 32 with Seattle."""
+    if season >= 2021:
+        return 32
+    return 31 if season >= 2017 else 30
 
 URL = f"{SUPABASE_URL}/rest/v1/player_snapshots"
 HEADERS = {
@@ -127,7 +135,7 @@ def validate_export(
         teams = {player.get("team") for player in season_players if player.get("team")}
         types = {str(player.get("player_type") or "").lower() for player in season_players}
         missing_types = REQUIRED_TYPES - types
-        # The 30-team floor is a real-season integrity check: a season missing a
+        # The team-count floor is a real-season integrity check: a season missing a
         # franchise means a partial ingest. It says nothing about the career
         # rollup, whose cohort is a few hundred players carrying whichever team
         # they last played for, so that one is checked on types and size instead.
@@ -138,19 +146,27 @@ def validate_export(
                     f"missing types={sorted(missing_types)}"
                 )
         elif season == CURRENT_SEASON:
-            # Opening week may contain only one completed game. Require both
-            # teams and every position group, without inventing the other games.
+            # Opening night may contain only one completed game. Require both
+            # teams and every cohort, without inventing the other games.
             if len(teams) < 2 or len(season_players) < 20 or missing_types:
                 raise RuntimeError(
                     f"Incomplete current season: {len(teams)} teams, "
                     f"{len(season_players)} players, missing types={sorted(missing_types)}"
                 )
-        elif len(teams) < 30 or missing_types:
+        elif len(teams) < minimum_teams(season) or missing_types:
             raise RuntimeError(
                 f"Incomplete {season}: {len(teams)} teams, missing types={sorted(missing_types)}"
             )
         if any(not player.get("metrics") for player in season_players):
             raise RuntimeError(f"Season {season} contains rows without metrics")
+
+    bad_categories = {
+        metric.get("category")
+        for player in players
+        for metric in player.get("metrics", [])
+    } - CATEGORIES
+    if bad_categories:
+        raise RuntimeError(f"Unexpected metric categories: {sorted(bad_categories, key=str)}")
 
     if require_rate_metrics:
         labels = {
@@ -158,7 +174,7 @@ def validate_export(
             for player in players
             for metric in player.get("metrics", [])
         }
-        missing_rates = {"EPA/Play", "EPA/Rush", "EPA/Tgt"} - labels
+        missing_rates = {"xGF%", "ixG", "GSAx"} - labels
         if missing_rates:
             raise RuntimeError(f"Missing current rate metrics: {sorted(missing_rates)}")
 

@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 /// The blurred board behind the Trends paywall has to redraw when the controls
 /// move.

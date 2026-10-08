@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 /// What "the last N games" adds up to on a player page.
 final class RecentFormWindowTests: XCTestCase {

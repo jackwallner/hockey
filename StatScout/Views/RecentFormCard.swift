@@ -23,7 +23,7 @@ struct RecentFormCard: View {
     @State private var logs: [PlayerGameLog] = []
     @State private var loading = false
     @State private var loadError: String?
-    @State private var windowGames: Int = 5
+    @State private var windowGames: Int = 4
     @State private var curves: LeaguePercentileCurves?
 
     /// The phase the card's games come from - the profile is scoped to
@@ -55,11 +55,11 @@ struct RecentFormCard: View {
             header
             content
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .task(id: "\(player.playerId)-\(season)-\(seasonPhase.rawValue)-\(freshnessRevision ?? "none")") {
             await load()
@@ -82,45 +82,45 @@ struct RecentFormCard: View {
             HStack(spacing: 8) {
                 Image(systemName: "flame.fill")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(GridironPalette.turf)
+                    .foregroundStyle(RinkPalette.turf)
                 Text("RECENT FORM")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                 Spacer()
                 if !store.isPro {
                     HStack(spacing: 3) {
                         Image(systemName: "crown.fill")
                             .font(.system(size: 9, weight: .bold))
                         Text("STATSCOUT+")
-                            .font(GridironType.micro)
+                            .font(RinkType.micro)
                             .fontWeight(.bold)
                     }
-                    .foregroundStyle(GridironPalette.midnight)
+                    .foregroundStyle(RinkPalette.midnight)
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
                     .background(Color.yellow)
                     .clipShape(Capsule())
                 }
             }
-            .padding(.horizontal, GridironGeo.padInline)
+            .padding(.horizontal, RinkGeo.padInline)
             .padding(.top, 12)
 
             windowPicker
-                .padding(.horizontal, GridironGeo.padInline)
+                .padding(.horizontal, RinkGeo.padInline)
                 .padding(.bottom, 10)
         }
-        .background(GridironPalette.surfaceAlt)
+        .background(RinkPalette.surfaceAlt)
         .overlay(
-            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+            Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
             alignment: .bottom
         )
     }
 
     private var windowPicker: some View {
-        GridironSegmented(
+        RinkSegmented(
             segments: RecentWindow.allCases.map { .init(value: $0, label: $0.segmentLabel) },
             selection: Binding(
-                get: { RecentWindow(rawValue: windowGames) ?? .three },
+                get: { RecentWindow(rawValue: windowGames) ?? .four },
                 set: { windowGames = $0.rawValue }
             )
         )
@@ -168,7 +168,7 @@ struct RecentFormCard: View {
                 if !isDefense { summaryStat(label: "Touches", value: "31") }
                 Spacer(minLength: 0)
             }
-            .padding(GridironGeo.padInline)
+            .padding(RinkGeo.padInline)
 
             metricBarList(sample)
         }
@@ -182,8 +182,8 @@ struct RecentFormCard: View {
                     .progressViewStyle(.circular)
                     .scaleEffect(0.75)
                 Text("Loading recent games…")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 24)
@@ -195,10 +195,10 @@ struct RecentFormCard: View {
             VStack(spacing: 6) {
                 Image(systemName: "calendar.badge.exclamationmark")
                     .font(.system(size: 22))
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                 Text(emptyStateText)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 22)
@@ -227,15 +227,15 @@ struct RecentFormCard: View {
                 Spacer(minLength: 0)
                 if w.plays < smallSamplePlaysThreshold {
                     Text("SMALL SAMPLE")
-                        .font(GridironType.micro)
+                        .font(RinkType.micro)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(GridironPalette.inkTertiary)
+                        .background(RinkPalette.inkTertiary)
                         .clipShape(Capsule())
                 }
             }
-            .padding(GridironGeo.padInline)
+            .padding(RinkGeo.padInline)
 
             metricBarList(recentMetricRows(window: w))
         }
@@ -248,13 +248,13 @@ struct RecentFormCard: View {
         VStack(spacing: 0) {
             ForEach(Array(rows.enumerated()), id: \.element.id) { index, metric in
                 MetricBar(metric: metric)
-                    .padding(.horizontal, GridironGeo.padCard)
+                    .padding(.horizontal, RinkGeo.padCard)
                     .padding(.vertical, 12)
-                    .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                    .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                     .overlay(
                         Rectangle()
-                            .fill(GridironPalette.divider)
-                            .frame(height: GridironGeo.hairline),
+                            .fill(RinkPalette.divider)
+                            .frame(height: RinkGeo.hairline),
                         alignment: .bottom
                     )
             }
@@ -264,11 +264,11 @@ struct RecentFormCard: View {
     private func summaryStat(label: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(label)
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
             Text(value)
-                .font(GridironType.bodyBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.bodyBold)
+                .foregroundStyle(RinkPalette.ink)
         }
     }
 

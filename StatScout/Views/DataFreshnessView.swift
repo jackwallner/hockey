@@ -71,8 +71,8 @@ struct DataFreshnessView: View {
                 }
                 Spacer(minLength: 0)
             }
-            .font(GridironType.micro)
-            .foregroundStyle(problemIcon == nil ? GridironPalette.inkTertiary : GridironPalette.performanceLow)
+            .font(RinkType.micro)
+            .foregroundStyle(problemIcon == nil ? RinkPalette.inkTertiary : RinkPalette.performanceLow)
             .frame(maxWidth: .infinity, minHeight: 20, alignment: .leading)
             .contentShape(Rectangle())
         }
@@ -158,6 +158,6 @@ struct DataFreshnessView: View {
 #Preview {
     DataFreshnessView(viewModel: DashboardViewModel())
         .padding()
-        .background(GridironPalette.canvas)
+        .background(RinkPalette.canvas)
 }
 #endif

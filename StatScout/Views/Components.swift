@@ -9,7 +9,7 @@ struct PlayerHeadshot: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(NFLTeamColor.color(team))
+            Circle().fill(TeamColor.color(team))
             Text(initials)
                 .font(.system(size: size * 0.34, weight: .bold, design: .default))
                 .foregroundStyle(.white)
@@ -67,17 +67,17 @@ struct OverallPercentileBadge: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("\(percentile)")
-                .font(GridironType.statHero)
+                .font(RinkType.statHero)
                 .foregroundStyle(.white)
                 .shadow(color: Color.black.opacity(0.4), radius: 2, x: 0, y: 1)
             Text(percentile.ordinal)
-                .font(GridironType.micro)
+                .font(RinkType.micro)
                 .foregroundStyle(.white.opacity(0.9))
                 .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 0.5)
         }
         .frame(width: size, height: size)
-        .background(GridironPalette.color(forPercentile: percentile))
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusBadge))
+        .background(RinkPalette.color(forPercentile: percentile))
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusBadge))
         .accessibilityLabel("Overall \(percentile.ordinalString) percentile, \(tierDescription)")
     }
 }
@@ -86,7 +86,7 @@ struct TeamColorDot: View {
     let abbr: String
     var size: CGFloat = 8
     var body: some View {
-        Circle().fill(NFLTeamColor.color(abbr)).frame(width: size, height: size)
+        Circle().fill(TeamColor.color(abbr)).frame(width: size, height: size)
             .accessibilityHidden(true)
     }
 }
@@ -119,12 +119,12 @@ struct MetricBar: View {
             // Label column - left aligned
             VStack(alignment: .leading, spacing: 1) {
                 Text(metric.label)
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(RinkPalette.ink)
                 if metric.isSmallSample, !metric.isUnranked {
                     Text("Small sample")
                         .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
@@ -136,13 +136,13 @@ struct MetricBar: View {
                 // an empty track, no bubble, no colour.
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(GridironPalette.surfaceSunk)
+                        .fill(RinkPalette.surfaceSunk)
                         .frame(height: 10)
                     Text("Not ranked")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .padding(.horizontal, 6)
-                        .background(Capsule().fill(GridironPalette.surfaceSunk))
+                        .background(Capsule().fill(RinkPalette.surfaceSunk))
                         .padding(.leading, 8)
                 }
                 .frame(height: 28)
@@ -155,8 +155,8 @@ struct MetricBar: View {
             // Value column - far right, fixed width (sized for "30.0 ft/s" / "0.421" range)
             if showValue && !metric.value.isEmpty {
                 Text(metric.value)
-                    .font(GridironType.statMed)
-                    .foregroundStyle(metric.isSmallSample || metric.isUnranked ? GridironPalette.inkSecondary : GridironPalette.ink)
+                    .font(RinkType.statMed)
+                    .foregroundStyle(metric.isSmallSample || metric.isUnranked ? RinkPalette.inkSecondary : RinkPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .frame(width: 72, alignment: .trailing)
@@ -178,16 +178,16 @@ struct MetricBar: View {
 
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(GridironPalette.surfaceSunk)
+                        .fill(RinkPalette.surfaceSunk)
                         .frame(height: 10)
 
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(GridironPalette.color(forPercentile: percentileValue))
+                        .fill(RinkPalette.color(forPercentile: percentileValue))
                         .frame(width: offset, height: 10)
 
                     ZStack {
                         Circle()
-                            .fill(GridironPalette.color(forPercentile: percentileValue))
+                            .fill(RinkPalette.color(forPercentile: percentileValue))
                             .frame(width: circleSize, height: circleSize)
 
                         Text("\(percentileValue)")
@@ -203,7 +203,7 @@ struct MetricBar: View {
     }
 }
 
-/// Season + recent percentile bars stacked in one row - same Gridiron layout,
+/// Season + recent percentile bars stacked in one row - same Rink layout,
 /// with a compact recent track under the season bar when both are available.
 struct DualMetricBar: View {
     let season: Metric
@@ -214,16 +214,16 @@ struct DualMetricBar: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Text("Season")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(width: 52, alignment: .leading)
                 MetricBar(metric: season, showValue: true)
             }
 
             HStack(spacing: 6) {
                 Text(recentCaption)
-                    .font(GridironType.micro)
-                    .foregroundStyle(recent == nil ? GridironPalette.inkTertiary : GridironPalette.turf)
+                    .font(RinkType.micro)
+                    .foregroundStyle(recent == nil ? RinkPalette.inkTertiary : RinkPalette.turf)
                     .frame(width: 52, alignment: .leading)
                 if let recent {
                     MetricBar(metric: recent, showValue: true)
@@ -238,8 +238,8 @@ struct DualMetricBar: View {
                     // per-game averages would be a different number wearing this
                     // one's label.
                     Text("Not available per game")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
@@ -260,17 +260,17 @@ struct SearchField: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .foregroundStyle(RinkPalette.inkSecondary)
             ZStack(alignment: .leading) {
                 if text.isEmpty {
                     Text(prompt)
-                        .font(GridironType.body)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.body)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                         .allowsHitTesting(false)
                 }
                 TextField("", text: $text)
                     .textInputAutocapitalization(.never)
-                    .foregroundStyle(GridironPalette.ink)
+                    .foregroundStyle(RinkPalette.ink)
                     .focused($isFocused)
             }
         }
@@ -281,11 +281,11 @@ struct SearchField: View {
         }
         .padding(.horizontal, 12)
         .frame(height: 36)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 1)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
     }
@@ -302,7 +302,7 @@ struct CategoryFilter: View {
         let tabs = showAllOption ? ["All"] + categoryTabs : categoryTabs
         let selectedTab = selectedCategory?.rawValue ?? (showAllOption ? "All" : MetricCategory.passing.rawValue)
 
-        GridironTabs(
+        RinkTabs(
             tabs: tabs,
             selected: Binding(
                 get: { selectedTab },
@@ -332,26 +332,26 @@ struct QualifierPicker: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     } label: {
                         Text(level.rawValue)
-                            .font(GridironType.micro)
-                            .foregroundStyle(selection == level ? .white : GridironPalette.inkSecondary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(selection == level ? .white : RinkPalette.inkSecondary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 28)
-                            .background(selection == level ? GridironPalette.turf : Color.clear)
+                            .background(selection == level ? RinkPalette.turf : Color.clear)
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(2)
-            .background(GridironPalette.surface)
+            .background(RinkPalette.surface)
             .clipShape(Capsule())
-            .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+            .overlay(Capsule().stroke(RinkPalette.hairline, lineWidth: 0.5))
 
             // Threshold caption - keeps "All" and "Min Sample" from reading as
             // synonyms by spelling out what the active level actually filters.
             Text(selection.description)
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
         }
     }
 }
@@ -381,16 +381,16 @@ struct QualifierMenu: View {
                 Image(systemName: "line.3.horizontal.decrease.circle")
                     .font(.system(size: 11, weight: .semibold))
                 Text(selection.rawValue)
-                    .font(GridironType.micro)
+                    .font(RinkType.micro)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 9, weight: .bold))
             }
-            .foregroundStyle(GridironPalette.inkSecondary)
+            .foregroundStyle(RinkPalette.inkSecondary)
             .padding(.horizontal, 10)
             .frame(height: 30)
-            .background(GridironPalette.surface)
+            .background(RinkPalette.surface)
             .clipShape(Capsule())
-            .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+            .overlay(Capsule().stroke(RinkPalette.hairline, lineWidth: 0.5))
         }
         .menuOrder(.fixed)
         .accessibilityLabel("Qualifier")
@@ -407,11 +407,11 @@ struct SectionHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(GridironType.sectionTitle)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.sectionTitle)
+                .foregroundStyle(RinkPalette.ink)
             Text(subtitle)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
         }
     }
 }
@@ -437,9 +437,9 @@ struct TrendGlyph: View {
 
     private var color: Color {
         switch direction {
-        case .up: GridironPalette.up
-        case .flat: GridironPalette.inkTertiary
-        case .down: GridironPalette.down
+        case .up: RinkPalette.up
+        case .flat: RinkPalette.inkTertiary
+        case .down: RinkPalette.down
         }
     }
 }
@@ -470,9 +470,9 @@ struct TrendArrow: View {
     private var isFlat: Bool { abs(delta) < 5 * pow(10, -Double(decimals + 1)) }
 
     private var tint: Color {
-        if isFlat { return GridironPalette.inkTertiary }
+        if isFlat { return RinkPalette.inkTertiary }
         let improved = lowerIsBetter ? delta < 0 : delta > 0
-        return improved ? GridironPalette.performanceHigh : GridironPalette.performanceLow
+        return improved ? RinkPalette.performanceHigh : RinkPalette.performanceLow
     }
 
     private var text: String {
@@ -487,7 +487,7 @@ struct TrendArrow: View {
                     .font(.system(size: 8, weight: .bold))
             }
             Text(text)
-                .font(GridironType.micro)
+                .font(RinkType.micro)
                 .monospacedDigit()
         }
         .foregroundStyle(tint)
@@ -509,11 +509,11 @@ struct PercentileBarMini: View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: height/2)
-                    .fill(GridironPalette.surfaceSunk)
+                    .fill(RinkPalette.surfaceSunk)
                     .frame(height: height)
 
                 RoundedRectangle(cornerRadius: height/2)
-                    .fill(tint ?? GridironPalette.color(forPercentile: percentile))
+                    .fill(tint ?? RinkPalette.color(forPercentile: percentile))
                     .frame(width: proxy.size.width * CGFloat(percentile) / 100.0, height: height)
             }
         }
@@ -534,18 +534,18 @@ struct LeaderboardTableHeader: View {
     var body: some View {
         HStack(spacing: 0) {
             Text("RANK")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(width: 42, alignment: .leading)
 
             Text("PLAYER")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Text("TEAM")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(width: 44, alignment: .leading)
 
             HStack(spacing: 2) {
@@ -569,8 +569,8 @@ struct LeaderboardTableHeader: View {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 7, weight: .bold))
                     }
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.turf)
                 }
                 .menuOrder(.fixed)
                 .accessibilityLabel("Metric")
@@ -579,7 +579,7 @@ struct LeaderboardTableHeader: View {
                 Button(action: onToggleDirection) {
                     Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(RinkPalette.turf)
                         .frame(width: 18, height: 26)
                 }
                 .buttonStyle(.plain)
@@ -588,10 +588,10 @@ struct LeaderboardTableHeader: View {
             }
             .frame(width: 104, alignment: .trailing)
         }
-        .frame(height: GridironGeo.rowHeightHeader)
-        .padding(.horizontal, GridironGeo.padInline)
-        .background(GridironPalette.surfaceAlt)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .frame(height: RinkGeo.rowHeightHeader)
+        .padding(.horizontal, RinkGeo.padInline)
+        .background(RinkPalette.surfaceAlt)
+        .overlay(Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline), alignment: .bottom)
     }
 }
 
@@ -602,17 +602,17 @@ struct InlineLoadError: View {
     var body: some View {
         VStack(spacing: 10) {
             Text(message)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
             Button("Try Again") {
                 Task { await retry() }
             }
-            .font(GridironType.smallBold)
-            .foregroundStyle(GridironPalette.turf)
+            .font(RinkType.smallBold)
+            .foregroundStyle(RinkPalette.turf)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .padding(.vertical, 24)
     }
 }
@@ -662,10 +662,10 @@ struct LeaderboardTableRow: View {
     }
 
     private var displayValueColor: Color {
-        if isSmallSample || displayMetric?.isUnranked == true { return GridironPalette.inkTertiary }
+        if isSmallSample || displayMetric?.isUnranked == true { return RinkPalette.inkTertiary }
         return valueOverride == nil
-            ? GridironPalette.textColor(forPercentile: displayPercentile)
-            : GridironPalette.ink
+            ? RinkPalette.textColor(forPercentile: displayPercentile)
+            : RinkPalette.ink
     }
 
     private var subtitle: String {
@@ -677,8 +677,8 @@ struct LeaderboardTableRow: View {
     var body: some View {
         HStack(spacing: 0) {
             Text("\(rank)")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.statSmall)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 42, alignment: .leading)
                 .monospacedDigit()
 
@@ -686,14 +686,14 @@ struct LeaderboardTableRow: View {
                 PlayerHeadshot(team: player.team, initials: player.initials, size: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(player.name)
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.bodyBold)
+                        .foregroundStyle(RinkPalette.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                         .truncationMode(.tail)
                     Text(subtitle)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 }
@@ -703,8 +703,8 @@ struct LeaderboardTableRow: View {
             HStack(spacing: 4) {
                 TeamColorDot(abbr: player.team, size: 6)
                 Text(displayTeamAbbr(player.team))
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
             }
             .frame(width: 44, alignment: .leading)
 
@@ -726,7 +726,7 @@ struct LeaderboardTableRow: View {
                         }
                     }
                     Text(displayValueText)
-                        .font(GridironType.statSmall)
+                        .font(RinkType.statSmall)
                         .foregroundStyle(displayValueColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -734,8 +734,8 @@ struct LeaderboardTableRow: View {
                         .monospacedDigit()
                 } else {
                     Text("-")
-                        .font(GridironType.statSmall)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.statSmall)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         .monospacedDigit()
                 }
@@ -747,14 +747,14 @@ struct LeaderboardTableRow: View {
                     .frame(width: 46, alignment: .trailing)
             }
         }
-        .frame(height: GridironGeo.rowHeight)
-        .padding(.horizontal, GridironGeo.padInline)
+        .frame(height: RinkGeo.rowHeight)
+        .padding(.horizontal, RinkGeo.padInline)
         // Banded rows, the same white / near-white alternation the Trends board
         // and the standard-stats board already use. Fifty rows of one flat
         // surface is where the eye loses its place tracking a name across to a
         // number; the band is what carries it. Keyed on `rank` (1-based) so the
         // first row is the plain surface and the card's top edge stays clean.
-        .background(rank % 2 == 1 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+        .background(rank % 2 == 1 ? RinkPalette.surface : RinkPalette.surfaceAlt)
         .contentShape(Rectangle())
     }
 }
@@ -781,8 +781,8 @@ struct BlurGateUnlock: View {
     var body: some View {
         VStack(spacing: 8) {
             Text(headline)
-                .font(GridironType.smallBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.smallBold)
+                .foregroundStyle(RinkPalette.ink)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -794,7 +794,7 @@ struct BlurGateUnlock: View {
         .frame(maxWidth: .infinity)
         .background(
             LinearGradient(
-                colors: [.clear, GridironPalette.surface.opacity(0.95), GridironPalette.surface],
+                colors: [.clear, RinkPalette.surface.opacity(0.95), RinkPalette.surface],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -829,22 +829,22 @@ struct StatGlossaryLink: View {
             HStack(spacing: 8) {
                 Image(systemName: "info.circle")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(GridironPalette.turf)
+                    .foregroundStyle(RinkPalette.turf)
                 Text("What do these stats mean?")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.turf)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .foregroundStyle(RinkPalette.inkTertiary)
             }
-            .padding(GridironGeo.padCard)
+            .padding(RinkGeo.padCard)
             .frame(maxWidth: .infinity)
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(RinkPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                    .stroke(RinkPalette.hairline, lineWidth: 0.5)
             )
         }
         .buttonStyle(.plain)
@@ -907,26 +907,26 @@ struct PlusDirectCTA: View {
             // button *is* the purchase point now (Apple 3.1.2).
             if let disclosure = store.yearlyCTADisclosureText(emphasis: emphasis) ?? store.paywallBlurSubtext {
                 Text(disclosure)
-                    .font(GridironType.micro)
+                    .font(RinkType.micro)
                     .tracking(0.3)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if let statusMessage {
                 Text(statusMessage)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.turf)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if showsAllPlansLink {
                 Button("See all plans") { showingPlans = true }
-                    .font(GridironType.micro)
+                    .font(RinkType.micro)
                     .tracking(0.3)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .foregroundStyle(RinkPalette.inkSecondary)
             }
         }
         .frame(maxWidth: .infinity)
@@ -950,13 +950,13 @@ struct PlusDirectCTA: View {
                     Image(systemName: "crown.fill")
                         .font(.system(size: 11))
                     Text(store.directCTALabel(for: trigger, emphasis: emphasis))
-                        .font(GridironType.bodyBold)
+                        .font(RinkType.bodyBold)
                 }
             }
             .foregroundStyle(.white)
             .padding(.horizontal, 22)
             .frame(height: 42)
-            .background(GridironPalette.turf)
+            .background(RinkPalette.turf)
             .clipShape(Capsule())
         case .bar:
             // Two lines only where the emphasis asks for it: the billed amount
@@ -967,10 +967,10 @@ struct PlusDirectCTA: View {
             ZStack {
                 VStack(spacing: 1) {
                     Text(store.directCTALabel(for: trigger, emphasis: emphasis))
-                        .font(GridironType.bodyBold)
+                        .font(RinkType.bodyBold)
                     if let subline {
                         Text(subline)
-                            .font(GridironType.micro)
+                            .font(RinkType.micro)
                             .foregroundStyle(.white.opacity(0.85))
                     }
                 }
@@ -983,7 +983,7 @@ struct PlusDirectCTA: View {
             .frame(maxWidth: .infinity)
             .frame(minHeight: 50)
             .padding(.vertical, subline == nil ? 0 : 6)
-            .background(GridironPalette.turf)
+            .background(RinkPalette.turf)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }

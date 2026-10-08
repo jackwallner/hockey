@@ -22,26 +22,26 @@ struct FollowingStatsView: View {
                         HStack(spacing: 12) {
                             TeamColorDot(abbr: team, size: 12)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("YOUR TEAM").font(GridironType.micro)
-                                    .foregroundStyle(GridironPalette.inkSecondary)
-                                Text(teamFullName(team)).font(GridironType.bodyBold)
-                                    .foregroundStyle(GridironPalette.ink)
+                                Text("YOUR TEAM").font(RinkType.micro)
+                                    .foregroundStyle(RinkPalette.inkSecondary)
+                                Text(teamFullName(team)).font(RinkType.bodyBold)
+                                    .foregroundStyle(RinkPalette.ink)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .foregroundStyle(RinkPalette.inkTertiary)
                         }
                         .padding(16)
-                        .background(GridironPalette.surface, in: RoundedRectangle(cornerRadius: 12))
+                        .background(RinkPalette.surface, in: RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
                 }
 
                 HStack {
-                    Text("Your players").font(GridironType.cardTitle)
+                    Text("Your players").font(RinkType.cardTitle)
                     Spacer()
                     Button(players.isEmpty ? "Follow players" : "Manage") { showingPlayers = true }
-                        .font(GridironType.smallBold)
+                        .font(RinkType.smallBold)
                         .frame(minHeight: 44)
                 }
 
@@ -68,8 +68,8 @@ struct FollowingStatsView: View {
 
                 if missingCount > 0 {
                     Text("\(missingCount) followed \(missingCount == 1 ? "player has" : "players have") no published stats for this season and phase yet. They stay on your list.")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Color.clear.frame(height: 88)
@@ -88,37 +88,37 @@ struct FollowingStatsView: View {
             HStack(spacing: 10) {
                 PlayerHeadshot(team: player.team, initials: player.initials, size: 36)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(player.name).font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                    Text(player.name).font(RinkType.bodyBold)
+                        .foregroundStyle(RinkPalette.ink)
                     Text("\(displayTeamAbbr(player.team)) · \(player.displayPosition)")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .foregroundStyle(RinkPalette.inkTertiary)
             }
             let stats = FanStatsSelection.summary(for: player)
             if !stats.isEmpty {
                 HStack(alignment: .top, spacing: 8) {
                     ForEach(stats) { stat in
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(stat.value).font(GridironType.statMed).monospacedDigit()
-                                .foregroundStyle(GridironPalette.turf)
-                            Text(stat.label).font(GridironType.small)
-                                .foregroundStyle(GridironPalette.inkSecondary)
+                            Text(stat.value).font(RinkType.statMed).monospacedDigit()
+                                .foregroundStyle(RinkPalette.turf)
+                            Text(stat.label).font(RinkType.small)
+                                .foregroundStyle(RinkPalette.inkSecondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
             } else {
                 Text("Open profile for available metrics")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
             }
         }
         .padding(16)
-        .background(GridironPalette.surface, in: RoundedRectangle(cornerRadius: 12))
+        .background(RinkPalette.surface, in: RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
     }
 }

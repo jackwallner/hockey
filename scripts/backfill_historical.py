@@ -1,20 +1,38 @@
 #!/usr/bin/env python3
-"""Backfill and validate Gridiron StatScout season snapshots from 2000 onward."""
+"""Backfill and validate Hockey StatScout season snapshots from 2008 (MoneyPuck's floor) onward.
+
+Runs backend/ingest.py once per season for both phases (REG and POST), then
+validates what landed in Supabase. Finished seasons are cached in
+backend/.cache/, so a re-run or the career rollup downloads nothing twice.
+"""
 
 import argparse
 import os
 import subprocess
 import sys
 from collections import Counter
+from datetime import date
 from typing import Any
 
 from supabase import create_client
 
-OLDEST_SUPPORTED_SEASON = 2000
-DEFAULT_CURRENT_SEASON = 2025
-REQUIRED_TYPES = {"qb", "rb", "wr", "te", "def"}
-MINIMUM_TEAMS = 30
+OLDEST_SUPPORTED_SEASON = 2008
+REQUIRED_TYPES = {"f", "d", "g"}
+CATEGORIES = {"Scoring", "Shot Quality", "Play Driving", "Goaltending"}
 MINIMUM_ROWS = 150
+
+
+def last_complete_season() -> int:
+    """The newest finished season: the live season is the one in progress."""
+    today = date.today()
+    return (today.year if today.month >= 9 else today.year - 1) - 1
+
+
+def minimum_teams(season: int) -> int:
+    """League size that season: 30 to 2016-17, 31 with Vegas, 32 with Seattle."""
+    if season >= 2021:
+        return 32
+    return 31 if season >= 2017 else 30
 
 
 def fetch_season(client: Any, season: int) -> list[dict]:
@@ -56,7 +74,7 @@ def validate_season(rows: list[dict], season: int) -> list[str]:
 
     regular = [row for row in rows if row.get("season_type", "REG") == "REG"]
     teams = {row.get("team") for row in regular if row.get("team")}
-    if len(teams) < MINIMUM_TEAMS:
+    if len(teams) < minimum_teams(season):
         errors.append(f"only {len(teams)} teams")
 
     player_types = {
@@ -66,6 +84,18 @@ def validate_season(rows: list[dict], season: int) -> list[str]:
     missing_types = REQUIRED_TYPES - player_types
     if missing_types:
         errors.append(f"missing player types: {sorted(missing_types)}")
+
+    bad_types = {row.get("player_type") for row in rows} - REQUIRED_TYPES
+    if bad_types:
+        errors.append(f"unexpected player types: {sorted(bad_types, key=str)}")
+
+    bad_categories = {
+        metric.get("category")
+        for row in rows
+        for metric in row.get("metrics", [])
+    } - CATEGORIES
+    if bad_categories:
+        errors.append(f"unexpected categories: {sorted(bad_categories, key=str)}")
 
     empty_metrics = [row.get("id") for row in rows if not row.get("metrics")]
     if empty_metrics:
@@ -89,7 +119,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--end",
         type=int,
-        default=int(os.environ.get("STATCAST_SEASON", DEFAULT_CURRENT_SEASON)),
+        default=int(os.environ.get("STATCAST_SEASON") or last_complete_season()),
     )
     parser.add_argument(
         "--validate-only",

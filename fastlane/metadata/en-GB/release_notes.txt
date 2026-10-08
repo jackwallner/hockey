@@ -1,1 +1,0 @@
-Position boards now open on each position’s default stat. Only a stat you choose carries over when you switch positions.

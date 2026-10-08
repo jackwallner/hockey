@@ -62,12 +62,12 @@ struct FollowPlayersSheet: View {
                     // jump down by its height on the first star you tapped,
                     // right under the finger about to tap the second one.
                     card {
-                        GridironSectionBar(title: "FOLLOWING (\(followed.count))")
+                        RinkSectionBar(title: "FOLLOWING (\(followed.count))")
                         if followed.isEmpty {
                             Text("Nobody yet. Tap a star to follow.")
-                                .font(GridironType.small)
-                                .foregroundStyle(GridironPalette.inkSecondary)
-                                .frame(height: GridironGeo.rowHeight)
+                                .font(RinkType.small)
+                                .foregroundStyle(RinkPalette.inkSecondary)
+                                .frame(height: RinkGeo.rowHeight)
                                 .frame(maxWidth: .infinity)
                         } else {
                             ForEach(Array(followed.enumerated()), id: \.element.playerId) { index, player in
@@ -96,7 +96,7 @@ struct FollowPlayersSheet: View {
                                     }
                                 }
                             } label: {
-                                GridironInlinePill(systemImage: "person.fill", title: listSide.label)
+                                RinkInlinePill(systemImage: "person.fill", title: listSide.label)
                             }
                             .menuOrder(.fixed)
                             .accessibilityLabel("Position group")
@@ -107,8 +107,8 @@ struct FollowPlayersSheet: View {
 
                         if candidates.isEmpty {
                             Text("No players match “\(searchText)”.")
-                                .font(GridironType.small)
-                                .foregroundStyle(GridironPalette.inkSecondary)
+                                .font(RinkType.small)
+                                .foregroundStyle(RinkPalette.inkSecondary)
                                 .padding(.vertical, 24)
                                 .frame(maxWidth: .infinity)
                         } else {
@@ -121,13 +121,13 @@ struct FollowPlayersSheet: View {
                     Color.clear.frame(height: 24)
                 }
             }
-            .background(GridironPalette.canvas)
+            .background(RinkPalette.canvas)
             .navigationTitle("Follow Players")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
-                        .font(GridironType.smallBold)
+                        .font(RinkType.smallBold)
                 }
             }
         }
@@ -137,9 +137,9 @@ struct FollowPlayersSheet: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(RinkPalette.inkTertiary)
             TextField("Search players", text: $searchText)
-                .font(GridironType.body)
+                .font(RinkType.body)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.words)
             if !searchText.isEmpty {
@@ -148,16 +148,16 @@ struct FollowPlayersSheet: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 14))
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 12)
         .frame(height: 40)
-        .background(GridironPalette.surface)
+        .background(RinkPalette.surface)
         .clipShape(Capsule())
-        .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+        .overlay(Capsule().stroke(RinkPalette.hairline, lineWidth: 0.5))
         .padding(.horizontal, 12)
         .padding(.top, 12)
     }
@@ -172,22 +172,22 @@ struct FollowPlayersSheet: View {
                 PlayerHeadshot(team: player.team, initials: player.initials, size: 34)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(player.name)
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.bodyBold)
+                        .foregroundStyle(RinkPalette.ink)
                         .lineLimit(1)
                     Text("\(player.team) · \(player.position)")
-                        .font(GridironType.micro)
+                        .font(RinkType.micro)
                         .tracking(0.3)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: following ? "star.fill" : "star")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(following ? Color.yellow : GridironPalette.inkTertiary)
+                    .foregroundStyle(following ? Color.yellow : RinkPalette.inkTertiary)
             }
-            .padding(.horizontal, GridironGeo.padInline)
-            .frame(height: GridironGeo.rowHeight)
-            .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+            .padding(.horizontal, RinkGeo.padInline)
+            .frame(height: RinkGeo.rowHeight)
+            .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -196,11 +196,11 @@ struct FollowPlayersSheet: View {
 
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) { content() }
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(RinkPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                    .stroke(RinkPalette.hairline, lineWidth: 0.5)
             )
             .padding(.horizontal, 12)
             .padding(.top, 12)

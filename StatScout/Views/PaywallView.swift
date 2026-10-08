@@ -168,7 +168,7 @@ struct PaywallView: View {
 
     var body: some View {
         ZStack {
-            GridironPalette.canvas.ignoresSafeArea()
+            RinkPalette.canvas.ignoresSafeArea()
 
             if store.isLoadingProducts && store.products.isEmpty {
                 loadingState
@@ -197,10 +197,10 @@ struct PaywallView: View {
     private var loadingState: some View {
         VStack(spacing: 14) {
             ProgressView()
-                .tint(GridironPalette.turf)
+                .tint(RinkPalette.turf)
             Text("Loading plans…")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkTertiary)
         }
     }
 
@@ -208,13 +208,13 @@ struct PaywallView: View {
         VStack(spacing: 12) {
             Image(systemName: "wifi.exclamationmark")
                 .font(.system(size: 40))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(RinkPalette.inkTertiary)
             Text("Couldn't Load Plans")
-                .font(GridironType.cardTitle)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.cardTitle)
+                .foregroundStyle(RinkPalette.inkSecondary)
             Text(store.lastError ?? "Check your connection and try again.")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkTertiary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             Button("Try Again") {
@@ -223,8 +223,8 @@ struct PaywallView: View {
                     selectDefaultPackageIfNeeded()
                 }
             }
-            .font(GridironType.bodyBold)
-            .foregroundStyle(GridironPalette.turf)
+            .font(RinkType.bodyBold)
+            .foregroundStyle(RinkPalette.turf)
         }
     }
 
@@ -258,7 +258,7 @@ struct PaywallView: View {
     private var heroHeader: some View {
         ZStack {
             LinearGradient(
-                colors: [GridironPalette.midnight, GridironPalette.midnight.opacity(0.88)],
+                colors: [RinkPalette.midnight, RinkPalette.midnight.opacity(0.88)],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -280,18 +280,18 @@ struct PaywallView: View {
                 }
 
                 Text("STATSCOUT+")
-                    .font(GridironType.micro)
+                    .font(RinkType.micro)
                     .foregroundStyle(.white.opacity(0.65))
 
                 Text(trigger.title)
-                    .font(GridironType.playerName)
+                    .font(RinkType.playerName)
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.9)
 
                 Text(trigger.subtitle)
-                    .font(GridironType.small)
+                    .font(RinkType.small)
                     .foregroundStyle(.white.opacity(0.85))
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
@@ -311,11 +311,11 @@ struct PaywallView: View {
                 HStack(spacing: 12) {
                     Image(systemName: feature.icon)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(RinkPalette.turf)
                         .frame(width: 26)
                     Text(feature.title)
-                        .font(GridironType.body)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.body)
+                        .foregroundStyle(RinkPalette.ink)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                 }
@@ -333,18 +333,18 @@ struct PaywallView: View {
                 Image(systemName: "bolt.fill")
                     .font(.system(size: 11, weight: .semibold))
                 Text("Next Gen-grade data")
-                    .font(GridironType.smallBold)
+                    .font(RinkType.smallBold)
             }
             Text("·")
-                .font(GridironType.smallBold)
+                .font(RinkType.smallBold)
             HStack(spacing: 5) {
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 11, weight: .semibold))
                 Text("Cancel anytime")
-                    .font(GridironType.smallBold)
+                    .font(RinkType.smallBold)
             }
         }
-        .foregroundStyle(GridironPalette.inkTertiary)
+        .foregroundStyle(RinkPalette.inkTertiary)
         .frame(maxWidth: .infinity)
     }
 
@@ -377,7 +377,7 @@ struct PaywallView: View {
             Button(action: startPurchase) {
                 ZStack {
                     Text(ctaTitle)
-                        .font(GridironType.bodyBold)
+                        .font(RinkType.bodyBold)
                         .foregroundStyle(.white)
                         .opacity(isPurchasing ? 0 : 1)
                     if isPurchasing {
@@ -386,7 +386,7 @@ struct PaywallView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 54)
-                .background(GridironPalette.turf)
+                .background(RinkPalette.turf)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
@@ -394,29 +394,29 @@ struct PaywallView: View {
 
             if let disclosure = disclosureText {
                 Text(disclosure)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.turf)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.turf)
                     .multilineTextAlignment(.center)
             }
             if let restoreMessage {
                 Text(restoreMessage)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                     .multilineTextAlignment(.center)
             }
 
             Button(action: startRestore) {
                 Text(isRestoring ? "Restoring…" : "Restore Purchases")
-                    .font(GridironType.smallBold)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.smallBold)
+                    .foregroundStyle(RinkPalette.inkSecondary)
             }
             .buttonStyle(.plain)
             .disabled(isRestoring || isPurchasing)
@@ -425,8 +425,8 @@ struct PaywallView: View {
                 Link("Terms", destination: StatScoutLegal.termsURL)
                 Link("Privacy", destination: StatScoutLegal.privacyURL)
             }
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
+            .font(RinkType.micro)
+            .foregroundStyle(RinkPalette.inkTertiary)
         }
     }
 
@@ -561,11 +561,11 @@ private struct PaywallPlanCard: View {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? GridironPalette.turf : GridironPalette.hairline, lineWidth: 2)
+                        .stroke(isSelected ? RinkPalette.turf : RinkPalette.hairline, lineWidth: 2)
                         .frame(width: 22, height: 22)
                     if isSelected {
                         Circle()
-                            .fill(GridironPalette.turf)
+                            .fill(RinkPalette.turf)
                             .frame(width: 12, height: 12)
                     }
                 }
@@ -573,21 +573,21 @@ private struct PaywallPlanCard: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(package.displayName)
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.ink)
                         if let savingsPercent {
                             Text("SAVE \(savingsPercent)%")
-                                .font(GridironType.micro)
+                                .font(RinkType.micro)
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(GridironPalette.turf, in: Capsule())
+                                .background(RinkPalette.turf, in: Capsule())
                         }
                     }
                     if isMostPopular {
                         Text("Best value")
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                     }
                 }
 
@@ -595,35 +595,35 @@ private struct PaywallPlanCard: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(package.priceLabel)
-                        .font(GridironType.cardTitle)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.cardTitle)
+                        .foregroundStyle(RinkPalette.ink)
                     if let perMonthLabel {
                         HStack(spacing: 5) {
                             if let monthlyAnchorLabel, savingsPercent != nil {
                                 Text(monthlyAnchorLabel)
-                                    .font(GridironType.micro)
-                                    .foregroundStyle(GridironPalette.inkTertiary)
-                                    .strikethrough(true, color: GridironPalette.inkTertiary)
+                                    .font(RinkType.micro)
+                                    .foregroundStyle(RinkPalette.inkTertiary)
+                                    .strikethrough(true, color: RinkPalette.inkTertiary)
                             }
                             Text("\(perMonthLabel)/mo")
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(RinkType.micro)
+                                .foregroundStyle(RinkPalette.inkTertiary)
                         }
                     }
                     if showsTrialBadge, let trial = package.introOfferLabel {
                         Text(trial.capitalized)
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                     }
                 }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(RinkPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
             .overlay {
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(isSelected ? GridironPalette.turf : GridironPalette.hairline, lineWidth: isSelected ? 2 : 0.5)
+                RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                    .stroke(isSelected ? RinkPalette.turf : RinkPalette.hairline, lineWidth: isSelected ? 2 : 0.5)
             }
         }
         .buttonStyle(.plain)

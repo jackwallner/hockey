@@ -24,8 +24,8 @@ struct TeamWeekGameCard: View {
                 } else if week.phase == .regular {
                     shell(week: week) {
                         Text("Bye week")
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.ink)
                         Spacer(minLength: 0)
                     }
                 }
@@ -41,7 +41,7 @@ struct TeamWeekGameCard: View {
                 favorites.setFavorite(team: following ? nil : normalizedTeamAbbreviation(team))
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
-                GridironChip(
+                RinkChip(
                     title: following ? "Your team" : "Follow team",
                     systemImage: following ? "star.fill" : "star",
                     isActive: following
@@ -51,7 +51,7 @@ struct TeamWeekGameCard: View {
             .accessibilityHint(following ? "Stops pinning this team's games" : "Pins this team's games at the top of Games")
 
             NavigationLink(value: TeamScheduleRoute(team: normalizedTeamAbbreviation(team))) {
-                GridironChip(title: "Schedule", systemImage: "calendar")
+                RinkChip(title: "Schedule", systemImage: "calendar")
             }
             .buttonStyle(.plain)
             Spacer(minLength: 0)
@@ -63,23 +63,23 @@ struct TeamWeekGameCard: View {
             TeamColorDot(abbr: game.opponent(of: team), size: 10)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(game.matchupLabel(for: team)) · \(teamFullName(game.opponent(of: team)))")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(RinkPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                 Text(detail(game))
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
             }
             Spacer(minLength: 8)
             if let line = game.resultLine(for: team) {
                 Text(line)
-                    .font(GridironType.statMed)
-                    .foregroundStyle(game.result(for: team) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh)
+                    .font(RinkType.statMed)
+                    .foregroundStyle(game.result(for: team) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh)
             }
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(RinkPalette.inkTertiary)
         }
     }
 
@@ -97,20 +97,20 @@ struct TeamWeekGameCard: View {
     private func shell<Content: View>(week: GameWeek, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(([week.label] + [viewModel.record(forTeam: team)].compactMap { $0 }).joined(separator: " · ").uppercased())
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkSecondary)
             HStack(spacing: 10) {
                 content()
             }
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .contentShape(Rectangle())
     }
@@ -126,14 +126,14 @@ struct TeamScheduleView: View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 VStack(spacing: 0) {
-                    GridironSectionBar(
+                    RinkSectionBar(
                         title: "\(String(viewModel.freeSeason)) schedule",
                         trailing: viewModel.record(forTeam: team).map {
-                            AnyView(Text($0).font(GridironType.statSmall).foregroundStyle(GridironPalette.inkSecondary))
+                            AnyView(Text($0).font(RinkType.statSmall).foregroundStyle(RinkPalette.inkSecondary))
                         }
                     )
                     ForEach(Array(entries(games).enumerated()), id: \.element.id) { index, entry in
-                        let background = index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt
+                        let background = index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt
                         switch entry {
                         case .game(let game):
                             NavigationLink(value: GameRoute(gameId: game.id)) {
@@ -146,23 +146,23 @@ struct TeamScheduleView: View {
                     }
                     if games.isEmpty {
                         Text(viewModel.isGamesLoading ? "Loading schedule" : "Schedule not published yet")
-                            .font(GridironType.small)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.small)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                             .padding(.vertical, 32)
                     }
                 }
-                .background(GridironPalette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(RinkPalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
                 .overlay(
-                    RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                        .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                        .stroke(RinkPalette.hairline, lineWidth: 0.5)
                 )
                 .padding(.horizontal, 12)
                 .padding(.top, 12)
                 Color.clear.frame(height: 88)
             }
         }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         .navigationTitle(teamFullName(team))
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.loadGames() }
@@ -199,53 +199,53 @@ struct TeamScheduleView: View {
     private func byeRow(_ week: Int) -> some View {
         HStack(spacing: 10) {
             Text("\(week)")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.statSmall)
+                .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(width: 30, alignment: .leading)
             Text("Bye week")
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.body)
+                .foregroundStyle(RinkPalette.inkTertiary)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .frame(minHeight: 44)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .overlay(Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline), alignment: .bottom)
     }
 
     private func row(_ game: Game) -> some View {
         HStack(spacing: 10) {
             Text(game.seasonPhase == .regular ? "\(game.week)" : game.gameType)
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.statSmall)
+                .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(width: 30, alignment: .leading)
             TeamColorDot(abbr: game.opponent(of: team), size: 10)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(game.matchupLabel(for: team)) · \(teamFullName(game.opponent(of: team)))")
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(RinkPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                 Text(game.dayLabel)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
             }
             Spacer(minLength: 8)
             if let line = game.resultLine(for: team) {
                 Text(line)
-                    .font(GridironType.statMed)
-                    .foregroundStyle(game.result(for: team) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh)
+                    .font(RinkType.statMed)
+                    .foregroundStyle(game.result(for: team) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh)
             } else {
                 Text(game.status() == .upcoming ? (game.kickoff?.formatted(date: .omitted, time: .shortened) ?? "TBD") : "In progress")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
             }
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(RinkPalette.inkTertiary)
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .frame(minHeight: 52)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .overlay(Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline), alignment: .bottom)
         .contentShape(Rectangle())
     }
 }
@@ -301,46 +301,46 @@ struct PlayerLastGameCard: View {
         let content = VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Text(title(log).uppercased())
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                 Spacer(minLength: 0)
                 if game != nil {
                     Text("Box score")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.turf)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.turf)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(GridironPalette.turf)
+                        .foregroundStyle(RinkPalette.turf)
                 }
             }
             HStack(spacing: 8) {
                 Text(matchup(log, team: team))
-                    .font(GridironType.bodyBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(RinkPalette.ink)
                     .lineLimit(1)
                 if let result = game?.resultLine(for: team) {
                     Text(result)
-                        .font(GridironType.statSmall)
-                        .foregroundStyle(game?.result(for: team) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh)
+                        .font(RinkType.statSmall)
+                        .foregroundStyle(game?.result(for: team) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh)
                 }
                 Spacer(minLength: 0)
             }
             if !summary.isEmpty {
                 Text(summary)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                     .monospacedDigit()
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .contentShape(Rectangle())
 
@@ -392,25 +392,25 @@ struct PlayerGameLogCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "GAME LOG")
+            RinkSectionBar(title: "GAME LOG")
             if entries.isEmpty {
                 Text(failed ? "Couldn't load games. Pull to refresh." : (loadedKey == nil ? "Loading games…" : "No games yet this season."))
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 20)
             } else {
                 ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                     row(entry)
-                        .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                        .background(index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt)
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .task(id: key) { await load() }
     }
@@ -454,36 +454,36 @@ struct PlayerGameLogCard: View {
         let game = entry.gameId.flatMap { viewModel.game(id: $0) }
         let content = HStack(alignment: .top, spacing: 10) {
             Text(game.map { $0.seasonPhase == .regular ? "\($0.week)" : $0.gameType } ?? "-")
-                .font(GridironType.statSmall)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.statSmall)
+                .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(width: 28, alignment: .leading)
                 .monospacedDigit()
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(game?.matchupLabel(for: entry.team) ?? "vs \(displayTeamAbbr(entry.opponent ?? ""))")
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.bodyBold)
+                        .foregroundStyle(RinkPalette.ink)
                     if let line = game?.resultLine(for: entry.team) {
                         Text(line)
-                            .font(GridironType.statSmall)
-                            .foregroundStyle(game?.result(for: entry.team) == "L" ? GridironPalette.performanceLow : GridironPalette.performanceHigh)
+                            .font(RinkType.statSmall)
+                            .foregroundStyle(game?.result(for: entry.team) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh)
                     }
                     Spacer(minLength: 0)
                     Text(entry.gameDate.formatted(DataCoverage.gameDayStyle))
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                 }
                 Text(entry.summary.isEmpty ? "No box score line" : entry.summary)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                     .monospacedDigit()
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .overlay(Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline), alignment: .bottom)
         .contentShape(Rectangle())
 
         if let game {

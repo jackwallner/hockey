@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 /// Guards the copy App Review rejected 1.0 (19) over, Guideline 3.1.2(c):
 ///

@@ -42,7 +42,7 @@ struct TeamRankingsCard: View {
 
     @State private var side: Side = .offense
     @State private var mode: Mode = .season
-    @State private var windowGames: Int = 5
+    @State private var windowGames: Int = 4
     @State private var logs: [PlayerGameLog] = []
     @State private var loading = false
     @State private var loadError: String?
@@ -84,18 +84,18 @@ struct TeamRankingsCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(
+            RinkSectionBar(
                 title: "TEAM ADVANCED STATS",
                 trailing: store.isPro ? nil : AnyView(proBadge)
             )
 
-            GridironPickerRow {
+            RinkPickerRow {
                 sidePicker.segmentCount(Side.allCases.count)
                 modePicker.segmentCount(Mode.allCases.count)
             }
-            .padding(.horizontal, GridironGeo.padInline)
+            .padding(.horizontal, RinkGeo.padInline)
             .padding(.vertical, 8)
-            .background(GridironPalette.surfaceAlt)
+            .background(RinkPalette.surfaceAlt)
 
             if effectiveMode.usesRecent {
                 windowPicker
@@ -107,11 +107,11 @@ struct TeamRankingsCard: View {
             case .both: bothSection
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .task(id: "\(team)-\(season)-\(seasonPhase.rawValue)-\(effectiveMode.rawValue)-\(store.isPro)-\(freshnessRevision ?? "none")") {
             if effectiveMode.usesRecent, store.isPro { await load() }
@@ -125,10 +125,10 @@ struct TeamRankingsCard: View {
             Image(systemName: "crown.fill")
                 .font(.system(size: 9, weight: .bold))
             Text("STATSCOUT+")
-                .font(GridironType.micro)
+                .font(RinkType.micro)
                 .fontWeight(.bold)
         }
-        .foregroundStyle(GridironPalette.midnight)
+        .foregroundStyle(RinkPalette.midnight)
         .padding(.horizontal, 7)
         .padding(.vertical, 3)
         .background(Color.yellow)
@@ -138,7 +138,7 @@ struct TeamRankingsCard: View {
     // MARK: - Pickers
 
     private var sidePicker: some View {
-        GridironSegmented(
+        RinkSegmented(
             segments: Side.allCases.map { .init(value: $0, label: $0.label) },
             selection: $side
         )
@@ -147,7 +147,7 @@ struct TeamRankingsCard: View {
     @ViewBuilder
     private var modePicker: some View {
         if supportsRecent {
-            GridironSegmented(
+            RinkSegmented(
                 segments: Mode.allCases.map {
                     .init(
                         value: $0,
@@ -187,11 +187,11 @@ struct TeamRankingsCard: View {
                         recent: recentRows[metric.label],
                         recentCaption: "Last \(windowGames)G"
                     )
-                    .padding(.horizontal, GridironGeo.padCard)
+                    .padding(.horizontal, RinkGeo.padCard)
                     .padding(.vertical, 10)
-                    .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                    .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                     .overlay(
-                        Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                        Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                         alignment: .bottom
                     )
                 }
@@ -203,24 +203,24 @@ struct TeamRankingsCard: View {
         HStack(spacing: 10) {
             ProgressView().scaleEffect(0.75)
             Text("Loading recent games…")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)
     }
 
     private var windowPicker: some View {
-        GridironSegmented(
+        RinkSegmented(
             segments: RecentWindow.allCases.map { .init(value: $0, label: $0.segmentLabel) },
             selection: Binding(
-                get: { RecentWindow(rawValue: windowGames) ?? .three },
+                get: { RecentWindow(rawValue: windowGames) ?? .four },
                 set: { windowGames = $0.rawValue }
             )
         )
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .padding(.bottom, 8)
-        .background(GridironPalette.surfaceAlt)
+        .background(RinkPalette.surfaceAlt)
     }
 
     // MARK: - Season
@@ -231,17 +231,17 @@ struct TeamRankingsCard: View {
         if rows.isEmpty {
             emptyAggregate
         } else {
-            GridironSubSectionBar(title: side.label.uppercased())
+            RinkSubSectionBar(title: side.label.uppercased())
 
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, metric in
                     NavigationLink(value: MetricRoute(label: metric.label, category: metric.category)) {
                         MetricBar(metric: metric)
-                            .padding(.horizontal, GridironGeo.padCard)
+                            .padding(.horizontal, RinkGeo.padCard)
                             .padding(.vertical, 12)
-                            .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                            .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                             .overlay(
-                                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                                Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                                 alignment: .bottom
                             )
                     }
@@ -357,17 +357,17 @@ struct TeamRankingsCard: View {
                 if side == .offense { summaryStat(label: "Touches", value: "318") }
                 Spacer(minLength: 0)
             }
-            .padding(GridironGeo.padInline)
+            .padding(RinkGeo.padInline)
 
-            GridironSubSectionBar(title: side.label.uppercased())
+            RinkSubSectionBar(title: side.label.uppercased())
             VStack(spacing: 0) {
                 ForEach(Array(sample.enumerated()), id: \.element.id) { index, metric in
                     MetricBar(metric: metric)
-                        .padding(.horizontal, GridironGeo.padCard)
+                        .padding(.horizontal, RinkGeo.padCard)
                         .padding(.vertical, 12)
-                        .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                        .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                         .overlay(
-                            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                            Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                             alignment: .bottom
                         )
                 }
@@ -385,15 +385,15 @@ struct TeamRankingsCard: View {
             recentSummaryRow(w)
             let rows = recentDisplayRows(window: w)
             if !rows.isEmpty {
-                GridironSubSectionBar(title: side.label.uppercased())
+                RinkSubSectionBar(title: side.label.uppercased())
                 VStack(spacing: 0) {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { index, metric in
                         MetricBar(metric: metric)
-                            .padding(.horizontal, GridironGeo.padCard)
+                            .padding(.horizontal, RinkGeo.padCard)
                             .padding(.vertical, 12)
-                            .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                            .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                             .overlay(
-                                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                                Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                                 alignment: .bottom
                             )
                     }
@@ -403,10 +403,10 @@ struct TeamRankingsCard: View {
             VStack(spacing: 6) {
                 Image(systemName: "calendar.badge.exclamationmark")
                     .font(.system(size: 22))
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                 Text(emptyStateText)
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 22)
@@ -434,25 +434,25 @@ struct TeamRankingsCard: View {
             Spacer(minLength: 0)
             if w.plays < smallSamplePlaysThreshold {
                 Text("SMALL SAMPLE")
-                    .font(GridironType.micro)
+                    .font(RinkType.micro)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(GridironPalette.inkTertiary)
+                    .background(RinkPalette.inkTertiary)
                     .clipShape(Capsule())
             }
         }
-        .padding(GridironGeo.padInline)
+        .padding(RinkGeo.padInline)
     }
 
     private func summaryStat(label: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(label)
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
             Text(value)
-                .font(GridironType.bodyBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.bodyBold)
+                .foregroundStyle(RinkPalette.ink)
         }
     }
 
@@ -543,12 +543,12 @@ struct TeamRankingsCard: View {
         VStack(spacing: 6) {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 22))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(RinkPalette.inkTertiary)
             Text(players.isEmpty
                  ? "No games played yet this season"
                  : "Not enough \(side.label.lowercased()) data to aggregate")
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 22)
@@ -556,10 +556,10 @@ struct TeamRankingsCard: View {
 
     private var weightedCaption: some View {
         Text("Season to date, averaged across the \(side.label.lowercased()) roster")
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
+            .font(RinkType.micro)
+            .foregroundStyle(RinkPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, GridironGeo.padCard)
+            .padding(.horizontal, RinkGeo.padCard)
             .padding(.vertical, 10)
     }
 

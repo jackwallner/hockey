@@ -10,44 +10,25 @@ paths:
 
 # App Store release workflow
 
-## Current release, 2026-09-28
+## Current state, 2026-10-08
 
-- App Store version 1.2.2 (build 53) is `READY_FOR_SALE`. Approved, then released
-  manually on 2026-09-28 via `POST /v1/appStoreVersionReleaseRequests` after
-  testing against live week 3 data.
-- App Store version 1.2.1 is superseded.
-- TestFlight build 53 is `VALID` and attached to 1.2.2. Build 52 was first
-  submitted on 2026-09-27, then pulled the same day for a fix (a passer's 0 INT
-  showed as "Not ranked") and 1.2.2 was resubmitted with build 53.
-- All 50 version localizations have What's New copy. The full release notes are
-  in en-US; the other locales use translated summaries.
-
-## Pending release, 2026-09-29
-
-- App Store version 1.2.3 (build 55) is `WAITING_FOR_REVIEW`. Build 55 is
-  `VALID` and attached. Submitted through `submit_review` on 2026-09-29 with
-  manual release (`automatic_release: false`).
-- Fixes position-board defaults: QB Pass Yds, RB Rush Yds, WR/TE Rec Yds, and
-  DEF Tackles. A stat carries across positions only when the user selected it.
-- All 50 version localizations have updated What's New copy. Existing
-  promotional text was preserved.
-- Version 1.2.2 (build 53) remains live until 1.2.3 is approved and manually
-  released.
+- ASC app `6820644691` created 2026-10-08 with version 1.0 in
+  `PREPARE_FOR_SUBMISSION`. No build uploaded yet.
+- Products: `com.jackwallner.hockey.pro.yearly` ($9.99/yr, 1-week trial),
+  `com.jackwallner.hockey.pro.monthly` ($1.99/mo, 1-week trial),
+  `com.jackwallner.hockey.pro` ($19.99 lifetime). Created in RevenueCat; the
+  ASC side is created by the fleet pricing tooling (`~/ios/pricing`).
+- The first IAP submission must ride with the version (Guideline 2.1(b)),
+  and the "Add for Review" step is UI-only: see the `ios-dev` skill.
 
 The `submit_review` lane uses `automatic_release: false`. `Deliverfile` lists
-the locales currently accepted by Fastlane. The 11 retired App Store locales
-are handled by the `fill_deprecated_locales` lane.
+the locales currently accepted by Fastlane; only en-US metadata exists so far.
 
 ## Draft version helper
 
-`ASC_DRAFT_VERSION` is the version to bump from, not the target version. For
-example, with 1.2.1 live, setting `ASC_DRAFT_VERSION=1.2.1` creates 1.2.2 when
-there is no editable draft. `scripts/asc_lib.py` reuses an editable draft and
-bumps an existing live version instead of returning it.
-
-If an editable draft's `versionString` is wrong, it can be patched with
-`PATCH /appStoreVersions/{id}`. A draft cannot be deleted once a build exists
-for its platform (409 `STATE_ERROR`).
+`ASC_DRAFT_VERSION` is the version to bump from, not the target version.
+`scripts/asc_lib.py` reuses an editable draft and bumps an existing live
+version instead of returning it.
 
 ## TestFlight build number
 
@@ -59,5 +40,4 @@ TestFlight build.
 
 Before editing `fastlane/metadata/`, run
 `./scripts/pull-appstore-metadata.sh` and compare the pull with its timestamped
-backup. Do not run the full metadata uploader when changing only one version's
-What's New text.
+backup.

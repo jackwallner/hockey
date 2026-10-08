@@ -1,1 +1,1 @@
-epa,cpoe,yac,compare,player,passing,rushing,receiving,defense,qb,fantasy,teams,rankings
+xg,expected,goals,scores,edge,player,compare,goalie,tracker,analytics,rankings,fantasy,teams,sv

@@ -143,7 +143,7 @@ struct PlayerComparisonView: View {
                         .blur(radius: 8)
                         .overlay(
                             LinearGradient(
-                                colors: [.clear, GridironPalette.canvas.opacity(0.9)],
+                                colors: [.clear, RinkPalette.canvas.opacity(0.9)],
                                 startPoint: .center,
                                 endPoint: .bottom
                             )
@@ -157,12 +157,12 @@ struct PlayerComparisonView: View {
                             .foregroundStyle(Color.yellow)
 
                         Text("Find the Edge")
-                            .font(GridironType.cardTitle)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(RinkType.cardTitle)
+                            .foregroundStyle(RinkPalette.ink)
 
                         Text("StatScout+ unlocks side-by-side player comparisons across every metric. See who leads in EPA, passing efficiency, separation, and more.")
-                            .font(GridironType.small)
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                            .font(RinkType.small)
+                            .foregroundStyle(RinkPalette.inkSecondary)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -170,37 +170,37 @@ struct PlayerComparisonView: View {
                             showingTrial = true
                         } label: {
                             Text(store.paywallBlurCTA)
-                                .font(GridironType.bodyBold)
+                                .font(RinkType.bodyBold)
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
-                                .background(GridironPalette.turf)
+                                .background(RinkPalette.turf)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         .buttonStyle(.plain)
 
                         if let subtext = store.paywallBlurSubtext {
                             Text(subtext)
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(RinkType.micro)
+                                .foregroundStyle(RinkPalette.inkTertiary)
                                 .multilineTextAlignment(.center)
                         }
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 20)
                     .background(
-                        RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                            .fill(GridironPalette.surface)
+                        RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                            .fill(RinkPalette.surface)
                             .shadow(color: .black.opacity(0.08), radius: 12, y: -4)
                     )
                     .overlay(alignment: .top) {
                         Rectangle()
-                            .fill(GridironPalette.divider)
-                            .frame(height: GridironGeo.hairline)
+                            .fill(RinkPalette.divider)
+                            .frame(height: RinkGeo.hairline)
                     }
                     .offset(y: -8)
                 }
-                .background(GridironPalette.canvas.ignoresSafeArea())
+                .background(RinkPalette.canvas.ignoresSafeArea())
                 .sheet(isPresented: $showingTrial) {
                     TrialPitchSheet(trigger: .playerComparison)
                 }
@@ -250,8 +250,8 @@ struct PlayerComparisonView: View {
 
                 if let note {
                     Text(note)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.turf)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.turf)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
                         .padding(.horizontal, 12)
@@ -279,19 +279,19 @@ struct PlayerComparisonView: View {
             Color.clear.frame(height: 88)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         .navigationTitle("Player Comparison")
         .navigationBarTitleDisplayMode(.inline)
         // Match the midnight bar on the profile it is pushed from. The stack's
         // dark toolbar scheme otherwise draws white status text on the canvas.
-        .toolbarBackground(GridironPalette.midnight, for: .navigationBar)
+        .toolbarBackground(RinkPalette.midnight, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
     }
 
     private var standardStatsCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "SEASON TOTALS")
+            RinkSectionBar(title: "SEASON TOTALS")
 
             HStack(spacing: 8) {
                 Text("STAT")
@@ -301,11 +301,11 @@ struct PlayerComparisonView: View {
                 Text(b.name.split(separator: " ").last.map(String.init) ?? "B")
                     .frame(maxWidth: .infinity)
             }
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
-            .frame(height: GridironGeo.rowHeightHeader)
-            .padding(.horizontal, GridironGeo.padInline)
-            .background(GridironPalette.surfaceAlt)
+            .font(RinkType.micro)
+            .foregroundStyle(RinkPalette.inkTertiary)
+            .frame(height: RinkGeo.rowHeightHeader)
+            .padding(.horizontal, RinkGeo.padInline)
+            .background(RinkPalette.surfaceAlt)
 
             ForEach(Array(standardComparison.enumerated()), id: \.element.label) { index, item in
                 let winner = StandardStatSemantics.winner(
@@ -315,8 +315,8 @@ struct PlayerComparisonView: View {
                 )
                 HStack(spacing: 8) {
                     Text(item.label)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.smallBold)
+                        .foregroundStyle(RinkPalette.ink)
                         .frame(width: 82, alignment: .leading)
                     aggregateValue(item.a, isWinner: winner == .left)
                     aggregateValue(item.b, isWinner: winner == .right)
@@ -330,22 +330,22 @@ struct PlayerComparisonView: View {
                         winner: winner
                     )
                 )
-                .frame(height: GridironGeo.rowHeight)
-                .padding(.horizontal, GridironGeo.padInline)
-                .background(index.isMultiple(of: 2) ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .frame(height: RinkGeo.rowHeight)
+                .padding(.horizontal, RinkGeo.padInline)
+                .background(index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt)
                 .overlay(
                     Rectangle()
-                        .fill(GridironPalette.divider)
-                        .frame(height: GridironGeo.hairline),
+                        .fill(RinkPalette.divider)
+                        .frame(height: RinkGeo.hairline),
                     alignment: .bottom
                 )
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -380,11 +380,11 @@ struct PlayerComparisonView: View {
                     .accessibilityHidden(true)
             }
             Text(value ?? "-")
-                .font(GridironType.statMed)
+                .font(RinkType.statMed)
                 .foregroundStyle(
                     value == nil
-                        ? GridironPalette.inkTertiary
-                        : (isWinner ? GridironPalette.turf : GridironPalette.inkSecondary)
+                        ? RinkPalette.inkTertiary
+                        : (isWinner ? RinkPalette.turf : RinkPalette.inkSecondary)
                 )
                 .monospacedDigit()
         }
@@ -404,11 +404,11 @@ struct PlayerComparisonView: View {
                 } label: {
                     Image(systemName: "arrow.left.arrow.right")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                         .frame(width: 32, height: 32)
-                        .background(GridironPalette.surface)
+                        .background(RinkPalette.surface)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(GridironPalette.hairline, lineWidth: 0.5))
+                        .overlay(Circle().stroke(RinkPalette.hairline, lineWidth: 0.5))
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 44)
@@ -424,13 +424,13 @@ struct PlayerComparisonView: View {
                 VStack(spacing: 6) {
                     PlayerHeadshot(team: player.team, initials: player.initials, size: 56)
                     Text(player.name)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.smallBold)
+                        .foregroundStyle(RinkPalette.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Text("\(displayTeamAbbr(player.team)) · \(player.displayPosition)")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                 }
                 .contentShape(Rectangle())
             }
@@ -464,7 +464,7 @@ struct PlayerComparisonView: View {
                         )
                     }
                 ) {
-                    GridironInlinePill(
+                    RinkInlinePill(
                         systemImage: nil,
                         title: "\(player.season.map(SeasonLabel.text) ?? "-") · \(player.seasonPhase.label)",
                         compressible: true
@@ -476,7 +476,7 @@ struct PlayerComparisonView: View {
                 Button {
                     picker = target
                 } label: {
-                    GridironInlinePill(
+                    RinkInlinePill(
                         systemImage: "arrow.triangle.2.circlepath",
                         title: "Change"
                     )
@@ -485,21 +485,21 @@ struct PlayerComparisonView: View {
                 .accessibilityLabel("Change \(target == .a ? "first" : "second") player")
             } else if let season = player.season {
                 Text(SeasonLabel.text(season))
-                    .font(GridironType.micro)
+                    .font(RinkType.micro)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(GridironPalette.midnight)
+                    .background(RinkPalette.midnight)
                     .clipShape(Capsule())
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -528,54 +528,54 @@ struct PlayerComparisonView: View {
 
     private func categoryCard(category: MetricCategory, metrics: [(label: String, a: Metric?, b: Metric?)]) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: category.rawValue.uppercased())
+            RinkSectionBar(title: category.rawValue.uppercased())
 
             HStack(spacing: 8) {
                 Text("METRIC")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(width: 72, alignment: .leading)
                 Text(a.name.split(separator: " ").last.map(String.init) ?? "A")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
                 Text(b.name.split(separator: " ").last.map(String.init) ?? "B")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
-            .frame(height: GridironGeo.rowHeightHeader)
-            .padding(.horizontal, GridironGeo.padInline)
-            .background(GridironPalette.surfaceAlt)
+            .frame(height: RinkGeo.rowHeightHeader)
+            .padding(.horizontal, RinkGeo.padInline)
+            .background(RinkPalette.surfaceAlt)
             .overlay(
-                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                 alignment: .bottom
             )
 
             ForEach(Array(metrics.enumerated()), id: \.offset) { index, item in
                 HStack(spacing: 8) {
                     Text(item.label)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.smallBold)
+                        .foregroundStyle(RinkPalette.ink)
                         .frame(width: 72, alignment: .leading)
 
                     metricValueCell(metric: item.a, other: item.b)
                     metricValueCell(metric: item.b, other: item.a)
                 }
                 .frame(height: 60)
-                .padding(.horizontal, GridironGeo.padInline)
-                .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .padding(.horizontal, RinkGeo.padInline)
+                .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                 .overlay(
-                    Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                    Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                     alignment: .bottom
                 )
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -585,7 +585,7 @@ struct PlayerComparisonView: View {
                 let hasValue = !m.value.isEmpty
                 let comparable = other.map { $0.percentile > 0 || !$0.value.isEmpty } ?? false
                 let isWinner = comparable && (other.map { m.percentile > $0.percentile } ?? false)
-                let pctTextColor = GridironPalette.textColor(forPercentile: m.percentile)
+                let pctTextColor = RinkPalette.textColor(forPercentile: m.percentile)
                 VStack(spacing: 4) {
                     HStack(spacing: 4) {
                         if isWinner {
@@ -595,14 +595,14 @@ struct PlayerComparisonView: View {
                                 .accessibilityHidden(true)
                         }
                         Text(hasValue ? m.value : "\(m.percentile)")
-                            .font(GridironType.statMed)
+                            .font(RinkType.statMed)
                             .foregroundStyle(pctTextColor)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                     }
                     Text(hasValue ? "" : "PERCENTILE")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .frame(height: 10)
                     // The same track-and-fill bar the boards and the profile
                     // use. The hand-rolled rectangle this replaces had no
@@ -621,8 +621,8 @@ struct PlayerComparisonView: View {
                 )
             } else {
                 Text("-")
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.statSmall)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(maxWidth: .infinity)
             }
         }

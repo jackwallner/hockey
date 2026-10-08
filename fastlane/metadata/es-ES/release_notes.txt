@@ -1,1 +1,0 @@
-Las tablas por posición ahora se abren con la estadística predeterminada de cada posición. Al cambiar de posición, solo se conserva la estadística que has elegido.

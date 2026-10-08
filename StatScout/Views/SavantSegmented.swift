@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum GridironControl {
+enum RinkControl {
     /// One height for every inline control in the app, segmented groups,
     /// chips, and the popover pills. Previously 26, 28, 30, 32, 34 and 44 were
     /// all in use for controls at the same level, which is what made a row of
@@ -19,13 +19,13 @@ enum GridironControl {
 ///    / Year Compare): the large filled rounded-rect row. "Which screen is
 ///    this."
 /// 2. **Metric category** (Passing / Rushing / Receiving / Defense):
-///    `GridironTabs`, underlined text.
+///    `RinkTabs`, underlined text.
 /// 3. **Inline options** (Season / Recent / Both, the Last 3 / 5 / 8 game
 ///    windows, Heating / Cooling): this control. One height, one shape,
 ///    everywhere. Past four options it hands over to a plain `Menu`, which is
 ///    what the season and Trends metric pickers use.
 /// 4. **Standalone controls** (the sort chip, search, Filters, the pickers that
-///    open a popover): `GridironChip`, same height and type as a segment.
+///    open a popover): `RinkChip`, same height and type as a segment.
 ///
 /// The wording is shared too: a rolling window is always "Last 5 games",
 /// never "5G" on one screen and "Last 5" on the next.
@@ -33,7 +33,7 @@ enum GridironControl {
 /// Segments can be individually locked, which draws a crown and routes the tap
 /// to `onLockedTap` instead of selecting, that's how a free user can see that
 /// Recent exists at all rather than the option being hidden entirely.
-struct GridironSegmented<Value: Hashable>: View {
+struct RinkSegmented<Value: Hashable>: View {
     struct Segment: Identifiable {
         let value: Value
         let label: String
@@ -51,9 +51,9 @@ struct GridironSegmented<Value: Hashable>: View {
     var onLockedTap: ((Value) -> Void)? = nil
     /// Fill for the selected segment. Defaults to the turf green every other
     /// active control uses; Trends overrides it to encode hot vs cold.
-    var selectedFill: (Value) -> Color = { _ in GridironPalette.turf }
+    var selectedFill: (Value) -> Color = { _ in RinkPalette.turf }
 
-    private let height: CGFloat = GridironControl.height
+    private let height: CGFloat = RinkControl.height
 
     var body: some View {
         HStack(spacing: 6) {
@@ -73,7 +73,7 @@ struct GridironSegmented<Value: Hashable>: View {
                                 .font(.system(size: 11, weight: .semibold))
                         }
                         Text(segment.label)
-                            .font(GridironType.smallBold)
+                            .font(RinkType.smallBold)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                         if segment.isLocked {
@@ -82,13 +82,13 @@ struct GridironSegmented<Value: Hashable>: View {
                                 .foregroundStyle(Color.yellow)
                         }
                     }
-                    .foregroundStyle(isSelected ? .white : GridironPalette.inkSecondary)
+                    .foregroundStyle(isSelected ? .white : RinkPalette.inkSecondary)
                     .frame(maxWidth: .infinity)
                     .frame(height: height)
-                    .background(isSelected ? selectedFill(segment.value) : GridironPalette.surface)
+                    .background(isSelected ? selectedFill(segment.value) : RinkPalette.surface)
                     .clipShape(Capsule())
                     .overlay(
-                        Capsule().stroke(isSelected ? Color.clear : GridironPalette.hairline, lineWidth: 0.5)
+                        Capsule().stroke(isSelected ? Color.clear : RinkPalette.hairline, lineWidth: 0.5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -110,7 +110,7 @@ struct GridironSegmented<Value: Hashable>: View {
 ///
 /// It renders a label only; the caller wraps it in whatever it needs to be
 /// (`Button`, `Menu`, a popover anchor).
-struct GridironChip: View {
+struct RinkChip: View {
     enum Trailing {
         case none
         /// A chooser, opens a menu or a popover.
@@ -138,7 +138,7 @@ struct GridironChip: View {
     var compressible: Bool = false
 
     private var glyphColor: Color {
-        isActive ? .white : GridironPalette.inkSecondary
+        isActive ? .white : RinkPalette.inkSecondary
     }
 
     var body: some View {
@@ -150,8 +150,8 @@ struct GridironChip: View {
             }
             if let title {
                 Text(title)
-                    .font(GridironType.smallBold)
-                    .foregroundStyle(isActive ? .white : GridironPalette.ink)
+                    .font(RinkType.smallBold)
+                    .foregroundStyle(isActive ? .white : RinkPalette.ink)
                     .lineLimit(1)
                     // Shrink before truncating: "Regular Sea…" reads as broken,
                     // a slightly smaller "Regular Season" does not.
@@ -172,18 +172,18 @@ struct GridironChip: View {
             case .sortArrow(let descending):
                 Image(systemName: descending ? "arrow.down" : "arrow.up")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(isActive ? .white : GridironPalette.turf)
+                    .foregroundStyle(isActive ? .white : RinkPalette.turf)
             }
         }
         .fixedSize(horizontal: !compressible, vertical: true)
         .padding(.horizontal, title == nil ? 0 : 12)
         // An icon-only chip stays a circle rather than collapsing to a sliver.
-        .frame(width: title == nil ? GridironControl.height : nil,
-               height: GridironControl.height)
-        .background(isActive ? GridironPalette.turf : GridironPalette.surface)
+        .frame(width: title == nil ? RinkControl.height : nil,
+               height: RinkControl.height)
+        .background(isActive ? RinkPalette.turf : RinkPalette.surface)
         .clipShape(Capsule())
         .overlay(
-            Capsule().stroke(isActive ? Color.clear : GridironPalette.hairline, lineWidth: 0.5)
+            Capsule().stroke(isActive ? Color.clear : RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 }
@@ -194,7 +194,7 @@ private struct SegmentCountKey: LayoutValueKey {
 }
 
 extension View {
-    /// Tells `GridironPickerRow` how many segments this control holds.
+    /// Tells `RinkPickerRow` how many segments this control holds.
     func segmentCount(_ count: Int) -> some View {
         layoutValue(key: SegmentCountKey.self, value: count)
     }
@@ -207,15 +207,15 @@ extension View {
 /// made "Season / Recent / Both" sit cramped beside "Hitting / Pitching":
 /// three labels squeezed into the width two were given, and worse once the
 /// free-tier crowns appeared on two of them.
-struct GridironPickerRow: Layout {
+struct RinkPickerRow: Layout {
     var spacing: CGFloat = 8
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.replacingUnspecifiedDimensions().width
         let height = subviews
             .map { $0.sizeThatFits(.unspecified).height }
-            .max() ?? GridironControl.height
-        return CGSize(width: width, height: max(height, GridironControl.height))
+            .max() ?? RinkControl.height
+        return CGSize(width: width, height: max(height, RinkControl.height))
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {

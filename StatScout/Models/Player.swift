@@ -156,7 +156,7 @@ struct Player: Identifiable, Codable, Hashable, Sendable {
             let valueText = metric.value.isEmpty ? "\(metric.percentile.ordinal) percentile" : "\(metric.value), \(metric.percentile.ordinal) percentile"
             return "\(metric.label) \(valueText)"
         } ?? "\(overallPercentile.ordinal) overall percentile"
-        return "\(name) · \(team) \(displayPosition)\nOverall: \(overallPercentile.ordinal) percentile\nTop stat: \(headline)\nGridiron StatScout"
+        return "\(name) · \(team) \(displayPosition)\nOverall: \(overallPercentile.ordinal) percentile\nTop stat: \(headline)\nRink StatScout"
     }
 
     func percentile(for category: MetricCategory) -> Int? {
@@ -214,9 +214,9 @@ struct Metric: Identifiable, Codable, Hashable, Sendable {
     /// overall average leave it out.
     var isUnranked: Bool {
         if rankable == false { return true }
-        guard let definition = FootballMetricRegistry.definition(for: label, category: category),
+        guard let definition = HockeyMetricRegistry.definition(for: label, category: category),
               definition.kind == .traditional,
-              FootballMetricRegistry.aggregation(for: label, category: category) == .sum,
+              HockeyMetricRegistry.aggregation(for: label, category: category) == .sum,
               let number = metricNumericValue(value)
         else { return false }
         return number == 0
@@ -303,7 +303,7 @@ enum StandardStatSemantics {
 /// all. That method now forwards here, so there is still one implementation.
 func metricNumericValue(_ value: String) -> Double? {
     var s = value.trimmingCharacters(in: .whitespaces)
-    // Strip thousands separators - NFL yardage ships as "3,322".
+    // Strip thousands separators - the feed ships "1,312".
     s = s.replacingOccurrences(of: ",", with: "")
     if s.hasPrefix(".") { s = "0" + s }
     if s.hasPrefix("-.") { s = "-0" + s.dropFirst() }
@@ -368,10 +368,10 @@ enum MetricDirection: String, Codable, Hashable, Sendable {
 }
 
 enum MetricCategory: String, Codable, CaseIterable, Hashable, Sendable {
-    case passing = "Passing"
-    case rushing = "Rushing"
-    case receiving = "Receiving"
-    case defense = "Defense"
+    case scoring = "Scoring"
+    case shotQuality = "Shot Quality"
+    case playDriving = "Play Driving"
+    case goaltending = "Goaltending"
 
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -392,10 +392,20 @@ enum MetricCategory: String, Codable, CaseIterable, Hashable, Sendable {
         try container.encode(rawValue)
     }
 
+    /// Short form for segmented controls and chips.
+    var shortLabel: String {
+        switch self {
+        case .scoring: return "Scoring"
+        case .shotQuality: return "Shots"
+        case .playDriving: return "Driving"
+        case .goaltending: return "Goalies"
+        }
+    }
+
     /// Registry-driven display order. Advanced metrics lead within each category,
     /// followed by traditional production metrics.
     var metricPriorityOrder: [String] {
-        FootballMetricRegistry.definitions
+        HockeyMetricRegistry.definitions
             .filter { $0.category == self }
             .sorted { $0.priority < $1.priority }
             .map(\.label)
@@ -415,52 +425,65 @@ struct TeamRoute: Hashable {
     let players: [Player]
 }
 
+/// NHL seasons span two calendar years. The feed keys a season by its start
+/// year (2026 is 2026-27); every label the user sees goes through here.
+enum SeasonLabel {
+    static let allTime = 0
+
+    static func display(_ season: Int) -> String {
+        guard season != allTime else { return "All Time" }
+        let end = (season + 1) % 100
+        return String(format: "%d-%02d", season, end)
+    }
+
+    /// "2026-27 regular season" style captions.
+    static func display(_ season: Int, phase: SeasonPhase) -> String {
+        guard season != allTime else { return "All Time" }
+        return "\(display(season)) \(phase == .regular ? "regular season" : "playoffs")"
+    }
+}
+
 extension Player {
-    /// Known NFL position groups the snapshot feed assigns.
-    private static let knownTypes: Set<String> = ["qb", "rb", "wr", "te", "def"]
+    /// Known NHL cohorts the snapshot feed assigns: forwards, defensemen, goalies.
+    private static let knownTypes: Set<String> = ["f", "d", "g"]
 
     func matchesPlayerType(for category: MetricCategory?) -> Bool {
         guard let category else { return true }
-        // Only filter on a recognized position group. An unknown / missing
-        // player_type falls through to "include" so we never drop a player who
-        // lost their role label upstream but still carries real metrics.
+        // Only filter on a recognized cohort. An unknown / missing player_type
+        // falls through to "include" so we never drop a player who lost their
+        // role label upstream but still carries real metrics.
         guard let type = playerType?.lowercased(), Self.knownTypes.contains(type) else { return true }
         switch category {
-        case .passing:
-            return type == "qb"
-        case .rushing:
-            return ["qb", "rb", "wr", "te"].contains(type)
-        case .receiving:
-            return ["rb", "wr", "te"].contains(type)
-        case .defense:
-            return type == "def"
+        case .scoring, .shotQuality, .playDriving:
+            return type == "f" || type == "d"
+        case .goaltending:
+            return type == "g"
         }
     }
 
     /// The category a player leads with - drives Recent Form and single-category
-    /// framing. Derived from the position group, falling back to the most common
-    /// metric category when the role label is missing.
+    /// framing. Derived from the cohort, falling back to the most common metric
+    /// category when the role label is missing.
     var primaryCategory: MetricCategory {
         switch playerType?.lowercased() {
-        case "qb": return .passing
-        case "rb": return .rushing
-        case "wr", "te": return .receiving
-        case "def": return .defense
+        case "f": return .scoring
+        case "d": return .playDriving
+        case "g": return .goaltending
         default:
             let counts = Dictionary(grouping: metrics, by: \.category).mapValues(\.count)
-            return counts.max { $0.value < $1.value }?.key ?? .passing
+            return counts.max { $0.value < $1.value }?.key ?? .scoring
         }
     }
 
     /// Position to surface in the UI. When the snapshot has no position (TBD /
-    /// empty) but the player has metrics, fall back to the player-type label so
-    /// we never show "TBD" next to real stats.
+    /// empty) but the player has metrics, fall back to the cohort label so we
+    /// never show "TBD" next to real stats.
     var displayPosition: String {
         let trimmed = position.trimmingCharacters(in: .whitespaces).uppercased()
         if !trimmed.isEmpty && trimmed != "TBD" && trimmed != "\u{2014}" && trimmed != "-" {
-            return position
+            return trimmed == "L" ? "LW" : trimmed == "R" ? "RW" : trimmed
         }
-        return playerType?.uppercased() ?? position
+        return positionGroup.rawValue
     }
 
     var initials: String {
@@ -473,12 +496,10 @@ extension Player {
         let hasSuffix = ["JR", "SR", "II", "III", "IV", "V"].contains(suffix)
 
         if hasSuffix && parts.count > 2 {
-            // Use part before suffix as last name (e.g., "Bobby Witt Jr." → "BW")
             let lastName = parts[parts.count - 2]
             return String(first.prefix(1)) + String(lastName.prefix(1))
         }
 
-        // Standard case: first initial + last initial
         return String(first.prefix(1)) + String(last.prefix(1))
     }
 }
@@ -503,48 +524,64 @@ struct GameTrend: Identifiable, Codable, Hashable, Sendable {
 
 
 enum PlayerPositionGroup: String, CaseIterable, Identifiable, Hashable, Sendable {
-    case qb = "QB"
-    case rb = "RB"
-    case wr = "WR"
-    case te = "TE"
-    case defense = "DEF"
+    case forward = "F"
+    case defense = "D"
+    case goalie = "G"
 
     var id: String { rawValue }
 
-    var cohortDescription: String {
+    var displayName: String {
         switch self {
-        case .defense: return "Among defensive players"
-        default: return "Among \(rawValue)s"
+        case .forward: return "Forwards"
+        case .defense: return "Defensemen"
+        case .goalie: return "Goalies"
         }
     }
 
+    var singular: String {
+        switch self {
+        case .forward: return "Forward"
+        case .defense: return "Defenseman"
+        case .goalie: return "Goalie"
+        }
+    }
+
+    var cohortDescription: String {
+        "Among \(displayName.lowercased())"
+    }
+
+    var isSkater: Bool { self != .goalie }
+
     var primaryCategory: MetricCategory {
         switch self {
-        case .qb: return .passing
-        case .rb: return .rushing
-        case .wr, .te: return .receiving
-        case .defense: return .defense
+        case .forward: return .scoring
+        case .defense: return .playDriving
+        case .goalie: return .goaltending
+        }
+    }
+
+    /// The categories this cohort appears in, in board order.
+    var categories: [MetricCategory] {
+        switch self {
+        case .forward: return [.scoring, .shotQuality, .playDriving]
+        case .defense: return [.playDriving, .shotQuality, .scoring]
+        case .goalie: return [.goaltending]
         }
     }
 
     var preferredAdvancedMetrics: [String] {
         switch self {
-        case .qb: return ["EPA/Play", "CPOE", "Rating"]
-        case .rb: return ["EPA/Rush", "RYOE", "Explosive%", "Rush EPA"]
-        case .wr, .te: return ["EPA/Tgt", "WOPR", "YAC+", "Rec EPA"]
-        // Pressures leads because it is the one advanced defensive number that
-        // exists for every defender rather than only for those targeted enough
-        // to be ranked in coverage.
-        case .defense: return ["Pressures", "Rating Allowed", "Cmp% Allowed", "Missed Tkl%"]
+        case .forward: return ["ixG", "GAx", "P/60", "xGF%"]
+        case .defense: return ["xGF%", "Rel xGF%", "xGA/60", "ixG"]
+        case .goalie: return ["GSAx", "HD SV%", "GSAx/60"]
         }
     }
 
     var preferredTraditionalMetrics: [String] {
         switch self {
-        case .qb: return ["Pass Yds", "Pass TD", "Cmp%"]
-        case .rb: return ["Rush Yds", "Rush TD", "Car"]
-        case .wr, .te: return ["Rec Yds", "Rec TD", "Rec"]
-        case .defense: return ["Tackles", "Sacks", "Def INT"]
+        case .forward: return ["P", "G", "A"]
+        case .defense: return ["P", "Blocks", "A"]
+        case .goalie: return ["SV%", "GAA", "W"]
         }
     }
 }
@@ -557,22 +594,14 @@ enum MetricKind: String, CaseIterable, Identifiable, Hashable, Sendable {
 }
 
 enum MetricFamily: String, CaseIterable, Identifiable, Hashable, Sendable {
-    case efficiency = "Efficiency"
-    case accuracy = "Accuracy"
-    case pressure = "Pressure"
-    case aggressiveness = "Aggressiveness"
-    case rushing = "Rushing"
-    case expectedProduction = "Expected"
-    case explosiveness = "Explosiveness"
-    case usage = "Usage"
-    case receiving = "Receiving"
-    case separation = "Separation"
-    case yac = "YAC"
     case production = "Production"
-    case passRush = "Pass Rush"
-    case turnovers = "Turnovers"
-    case coverage = "Coverage"
-    case tackling = "Tackling"
+    case expectedGoals = "Expected Goals"
+    case shooting = "Shooting"
+    case possession = "Possession"
+    case defense = "Defense"
+    case usage = "Usage"
+    case goaltending = "Goaltending"
+    case workload = "Workload"
 
     var id: String { rawValue }
 }
@@ -588,124 +617,104 @@ struct MetricDefinition: Hashable, Sendable {
     let description: String
 }
 
-enum FootballMetricRegistry {
+enum HockeyMetricRegistry {
+    private static let skaters: Set<PlayerPositionGroup> = [.forward, .defense]
+
     static let definitions: [MetricDefinition] = [
-        definition("EPA/Play", .passing, .advanced, .efficiency, [.qb], 10, "Passing expected points added divided by attempts plus sacks. EPA measures the change in expected points from before to after a play."),
-        definition("CPOE", .passing, .advanced, .accuracy, [.qb], 20, "Completion percentage minus the completion rate expected from throw difficulty, in percentage points."),
-        definition("INT%", .passing, .advanced, .accuracy, [.qb], 30, "Passing interceptions divided by attempts.", higherIsBetter: false),
-        definition("Sack%", .passing, .advanced, .pressure, [.qb], 40, "Sacks taken divided by attempts plus sacks.", higherIsBetter: false),
-        definition("Time to Throw", .passing, .advanced, .pressure, [.qb], 50, "Average seconds from the snap until the passer releases the ball."),
-        definition("Aggressiveness", .passing, .advanced, .aggressiveness, [.qb], 60, "Percentage of attempts thrown into tight coverage, with a defender within one yard of the receiver."),
-        definition("Intended Air Yds", .passing, .advanced, .aggressiveness, [.qb], 70, "Average vertical distance the ball travels from the line of scrimmage to the intended target."),
-        definition("Pass Yds", .passing, .traditional, .production, [.qb], 110, "Total passing yards."),
-        definition("Pass TD", .passing, .traditional, .production, [.qb], 120, "Total passing touchdowns."),
-        definition("Cmp%", .passing, .traditional, .accuracy, [.qb], 130, "Completions divided by passing attempts."),
-        definition("Y/A", .passing, .traditional, .efficiency, [.qb], 140, "Passing yards per attempt."),
-        definition("Rating", .passing, .traditional, .efficiency, [.qb], 150, "NFL passer rating calculated from completion rate, yards per attempt, touchdown rate, and interception rate. Maximum 158.3."),
+        // Scoring. Rates lead; the counting stats every box score carries follow.
+        definition("P/60", .scoring, .advanced, .production, skaters, 10, "Points per 60 minutes of ice time, all situations. Production with the ice time taken out."),
+        definition("Primary P", .scoring, .advanced, .production, skaters, 20, "Goals plus primary assists. Secondary assists are left out because they track linemates more than the player."),
+        definition("Game Score", .scoring, .advanced, .production, skaters, 30, "MoneyPuck game score per game played: one number that weighs goals, assists, shots, blocks, penalties, faceoffs and on-ice shot share."),
+        definition("G", .scoring, .traditional, .production, skaters, 110, "Goals, all situations."),
+        definition("A", .scoring, .traditional, .production, skaters, 120, "Assists, primary and secondary."),
+        definition("P", .scoring, .traditional, .production, skaters, 130, "Points: goals plus assists."),
+        definition("PP P", .scoring, .traditional, .production, skaters, 140, "Power-play points, scored at 5 on 4."),
+        definition("SOG", .scoring, .traditional, .shooting, skaters, 150, "Shots on goal."),
+        definition("Sh%", .scoring, .traditional, .shooting, skaters, 160, "Goals divided by shots on goal."),
 
-        definition("EPA/Rush", .rushing, .advanced, .efficiency, [.qb, .rb, .wr, .te], 10, "Expected points added per rushing attempt."),
-        definition("RYOE", .rushing, .advanced, .expectedProduction, [.qb, .rb], 20, "Total rushing yards gained above or below the yards expected by the Next Gen Stats model."),
-        definition("Explosive%", .rushing, .advanced, .explosiveness, [.qb, .rb, .wr, .te], 30, "Percentage of carries gaining at least 10 yards."),
-        definition("Rush EPA", .rushing, .advanced, .production, [.qb, .rb, .wr, .te], 40, "Total expected points added on rushing plays."),
-        definition("Fumble%", .rushing, .advanced, .efficiency, [.qb, .rb, .wr, .te], 50, "Rushing fumbles divided by carries.", higherIsBetter: false),
-        definition("Rush Yds", .rushing, .traditional, .production, [.qb, .rb, .wr, .te], 110, "Total rushing yards."),
-        definition("Rush TD", .rushing, .traditional, .production, [.qb, .rb, .wr, .te], 120, "Total rushing touchdowns."),
-        definition("Y/C", .rushing, .traditional, .efficiency, [.qb, .rb, .wr, .te], 130, "Rushing yards per carry."),
-        definition("Rush 1D", .rushing, .traditional, .production, [.qb, .rb, .wr, .te], 140, "Rushing first downs."),
+        // Shot Quality. MoneyPuck's expected goals model, the number analytics
+        // readers reach for first.
+        definition("ixG", .shotQuality, .advanced, .expectedGoals, skaters, 10, "Individual expected goals: the sum of each shot's probability of scoring given its location, type, rebound and rush context. From MoneyPuck."),
+        definition("GAx", .shotQuality, .advanced, .expectedGoals, skaters, 20, "Goals above expected: actual goals minus individual expected goals. Positive means finishing above what the shots deserved."),
+        definition("ixG/60", .shotQuality, .advanced, .expectedGoals, skaters, 30, "Individual expected goals per 60 minutes, all situations."),
+        definition("xG/Shot", .shotQuality, .advanced, .shooting, skaters, 40, "Expected goals per unblocked shot attempt: how dangerous the average shot is."),
+        definition("Shots/60", .shotQuality, .advanced, .shooting, skaters, 50, "Shot attempts per 60 minutes, blocked and missed included."),
+        definition("Shot Att", .shotQuality, .traditional, .shooting, skaters, 110, "Shot attempts: on goal, missed and blocked."),
+        definition("HD Shots", .shotQuality, .traditional, .shooting, skaters, 120, "High-danger shots, the attempts MoneyPuck rates at 20% or more to score."),
+        definition("Rebounds", .shotQuality, .traditional, .shooting, skaters, 130, "Rebounds created by the player's shots."),
 
-        definition("EPA/Tgt", .receiving, .advanced, .efficiency, [.rb, .wr, .te], 10, "Expected points added per target."),
-        definition("WOPR", .receiving, .advanced, .usage, [.rb, .wr, .te], 20, "Weighted opportunity rating: 1.5 × target share plus 0.7 × air-yards share."),
-        definition("Target Share", .receiving, .advanced, .usage, [.rb, .wr, .te], 30, "Player targets as a share of the team's pass attempts."),
-        definition("RACR", .receiving, .advanced, .efficiency, [.rb, .wr, .te], 40, "Receiving yards divided by receiving air yards."),
-        definition("Separation", .receiving, .advanced, .separation, [.rb, .wr, .te], 50, "Average yards between the targeted receiver and the nearest defender at pass arrival."),
-        definition("YAC+", .receiving, .advanced, .yac, [.rb, .wr, .te], 60, "Average yards after catch gained above or below the Next Gen Stats expectation."),
-        definition("Rec EPA", .receiving, .advanced, .production, [.rb, .wr, .te], 70, "Total expected points added on receiving plays."),
-        definition("Rec", .receiving, .traditional, .production, [.rb, .wr, .te], 110, "Total receptions."),
-        definition("Rec Yds", .receiving, .traditional, .production, [.rb, .wr, .te], 120, "Total receiving yards."),
-        definition("Rec TD", .receiving, .traditional, .production, [.rb, .wr, .te], 130, "Total receiving touchdowns."),
-        definition("YAC", .receiving, .traditional, .yac, [.rb, .wr, .te], 140, "Yards after catch."),
-        definition("Catch%", .receiving, .traditional, .efficiency, [.rb, .wr, .te], 150, "Receptions divided by targets."),
+        // Play Driving. 5 on 5 on-ice share metrics, the Natural Stat Trick
+        // vocabulary, plus the counting stats a defenseman is judged on.
+        definition("xGF%", .playDriving, .advanced, .possession, skaters, 10, "Share of 5-on-5 expected goals that went the player's way while on the ice. 50% is even."),
+        definition("Rel xGF%", .playDriving, .advanced, .possession, skaters, 20, "On-ice xGF% minus the team's xGF% with the player on the bench. Separates the player from the team."),
+        definition("CF%", .playDriving, .advanced, .possession, skaters, 30, "Corsi for percentage: share of all 5-on-5 shot attempts while on the ice."),
+        definition("Rel CF%", .playDriving, .advanced, .possession, skaters, 40, "On-ice CF% minus the team's CF% with the player on the bench."),
+        definition("HDCF%", .playDriving, .advanced, .possession, skaters, 50, "Share of 5-on-5 high-danger shot attempts while on the ice."),
+        definition("GF%", .playDriving, .advanced, .possession, skaters, 60, "Share of 5-on-5 goals while on the ice. Swings on goaltending and shooting luck; compare with xGF%."),
+        definition("xGF/60", .playDriving, .advanced, .possession, skaters, 70, "5-on-5 expected goals for per 60 minutes while on the ice."),
+        definition("xGA/60", .playDriving, .advanced, .defense, skaters, 80, "5-on-5 expected goals against per 60 minutes while on the ice. Lower is better.", higherIsBetter: false),
+        definition("Blocks", .playDriving, .traditional, .defense, skaters, 110, "Shots blocked."),
+        definition("Hits", .playDriving, .traditional, .defense, skaters, 120, "Hits credited by the home scorer."),
+        definition("Takeaways", .playDriving, .traditional, .defense, skaters, 130, "Takeaways credited by the home scorer."),
+        definition("Giveaways", .playDriving, .traditional, .defense, skaters, 140, "Giveaways credited by the home scorer. Lower is better.", higherIsBetter: false),
 
-        // Advanced defence, from Pro-Football-Reference's advanced defensive
-        // table (2018 onward - the first season it was published). Defenders
-        // were previously the one position group with nothing but counting
-        // stats, which made the whole advanced half of the app silent on half
-        // the field. Coverage metrics describe what a defender *allowed* when
-        // targeted, so on all four of them a lower number is the better one.
-        definition("Pressures", .defense, .advanced, .passRush, [.defense], 10, "Quarterback pressures: sacks, hits and hurries credited to this defender. Pro-Football-Reference, 2018 onward."),
-        definition("Hurries", .defense, .advanced, .passRush, [.defense], 20, "Times the defender forced the quarterback to move off his spot or throw early without hitting him. 2018 onward."),
-        definition("QB KD", .defense, .advanced, .passRush, [.defense], 30, "Quarterback knockdowns: times the defender put the passer on the ground, sack or not. 2018 onward."),
-        definition("Cmp% Allowed", .defense, .advanced, .coverage, [.defense], 40, "Completion percentage on passes thrown at this defender. Needs at least 20 targets to be ranked. 2018 onward.", higherIsBetter: false),
-        definition("Yds/Tgt Allowed", .defense, .advanced, .coverage, [.defense], 50, "Yards allowed per pass thrown at this defender. Needs at least 20 targets to be ranked. 2018 onward.", higherIsBetter: false),
-        definition("Rating Allowed", .defense, .advanced, .coverage, [.defense], 60, "Passer rating on throws into this defender's coverage. Needs at least 20 targets to be ranked. 2018 onward.", higherIsBetter: false),
-        definition("Missed Tkl%", .defense, .advanced, .tackling, [.defense], 70, "Share of this defender's tackle attempts that he missed. Needs at least 20 combined tackles to be ranked. 2018 onward.", higherIsBetter: false),
-
-        definition("Tackles", .defense, .traditional, .production, [.defense], 110, "Total tackles."),
-        definition("TFL", .defense, .traditional, .production, [.defense], 120, "Tackles for loss."),
-        definition("PD", .defense, .traditional, .production, [.defense], 130, "Passes defended."),
-        definition("Sacks", .defense, .traditional, .passRush, [.defense], 140, "Total sacks."),
-        definition("QB Hits", .defense, .traditional, .passRush, [.defense], 150, "Quarterback hits."),
-        definition("INT", .defense, .traditional, .turnovers, [.defense], 160, "Defensive interceptions."),
-        definition("FF", .defense, .traditional, .turnovers, [.defense], 170, "Forced fumbles.")
+        // Goaltending. Goals saved above expected is the headline; save
+        // percentage and GAA are the numbers on the broadcast.
+        definition("GSAx", .goaltending, .advanced, .goaltending, [.goalie], 10, "Goals saved above expected: expected goals faced minus goals allowed. From MoneyPuck."),
+        definition("GSAx/60", .goaltending, .advanced, .goaltending, [.goalie], 20, "Goals saved above expected per 60 minutes."),
+        definition("HD SV%", .goaltending, .advanced, .goaltending, [.goalie], 30, "Save percentage on high-danger shots."),
+        definition("xGA/60", .goaltending, .advanced, .workload, [.goalie], 40, "Expected goals faced per 60 minutes: how much danger the goalie saw."),
+        definition("Rebound%", .goaltending, .advanced, .goaltending, [.goalie], 50, "Share of shots on goal that produced a rebound. Lower is better.", higherIsBetter: false),
+        definition("SV%", .goaltending, .traditional, .goaltending, [.goalie], 110, "Saves divided by shots on goal."),
+        definition("GAA", .goaltending, .traditional, .goaltending, [.goalie], 120, "Goals against per 60 minutes. Lower is better.", higherIsBetter: false),
+        definition("W", .goaltending, .traditional, .production, [.goalie], 130, "Wins."),
+        definition("SO", .goaltending, .traditional, .production, [.goalie], 140, "Shutouts."),
+        definition("Saves", .goaltending, .traditional, .workload, [.goalie], 150, "Saves."),
+        definition("GA", .goaltending, .traditional, .goaltending, [.goalie], 160, "Goals against. Lower is better.", higherIsBetter: false)
     ]
 
     static func definition(for label: String, category: MetricCategory) -> MetricDefinition? {
         definitions.first { $0.label == label && $0.category == category }
     }
 
-    /// How a metric combines when several players are pooled into one number -
+    /// How a metric combines when several players are pooled into one number,
     /// the roster aggregate the team comparison draws.
     ///
-    /// Kept as its own table rather than a field on `MetricDefinition` because
-    /// it answers a different question from the rest of the registry (how to
-    /// *display* one player's metric vs how to *combine* many), and because the
-    /// weights below are the honest part: a rate cannot be averaged across
-    /// players without weighting it by the volume it was computed over. Ten
-    /// carries at 8.0 EPA/Rush and two hundred at 0.05 do not average to 4.0.
-    ///
-    /// Volume-weighting a per-play rate by its own denominator reproduces the
-    /// true team rate exactly for the ratio metrics (EPA/Play, Sack%, INT%,
-    /// Explosive%, Fumble%, Catch%, Cmp%, Y/A, Y/C, EPA/Rush, EPA/Tgt), because
-    /// summing numerator and denominator separately is what the weighted mean
-    /// works out to. For the Next Gen averages (Time to Throw, Separation,
-    /// YAC+, CPOE, ADOT) it is a very close approximation rather than an
-    /// identity, since we hold the per-player mean rather than the raw plays.
+    /// A rate cannot be averaged across players without weighting it by the
+    /// volume it was computed over: twenty minutes at 4.0 P/60 and a thousand
+    /// at 1.5 do not average to 2.75. Per-60 rates weight by ice time, per-shot
+    /// rates by shots, goalie rates by shots against. Shares (xGF%, CF%) weight
+    /// by ice time too, which is exact when every player's on-ice sample is in
+    /// proportion to his minutes and a close approximation otherwise.
     static func aggregation(for label: String, category: MetricCategory) -> MetricAggregation {
         switch (category, label) {
-        // Passing: every rate is per attempt. Passer rating is a composite of
-        // four per-attempt rates, so it weights the same way.
-        case (.passing, "Pass Yds"), (.passing, "Pass TD"):
+        case (.scoring, "Sh%"):
+            return .weighted(.shotsOnGoal)
+        case (.scoring, "P/60"), (.scoring, "Game Score"):
+            return .weighted(.iceTime)
+        case (.scoring, _):
             return .sum
-        case (.passing, _):
-            return .weighted(.attempts)
 
-        // Rushing: RYOE and Rush EPA are yardage/points totals, not rates.
-        case (.rushing, "Rush Yds"), (.rushing, "Rush TD"), (.rushing, "Rush 1D"),
-             (.rushing, "Rush EPA"), (.rushing, "RYOE"):
+        case (.shotQuality, "xG/Shot"):
+            return .weighted(.shotAttempts)
+        case (.shotQuality, "ixG/60"), (.shotQuality, "Shots/60"):
+            return .weighted(.iceTime)
+        case (.shotQuality, _):
             return .sum
-        case (.rushing, _):
-            return .weighted(.carries)
 
-        // Receiving: Target Share and WOPR are shares of a team's own passing
-        // volume, so a roster's shares genuinely do add up - summing them is
-        // right, and it is also the interesting number (how much of the offence
-        // these players account for).
-        case (.receiving, "Rec"), (.receiving, "Rec Yds"), (.receiving, "Rec TD"),
-             (.receiving, "YAC"), (.receiving, "Rec EPA"),
-             (.receiving, "Target Share"), (.receiving, "WOPR"):
+        case (.playDriving, "Blocks"), (.playDriving, "Hits"),
+             (.playDriving, "Takeaways"), (.playDriving, "Giveaways"):
             return .sum
-        case (.receiving, _):
-            return .weighted(.targets)
+        case (.playDriving, _):
+            return .weighted(.iceTime)
 
-        // Defense: the PFR coverage and pass-rush rates are per target or per
-        // tackle attempt; the rest are counting stats.
-        case (.defense, "Cmp% Allowed"), (.defense, "Yds/Tgt Allowed"),
-             (.defense, "Rating Allowed"), (.defense, "ADOT"):
-            return .weighted(.targetsAllowed)
-        case (.defense, "Missed Tkl%"):
-            return .weighted(.games)
-        case (.defense, _):
+        case (.goaltending, "W"), (.goaltending, "SO"), (.goaltending, "Saves"),
+             (.goaltending, "GA"), (.goaltending, "GSAx"):
             return .sum
+        case (.goaltending, "GAA"), (.goaltending, "GSAx/60"), (.goaltending, "xGA/60"):
+            return .weighted(.iceTime)
+        case (.goaltending, _):
+            return .weighted(.shotsAgainst)
         }
     }
 
@@ -761,10 +770,11 @@ enum MetricAggregation: Hashable, Sendable {
 /// Each case resolves to a number already present in the player's standard
 /// stats, so no extra feed columns are needed.
 enum MetricWeight: Hashable, Sendable {
-    case attempts
-    case carries
-    case targets
-    case targetsAllowed
+    /// Total ice time in minutes: TOI/GP times GP.
+    case iceTime
+    case shotsOnGoal
+    case shotAttempts
+    case shotsAgainst
     case games
 
     /// Pulls the weight out of a player's standard-stat line. Returns nil when
@@ -772,11 +782,11 @@ enum MetricWeight: Hashable, Sendable {
     /// weighted mean instead of contributing a zero.
     func value(for player: Player) -> Double? {
         switch self {
-        case .attempts: return Self.secondComponent(of: "Cmp/Att", in: player)
-        case .targets: return Self.secondComponent(of: "Rec/Tgt", in: player)
-        case .targetsAllowed: return Self.plain("Tgt Allowed", in: player)
-        case .carries: return Self.plain("Car", in: player)
-        case .games: return Self.plain("G", in: player)
+        case .iceTime: return Self.totalIceTime(in: player)
+        case .shotsOnGoal: return Self.plain("SOG", in: player)
+        case .shotAttempts: return Self.plain("SOG", in: player)
+        case .shotsAgainst: return Self.plain("SA", in: player)
+        case .games: return Self.plain("GP", in: player)
         }
     }
 
@@ -788,63 +798,68 @@ enum MetricWeight: Hashable, Sendable {
         return value
     }
 
-    /// "18/29" -> 29. The feed packs completions and attempts (and receptions
-    /// and targets) into one display string, and the denominator is the half we
-    /// want to weight by.
-    private static func secondComponent(of label: String, in player: Player) -> Double? {
-        guard let raw = player.standardStats?.first(where: { $0.label == label })?.value else { return nil }
-        let parts = raw.split(separator: "/", maxSplits: 1)
-        guard parts.count == 2,
-              let value = metricNumericValue(String(parts[1])),
-              value > 0
-        else { return nil }
-        return value
+    /// "19:42" per game times games played. A goalie line carries no TOI/GP, so
+    /// goalies weight by games instead.
+    private static func totalIceTime(in player: Player) -> Double? {
+        guard let games = plain("GP", in: player) else { return nil }
+        guard let raw = player.standardStats?.first(where: { $0.label == "TOI/GP" })?.value,
+              let perGame = clockMinutes(raw), perGame > 0
+        else { return games }
+        return perGame * games
+    }
+
+    /// "19:42" -> 19.7 minutes.
+    static func clockMinutes(_ raw: String) -> Double? {
+        let parts = raw.split(separator: ":")
+        guard parts.count == 2, let minutes = Double(parts[0]), let seconds = Double(parts[1]) else {
+            return metricNumericValue(raw)
+        }
+        return minutes + seconds / 60
     }
 }
 
 extension Player {
-    var isDefensivePlayer: Bool {
-        playerType?.lowercased() == "def" || positionGroup == .defense
+    var isGoalie: Bool {
+        playerType?.lowercased() == "g" || positionGroup == .goalie
     }
 
+    /// Kept for call sites that framed the gate as offense vs defense; in
+    /// hockey the line that cannot be crossed is skater vs goalie.
+    var isDefensivePlayer: Bool { isGoalie }
+
     func canCompareHeadToHead(with other: Player) -> Bool {
-        isDefensivePlayer == other.isDefensivePlayer
+        isGoalie == other.isGoalie
     }
 
     var positionGroup: PlayerPositionGroup {
         switch playerType?.lowercased() {
-        case "qb": return .qb
-        case "rb": return .rb
-        case "wr": return .wr
-        case "te": return .te
-        case "def": return .defense
+        case "f": return .forward
+        case "d": return .defense
+        case "g": return .goalie
         default:
-            let position = displayPosition.uppercased()
-            if position == "QB" { return .qb }
-            if position == "RB" || position == "FB" { return .rb }
-            if position == "WR" { return .wr }
-            if position == "TE" { return .te }
-            return primaryCategory == .defense ? .defense : .wr
+            let position = self.position.trimmingCharacters(in: .whitespaces).uppercased()
+            if position == "G" { return .goalie }
+            if position == "D" { return .defense }
+            if ["C", "L", "R", "W", "LW", "RW", "F"].contains(position) { return .forward }
+            return primaryCategory == .goaltending ? .goalie : .forward
         }
     }
 
     /// The volume a category's rates were measured over, for a board subtitle:
-    /// "16 att", "23 tgt", "31 car". Nil when the line has none.
+    /// "41 SOG", "312 min", "12 GP". Nil when the line has none.
     func volumeCaption(for category: MetricCategory) -> String? {
         switch category {
-        case .passing:
-            return MetricWeight.attempts.value(for: self).map { "\(Int($0)) att" }
-        case .rushing:
-            return MetricWeight.carries.value(for: self).map { "\(Int($0)) car" }
-        case .receiving:
-            return MetricWeight.targets.value(for: self).map { "\(Int($0)) tgt" }
-        case .defense:
-            return MetricWeight.games.value(for: self).map { "\(Int($0)) G" }
+        case .scoring, .playDriving:
+            return MetricWeight.iceTime.value(for: self).map { "\(Int($0.rounded())) min" }
+        case .shotQuality:
+            return MetricWeight.shotsOnGoal.value(for: self).map { "\(Int($0)) SOG" }
+        case .goaltending:
+            return MetricWeight.shotsAgainst.value(for: self).map { "\(Int($0)) SA" }
         }
     }
 
     func metrics(kind: MetricKind) -> [Metric] {
-        FootballMetricRegistry.sorted(metrics.filter { FootballMetricRegistry.kind(for: $0) == kind })
+        HockeyMetricRegistry.sorted(metrics.filter { HockeyMetricRegistry.kind(for: $0) == kind })
     }
 
     func preferredHeadlineMetric(kind: MetricKind) -> Metric? {

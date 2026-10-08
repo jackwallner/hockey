@@ -1,1 +1,0 @@
-Tabele pozycji otwierają się teraz z domyślną statystyką dla danej pozycji. Po zmianie pozycji pozostaje tylko wybrana przez Ciebie statystyka.

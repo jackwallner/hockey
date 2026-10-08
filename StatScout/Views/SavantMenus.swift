@@ -11,7 +11,7 @@ import SwiftUI
 /// optimise for. Native scrolls properly, sizes itself, dismisses correctly and
 /// is the control users already know.
 ///
-/// `GridironSegmented` still covers two-to-four inline options; past that, this.
+/// `RinkSegmented` still covers two-to-four inline options; past that, this.
 /// The generic is named `Trigger`, not `Label`, so the rows below can still say
 /// `Label(_:systemImage:)` and mean SwiftUI's.
 struct SeasonMenu<Trigger: View>: View {
@@ -247,7 +247,7 @@ struct SeasonPhaseNavBar: ViewModifier {
             // it, and it is the right thing to cut: a four-digit year beside the
             // word "Season" is already unmistakably a date, so the icon was
             // decoration sitting in front of the label it decorated.
-            GridironNavPill(
+            RinkNavPill(
                 title: SeasonLabel.text(selectedSeason) + " · " + selectedPhase.label
             )
         }
@@ -275,7 +275,7 @@ extension View {
 /// copy of this, and they drifted, one was a `Menu`, the others popovers, and
 /// the team page's had no `fixedSize()` so it clipped to a bare icon. One view
 /// now, so a change lands everywhere.
-struct GridironNavPill: View {
+struct RinkNavPill: View {
     /// Optional: a bar that is tight on width can drop the glyph and keep the
     /// label, which is the part that carries meaning.
     var systemImage: String? = nil
@@ -295,7 +295,7 @@ struct GridironNavPill: View {
                 // scale buys the words back without touching the CTA, and this
                 // is nav-bar chrome rather than content, so it can afford to sit
                 // a size below the board it labels.
-                .font(GridironType.micro)
+                .font(RinkType.micro)
             Image(systemName: "chevron.down")
                 .font(.system(size: 8, weight: .bold))
         }
@@ -305,25 +305,25 @@ struct GridironNavPill: View {
         .fixedSize()
         .padding(.horizontal, 9)
         .padding(.vertical, 5)
-        .background(GridironPalette.turf)
+        .background(RinkPalette.turf)
         .clipShape(Capsule())
     }
 }
 
 /// In-content variant: same control, but sitting on a card rather than the midnight
 /// bar, so it's a quiet outlined capsule instead of a green one. It's a
-/// `GridironChip` with a chevron, so it can't drift from the sort / search /
+/// `RinkChip` with a chevron, so it can't drift from the sort / search /
 /// Filters chips it shares a row with.
-struct GridironInlinePill: View {
+struct RinkInlinePill: View {
     let systemImage: String?
     let title: String
     var isLocked: Bool = false
-    /// See `GridironChip.compressible`: set it where two of these share a
+    /// See `RinkChip.compressible`: set it where two of these share a
     /// half-width column, as they do in each Compare slot.
     var compressible: Bool = false
 
     var body: some View {
-        GridironChip(
+        RinkChip(
             title: title,
             systemImage: systemImage,
             trailing: .chevron,

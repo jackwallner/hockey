@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 /// The coverage notes exist so a gap in an old season reads as a limit of the
 /// public record rather than as a broken app. These tests pin the boundaries to

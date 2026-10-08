@@ -1,1 +1,0 @@
-Pozisyon tabloları artık her pozisyonun varsayılan istatistiğiyle açılıyor. Pozisyon değiştirdiğinizde yalnızca seçtiğiniz istatistik korunuyor.

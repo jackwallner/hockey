@@ -77,7 +77,7 @@ struct StatPickerMenu: View {
                 }
             }
         } label: {
-            GridironInlinePill(systemImage: "chart.bar.fill", title: activeLabel)
+            RinkInlinePill(systemImage: "chart.bar.fill", title: activeLabel)
         }
         .menuOrder(.fixed)
         .gridironMenuAppearance()
@@ -115,7 +115,7 @@ struct SortDirectionButton: View {
             action()
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         } label: {
-            GridironChip(trailing: .sortArrow(descending: descending))
+            RinkChip(trailing: .sortArrow(descending: descending))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Sort direction")
@@ -206,7 +206,7 @@ struct StatsViewMenu: View {
             qualifierSection
             boardSection
         } label: {
-            GridironChip(
+            RinkChip(
                 title: "View",
                 systemImage: "slider.horizontal.3",
                 trailing: .chevron,
@@ -219,7 +219,7 @@ struct StatsViewMenu: View {
 
     private var conferenceSection: some View {
         Section("Conference") {
-            ForEach(NFLConference.allCases) { conference in
+            ForEach(LeagueConference.allCases) { conference in
                 Button {
                     viewModel.selectedConference = conference
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()

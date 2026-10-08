@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 final class GamesTests: XCTestCase {
     private func date(_ iso: String) -> Date {

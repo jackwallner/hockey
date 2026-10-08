@@ -4,9 +4,9 @@ extension ContractValue {
     /// Green for outplaying the deal, rust for under it, ink in between.
     var tint: Color {
         switch verdict {
-        case .bargain, .outplaying: return GridironPalette.performanceHigh
-        case .fair: return GridironPalette.inkSecondary
-        case .under, .overpaid: return GridironPalette.performanceLow
+        case .bargain, .outplaying: return RinkPalette.performanceHigh
+        case .fair: return RinkPalette.inkSecondary
+        case .under, .overpaid: return RinkPalette.performanceLow
         }
     }
 }
@@ -28,7 +28,7 @@ struct ContractValueBoard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GridironTabs(
+            RinkTabs(
                 tabs: positions.map(\.rawValue),
                 selected: Binding(
                     get: { viewModel.selectedPosition.rawValue },
@@ -42,7 +42,7 @@ struct ContractValueBoard: View {
             .padding(.top, 8)
 
             HStack(spacing: 8) {
-                GridironSegmented(
+                RinkSegmented(
                     segments: [
                         .init(value: true, label: "Bargains"),
                         .init(value: false, label: "Overpaid"),
@@ -53,7 +53,7 @@ struct ContractValueBoard: View {
                     .fixedSize()
             }
             .padding(.horizontal, 12)
-            .padding(.top, GridironGeo.controlRowGap)
+            .padding(.top, RinkGeo.controlRowGap)
 
             ScrollView {
                 VStack(spacing: 0) {
@@ -113,11 +113,11 @@ struct ContractValueBoard: View {
                     }
                 }
             }
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(RinkPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                    .stroke(RinkPalette.hairline, lineWidth: 0.5)
             )
         }
     }
@@ -133,12 +133,12 @@ struct ContractValueBoard: View {
             Text("VALUE")
                 .frame(width: 52, alignment: .trailing)
         }
-        .font(GridironType.micro)
-        .foregroundStyle(GridironPalette.inkTertiary)
-        .frame(height: GridironGeo.rowHeightHeader)
-        .padding(.horizontal, GridironGeo.padInline)
-        .background(GridironPalette.surfaceAlt)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .font(RinkType.micro)
+        .foregroundStyle(RinkPalette.inkTertiary)
+        .frame(height: RinkGeo.rowHeightHeader)
+        .padding(.horizontal, RinkGeo.padInline)
+        .background(RinkPalette.surfaceAlt)
+        .overlay(Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline), alignment: .bottom)
     }
 
     private func row(rank: Int, entry: (player: Player, value: ContractValue)) -> some View {
@@ -146,39 +146,39 @@ struct ContractValueBoard: View {
         return NavigationLink(value: entry.player) {
             HStack(spacing: 0) {
                 Text("\(rank)")
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.statSmall)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                     .frame(width: 36, alignment: .leading)
                     .monospacedDigit()
                 HStack(spacing: 10) {
                     PlayerHeadshot(team: entry.player.team, initials: entry.player.initials, size: 36)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(entry.player.name)
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.ink)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
                         Text([displayTeamAbbr(entry.player.team), contract].compactMap { $0 }.joined(separator: " · "))
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                             .lineLimit(1)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Text("\(entry.value.payPercentile) / \(entry.value.productionPercentile)")
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.statSmall)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                     .monospacedDigit()
                     .frame(width: 72, alignment: .trailing)
                 Text(entry.value.scoreLabel)
-                    .font(GridironType.statMed)
+                    .font(RinkType.statMed)
                     .foregroundStyle(entry.value.tint)
                     .monospacedDigit()
                     .frame(width: 52, alignment: .trailing)
             }
-            .frame(height: GridironGeo.rowHeight)
-            .padding(.horizontal, GridironGeo.padInline)
-            .background(rank % 2 == 1 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+            .frame(height: RinkGeo.rowHeight)
+            .padding(.horizontal, RinkGeo.padInline)
+            .background(rank % 2 == 1 ? RinkPalette.surface : RinkPalette.surfaceAlt)
             .contentShape(Rectangle())
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(
@@ -190,8 +190,8 @@ struct ContractValueBoard: View {
 
     private var footnote: some View {
         Text("Pay is each deal's yearly average as a share of the cap when it was signed; play is the player's average percentile on the stats he qualifies for. Both are ranked among qualified \(viewModel.selectedPosition.rawValue)s with a contract, and value is play minus pay. Contracts: OverTheCap via nflverse.")
-            .font(GridironType.micro)
-            .foregroundStyle(GridironPalette.inkTertiary)
+            .font(RinkType.micro)
+            .foregroundStyle(RinkPalette.inkTertiary)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
@@ -206,8 +206,8 @@ struct ContractValueBoard: View {
         }
         .padding(.vertical, 32)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
     }
 }
 
@@ -222,12 +222,12 @@ struct ContractValueCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(
+            RinkSectionBar(
                 title: "CONTRACT VALUE",
                 trailing: value.map { value in
                     AnyView(
                         Text("\(value.scoreLabel) · \(value.verdict.rawValue)")
-                            .font(GridironType.smallBold)
+                            .font(RinkType.smallBold)
                             .foregroundStyle(value.tint)
                     )
                 }
@@ -235,31 +235,31 @@ struct ContractValueCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 if let contract = contractLine {
                     Text(contract)
-                        .font(GridironType.body)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.body)
+                        .foregroundStyle(RinkPalette.ink)
                 }
                 if let value {
                     bar(label: "Pay", percentile: value.payPercentile, neutral: true)
                     bar(label: "Play", percentile: value.productionPercentile, neutral: false)
                     Text(explanation(value))
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text(unavailableReason)
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(GridironGeo.padCard)
+            .padding(RinkGeo.padCard)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .accessibilityElement(children: .combine)
     }
@@ -296,14 +296,14 @@ struct ContractValueCard: View {
     private func bar(label: String, percentile: Int, neutral: Bool) -> some View {
         HStack(spacing: 10) {
             Text(label)
-                .font(GridironType.smallBold)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.smallBold)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 34, alignment: .leading)
             // Pay is drawn in ink: a high pay rank is a cost, not a strength.
-            PercentileBarMini(percentile: percentile, height: 8, tint: neutral ? GridironPalette.inkTertiary : nil)
+            PercentileBarMini(percentile: percentile, height: 8, tint: neutral ? RinkPalette.inkTertiary : nil)
             Text(percentile.ordinal)
-                .font(GridironType.statSmall)
-                .foregroundStyle(neutral ? GridironPalette.inkSecondary : GridironPalette.textColor(forPercentile: percentile))
+                .font(RinkType.statSmall)
+                .foregroundStyle(neutral ? RinkPalette.inkSecondary : RinkPalette.textColor(forPercentile: percentile))
                 .monospacedDigit()
                 .frame(width: 44, alignment: .trailing)
         }

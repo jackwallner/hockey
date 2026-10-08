@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 final class DashboardViewModelTests: XCTestCase {
     override func setUp() {
@@ -603,7 +603,7 @@ final class DashboardViewModelTests: XCTestCase {
     }
 
     private func makeCompleteSeasonPlayers(season: Int, namePrefix: String) -> [Player] {
-        let teams = nflTeamAbbreviations
+        let teams = leagueTeamAbbreviations
         let types = ["qb", "rb", "wr", "te", "def"]
         return teams.enumerated().map { index, team in
             let type = types[index % types.count]

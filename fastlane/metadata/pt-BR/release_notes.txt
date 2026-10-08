@@ -1,1 +1,0 @@
-Os painéis por posição agora abrem com a estatística padrão de cada posição. Ao trocar de posição, só a estatística que você escolheu é mantida.

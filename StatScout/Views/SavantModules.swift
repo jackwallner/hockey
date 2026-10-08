@@ -52,12 +52,12 @@ struct PlayerIdentityStrip: View {
                 .overlay(Circle().stroke(.white, lineWidth: 2))
             VStack(alignment: .leading, spacing: 4) {
                 Text(player.name)
-                    .font(GridironType.playerName)
-                    .foregroundStyle(GridironPalette.inkOnDark)
+                    .font(RinkType.playerName)
+                    .foregroundStyle(RinkPalette.inkOnDark)
                     .lineLimit(1).minimumScaleFactor(0.7)
                 HStack(spacing: 8) {
                     Text(displayTeamFullName(player.team))
-                        .font(GridironType.bodyBold)
+                        .font(RinkType.bodyBold)
                         .foregroundStyle(.white.opacity(0.85))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -66,13 +66,13 @@ struct PlayerIdentityStrip: View {
                     }
                 }
                 Text(bioLine)
-                    .font(GridironType.small)
+                    .font(RinkType.small)
                     .foregroundStyle(.white.opacity(0.65))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 if let originLine {
                     Text(originLine)
-                        .font(GridironType.small)
+                        .font(RinkType.small)
                         .foregroundStyle(.white.opacity(0.65))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -83,10 +83,10 @@ struct PlayerIdentityStrip: View {
                 OverallPercentileBadge(percentile: player.overallPercentile)
             }
         }
-        .padding(.horizontal, GridironGeo.padPage)
-        .padding(.vertical, GridironGeo.padPage)
+        .padding(.horizontal, RinkGeo.padPage)
+        .padding(.vertical, RinkGeo.padPage)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(GridironPalette.midnight)
+        .background(RinkPalette.midnight)
     }
 }
 
@@ -97,13 +97,13 @@ struct InjuryBadge: View {
 
     var body: some View {
         Text([report.shortStatus.uppercased(), report.injury].compactMap { $0 }.joined(separator: " · "))
-            .font(GridironType.micro)
+            .font(RinkType.micro)
             .foregroundStyle(.white)
             .lineLimit(1)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
             .background(
-                Capsule().fill(report.isOut ? GridironPalette.performanceLow : Color(red: 0.72, green: 0.49, blue: 0.08))
+                Capsule().fill(report.isOut ? RinkPalette.performanceLow : Color(red: 0.72, green: 0.49, blue: 0.08))
             )
             .accessibilityLabel("Injury report: \(report.status)\(report.injury.map { ", \($0)" } ?? "")")
     }
@@ -126,77 +126,77 @@ struct TeamIdentityStrip: View {
         HStack(alignment: .center, spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(NFLTeamColor.color(normalizedTeam))
+                    .fill(TeamColor.color(normalizedTeam))
                     .frame(width: 56, height: 56)
                 Text(normalizedTeam)
-                    .font(GridironType.pageTitle)
+                    .font(RinkType.pageTitle)
                     .foregroundStyle(.white)
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(teamFullName(normalizedTeam))
-                    .font(GridironType.playerName)
-                    .foregroundStyle(GridironPalette.inkOnDark)
+                    .font(RinkType.playerName)
+                    .foregroundStyle(RinkPalette.inkOnDark)
                     .lineLimit(1).minimumScaleFactor(0.7)
                 Text(seasonLabel)
-                    .font(GridironType.small)
+                    .font(RinkType.small)
                     .foregroundStyle(.white.opacity(0.65))
             }
             Spacer(minLength: 8)
         }
-        .padding(.horizontal, GridironGeo.padPage)
-        .padding(.vertical, GridironGeo.padPage)
+        .padding(.horizontal, RinkGeo.padPage)
+        .padding(.vertical, RinkGeo.padPage)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(GridironPalette.midnight)
+        .background(RinkPalette.midnight)
     }
 }
 
 // MARK: - Module 3: Section Bar
 
-struct GridironSectionBar: View {
+struct RinkSectionBar: View {
     let title: String
     var trailing: AnyView? = nil
 
     var body: some View {
         HStack(spacing: 0) {
             Text(title.uppercased())
-                .font(GridironType.sectionTitle)
-                .foregroundStyle(GridironPalette.ink)
-                .padding(.leading, GridironGeo.padCard)
+                .font(RinkType.sectionTitle)
+                .foregroundStyle(RinkPalette.ink)
+                .padding(.leading, RinkGeo.padCard)
             Spacer()
             if let trailing { trailing.padding(.trailing, 12) }
         }
-        .frame(height: GridironGeo.rowHeightHeader)
-        .background(GridironPalette.surfaceSunk)
+        .frame(height: RinkGeo.rowHeightHeader)
+        .background(RinkPalette.surfaceSunk)
     }
 }
 
-struct GridironSubSectionBar: View {
+struct RinkSubSectionBar: View {
     let title: String
     var trailing: String? = nil
-    var trailingColor: Color = GridironPalette.inkSecondary
+    var trailingColor: Color = RinkPalette.inkSecondary
 
     var body: some View {
         HStack {
             Text(title.uppercased())
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkSecondary)
             Spacer()
             if let trailing {
                 Text(trailing)
-                    .font(GridironType.statSmall)
+                    .font(RinkType.statSmall)
                     .foregroundStyle(trailingColor)
             }
         }
         .frame(height: 26)
-        .padding(.horizontal, GridironGeo.padCard)
-        .background(GridironPalette.surfaceAlt)
-        .overlay(Rectangle().fill(GridironPalette.divider).frame(height: 0.5), alignment: .bottom)
+        .padding(.horizontal, RinkGeo.padCard)
+        .background(RinkPalette.surfaceAlt)
+        .overlay(Rectangle().fill(RinkPalette.divider).frame(height: 0.5), alignment: .bottom)
     }
 }
 
 // MARK: - Module 5: Tab Bar
 
-struct GridironTabs: View {
+struct RinkTabs: View {
     let tabs: [String]
     @Binding var selected: String
 
@@ -210,15 +210,15 @@ struct GridironTabs: View {
                 }) {
                     VStack(spacing: 0) {
                         Text(tab.uppercased())
-                            .font(GridironType.smallBold)
-                            .foregroundStyle(selected == tab ? GridironPalette.ink : GridironPalette.inkTertiary)
+                            .font(RinkType.smallBold)
+                            .foregroundStyle(selected == tab ? RinkPalette.ink : RinkPalette.inkTertiary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                             .padding(.horizontal, 4)
                             .frame(maxWidth: .infinity)
                             .frame(height: 40)
                         Rectangle()
-                            .fill(selected == tab ? GridironPalette.turf : Color.clear)
+                            .fill(selected == tab ? RinkPalette.turf : Color.clear)
                             .frame(height: 3)
                     }
                 }
@@ -227,7 +227,7 @@ struct GridironTabs: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .overlay(Rectangle().fill(GridironPalette.hairline).frame(height: GridironGeo.hairline), alignment: .bottom)
+        .background(RinkPalette.surface)
+        .overlay(Rectangle().fill(RinkPalette.hairline).frame(height: RinkGeo.hairline), alignment: .bottom)
     }
 }

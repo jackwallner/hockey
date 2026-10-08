@@ -48,14 +48,14 @@ struct MetricRankingView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                GridironSectionBar(
+                RinkSectionBar(
                     title: "\(metricLabel) · \(metricCategory.rawValue)",
                     trailing: AnyView(
                         HStack(spacing: 12) {
                             if let season {
                                 Text(SeasonLabel.text(season))
-                                    .font(GridironType.micro)
-                                    .foregroundStyle(GridironPalette.inkSecondary)
+                                    .font(RinkType.micro)
+                                    .foregroundStyle(RinkPalette.inkSecondary)
                             }
                             Button(action: {
                                 sortDescending.toggle()
@@ -66,8 +66,8 @@ struct MetricRankingView: View {
                                     Text(metricLabel)
                                     Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
                                 }
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.inkSecondary)
+                                .font(RinkType.micro)
+                                .foregroundStyle(RinkPalette.inkSecondary)
                             }
                         }
                     )
@@ -100,18 +100,18 @@ struct MetricRankingView: View {
                     }
                 }
             }
-            .background(GridironPalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+            .background(RinkPalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
             .overlay(
-                RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                    .stroke(GridironPalette.hairline, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                    .stroke(RinkPalette.hairline, lineWidth: 0.5)
             )
             .padding(.horizontal, 12)
             .padding(.top, 12)
             Color.clear.frame(height: 88)
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         .navigationTitle("\(metricLabel) · \(metricCategory.rawValue)")
         .navigationBarTitleDisplayMode(.inline)
     }

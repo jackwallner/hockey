@@ -1,7 +1,7 @@
 import Foundation
 
 /// Maps a raw metric value onto the league's full-season percentile scale by
-/// reusing Gridiron's own value→percentile calibration. Built entirely from the
+/// reusing Rink's own value→percentile calibration. Built entirely from the
 /// in-memory league pool: for each metric we collect every qualified player's
 /// (raw season value, season percentile) pair, sort by value, and interpolate.
 ///

@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 /// Regressions for the three context bugs found in the 1.2.1 audit: an
 /// unprovenanced current-season cache surviving an upgrade, a team page whose

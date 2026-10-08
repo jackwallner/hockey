@@ -73,7 +73,7 @@ struct StandardStatsLeadersView: View {
                         isSearching = false
                         searchText = ""
                     }
-                    .font(GridironType.small)
+                    .font(RinkType.small)
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
@@ -92,8 +92,8 @@ struct StandardStatsLeadersView: View {
                         Text(pendingNote)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
                 }
@@ -104,7 +104,7 @@ struct StandardStatsLeadersView: View {
             .scrollDismissesKeyboard(.interactively)
             .refreshable { await viewModel?.load() }
         }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: selectedPosition) { _, next in
             guard !StandardStatCatalog.stats(for: next).contains(selectedStat) else {
@@ -119,7 +119,7 @@ struct StandardStatsLeadersView: View {
     }
 
     private var positionSelector: some View {
-        GridironTabs(
+        RinkTabs(
             tabs: PlayerPositionGroup.allCases.map(\.rawValue),
             selected: Binding(
                 get: { selectedPosition.rawValue },
@@ -177,7 +177,7 @@ struct StandardStatsLeadersView: View {
                 isSearching.toggle()
                 if !isSearching { searchText = "" }
             } label: {
-                GridironChip(systemImage: "magnifyingglass", isActive: isSearching)
+                RinkChip(systemImage: "magnifyingglass", isActive: isSearching)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Search players or teams")
@@ -191,8 +191,8 @@ struct StandardStatsLeadersView: View {
             }
         }
         .padding(.trailing, 12)
-        .frame(height: GridironControl.height + 2)
-        .padding(.top, GridironGeo.controlRowGap)
+        .frame(height: RinkControl.height + 2)
+        .padding(.top, RinkGeo.controlRowGap)
     }
 
     private var statMenu: some View {
@@ -219,41 +219,41 @@ struct StandardStatsLeadersView: View {
             } label: {
                 HStack(spacing: 0) {
                     Text("RANK")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .frame(width: 42, alignment: .leading)
                     // Says who is on the list where the list is read. The rule
                     // otherwise lives only in the View menu, and "leaders" with
                     // no minimum in Week 1 reads like a ranking of the best.
                     Text(sampleLabel)
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("TEAM")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                         .frame(width: 44, alignment: .leading)
                     HStack(spacing: 4) {
                         Text(selectedStat.uppercased())
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.turf)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.turf)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                         Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
                             .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(GridironPalette.turf)
+                            .foregroundStyle(RinkPalette.turf)
                     }
                     .frame(width: 100, alignment: .trailing)
                 }
-                .frame(height: GridironGeo.rowHeightHeader)
-                .padding(.horizontal, GridironGeo.padInline)
-                .background(GridironPalette.surfaceAlt)
+                .frame(height: RinkGeo.rowHeightHeader)
+                .padding(.horizontal, RinkGeo.padInline)
+                .background(RinkPalette.surfaceAlt)
                 .overlay(
                     Rectangle()
-                        .fill(GridironPalette.divider)
-                        .frame(height: GridironGeo.hairline),
+                        .fill(RinkPalette.divider)
+                        .frame(height: RinkGeo.hairline),
                     alignment: .bottom
                 )
             }
@@ -269,7 +269,7 @@ struct StandardStatsLeadersView: View {
                     Text("No \(selectedPosition.rawValue) players have \(selectedStat) data for this season.")
                 }
                 .padding(.vertical, 48)
-                .background(GridironPalette.surface)
+                .background(RinkPalette.surface)
             } else {
                 let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
                 let ranked = Array(sortedPlayers.enumerated()).filter { _, player in
@@ -287,11 +287,11 @@ struct StandardStatsLeadersView: View {
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -299,8 +299,8 @@ struct StandardStatsLeadersView: View {
         NavigationLink(value: player) {
             HStack(spacing: 0) {
                 Text("\(rank)")
-                    .font(GridironType.statSmall)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.statSmall)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                     .frame(width: 36, alignment: .leading)
 
                 HStack(spacing: 10) {
@@ -311,14 +311,14 @@ struct StandardStatsLeadersView: View {
                     )
                     VStack(alignment: .leading, spacing: 2) {
                         Text(player.name)
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.ink)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
                             .truncationMode(.tail)
                         Text([player.displayPosition, volumeText(for: player)].compactMap { $0 }.joined(separator: " · "))
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                             .lineLimit(1)
                     }
                 }
@@ -327,8 +327,8 @@ struct StandardStatsLeadersView: View {
                 HStack(spacing: 4) {
                     TeamColorDot(abbr: player.team, size: 6)
                     Text(displayTeamAbbr(player.team))
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                 }
                 .frame(width: 44, alignment: .leading)
 
@@ -346,8 +346,8 @@ struct StandardStatsLeadersView: View {
                             .frame(width: 34)
                     }
                     Text(statDisplay(for: player))
-                        .font(GridironType.statMed)
-                        .foregroundStyle(isZero ? GridironPalette.inkTertiary : GridironPalette.turf)
+                        .font(RinkType.statMed)
+                        .foregroundStyle(isZero ? RinkPalette.inkTertiary : RinkPalette.turf)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                         .frame(width: 58, alignment: .trailing)
@@ -360,17 +360,17 @@ struct StandardStatsLeadersView: View {
                         : "\(selectedStat): \(statDisplay(for: player)), \(pct.ordinalString) percentile"
                 )
             }
-            .frame(height: GridironGeo.rowHeight)
-            .padding(.horizontal, GridironGeo.padInline)
+            .frame(height: RinkGeo.rowHeight)
+            .padding(.horizontal, RinkGeo.padInline)
             .background(
                 rank.isMultiple(of: 2)
-                    ? GridironPalette.surfaceAlt
-                    : GridironPalette.surface
+                    ? RinkPalette.surfaceAlt
+                    : RinkPalette.surface
             )
             .overlay(
                 Rectangle()
-                    .fill(GridironPalette.divider)
-                    .frame(height: GridironGeo.hairline),
+                    .fill(RinkPalette.divider)
+                    .frame(height: RinkGeo.hairline),
                 alignment: .bottom
             )
         }

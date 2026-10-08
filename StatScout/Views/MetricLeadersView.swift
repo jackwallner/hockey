@@ -38,12 +38,12 @@ struct MetricLeadersView: View {
             }
         }
         .scrollBounceBehavior(.basedOnSize)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
     }
 
     /// Many metrics (xISO, xOBP, Hard-Hit%, Arm Strength, Squared-Up%) ship a
-    /// valid Gridiron percentile but a blank value string. Rather than render an
+    /// valid Rink percentile but a blank value string. Rather than render an
     /// empty cell, fall back to the percentile so the row still carries signal.
     private func displayValue(_ raw: String, percentile: Int) -> String {
         let trimmed = raw.trimmingCharacters(in: .whitespaces)
@@ -52,27 +52,27 @@ struct MetricLeadersView: View {
 
     private func categoryCard(_ group: (MetricCategory, [MetricLeaderEntry])) -> some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: group.0.rawValue.uppercased())
+            RinkSectionBar(title: group.0.rawValue.uppercased())
 
             HStack(spacing: 8) {
                 Text("METRIC")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(width: 88, alignment: .leading)
                 Text("BEST")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text("WORST")
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(height: GridironGeo.rowHeightHeader)
-            .padding(.horizontal, GridironGeo.padInline)
-            .background(GridironPalette.surfaceAlt)
+            .frame(height: RinkGeo.rowHeightHeader)
+            .padding(.horizontal, RinkGeo.padInline)
+            .background(RinkPalette.surfaceAlt)
             .overlay(
-                Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                 alignment: .bottom
             )
 
@@ -81,11 +81,11 @@ struct MetricLeadersView: View {
                     NavigationLink(value: MetricRoute(label: item.label, category: item.category)) {
                         HStack(spacing: 2) {
                             Text(item.label)
-                                .font(GridironType.smallBold)
-                                .foregroundStyle(GridironPalette.ink)
+                                .font(RinkType.smallBold)
+                                .foregroundStyle(RinkPalette.ink)
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 9, weight: .bold))
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .foregroundStyle(RinkPalette.inkTertiary)
                         }
                         .frame(width: 88, alignment: .leading)
                     }
@@ -97,13 +97,13 @@ struct MetricLeadersView: View {
                                 PlayerHeadshot(team: best.player.team, initials: best.player.initials, size: 24)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(best.player.name)
-                                        .font(GridironType.smallBold)
-                                        .foregroundStyle(GridironPalette.ink)
+                                        .font(RinkType.smallBold)
+                                        .foregroundStyle(RinkPalette.ink)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.7)
                                     Text(displayValue(best.actualValue, percentile: best.percentile))
-                                        .font(GridironType.statSmall)
-                                        .foregroundStyle(GridironPalette.inkSecondary)
+                                        .font(RinkType.statSmall)
+                                        .foregroundStyle(RinkPalette.inkSecondary)
                                         .lineLimit(1)
                                 }
                             }
@@ -112,8 +112,8 @@ struct MetricLeadersView: View {
                         .buttonStyle(.plain)
                     } else {
                         Text("No qualified players")
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .lineLimit(1)
                     }
@@ -124,13 +124,13 @@ struct MetricLeadersView: View {
                                 PlayerHeadshot(team: worst.player.team, initials: worst.player.initials, size: 24)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(worst.player.name)
-                                        .font(GridironType.smallBold)
-                                        .foregroundStyle(GridironPalette.ink)
+                                        .font(RinkType.smallBold)
+                                        .foregroundStyle(RinkPalette.ink)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.7)
                                     Text(displayValue(worst.actualValue, percentile: worst.percentile))
-                                        .font(GridironType.statSmall)
-                                        .foregroundStyle(GridironPalette.inkSecondary)
+                                        .font(RinkType.statSmall)
+                                        .foregroundStyle(RinkPalette.inkSecondary)
                                         .lineLimit(1)
                                 }
                             }
@@ -139,26 +139,26 @@ struct MetricLeadersView: View {
                         .buttonStyle(.plain)
                     } else {
                         Text("Only qualifier")
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkTertiary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .lineLimit(1)
                     }
                 }
-                .frame(height: GridironGeo.rowHeight)
-                .padding(.horizontal, GridironGeo.padInline)
-                .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .frame(height: RinkGeo.rowHeight)
+                .padding(.horizontal, RinkGeo.padInline)
+                .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                 .overlay(
-                    Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                    Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                     alignment: .bottom
                 )
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 }

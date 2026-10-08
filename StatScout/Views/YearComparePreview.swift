@@ -19,10 +19,10 @@ struct YearComparePreview: View {
                 trigger: .yearCompare
             )
         }
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -48,36 +48,36 @@ struct YearComparePreview: View {
             mockYearButton(label: "2026", subtitle: "Recent")
             Image(systemName: "arrow.right")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(RinkPalette.inkTertiary)
             mockYearButton(label: "2025", subtitle: "Prior")
         }
         .padding(16)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private func mockYearButton(label: String, subtitle: String) -> some View {
         VStack(spacing: 2) {
             Text(label)
-                .font(GridironType.statLarge)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.statLarge)
+                .foregroundStyle(RinkPalette.ink)
             Text(subtitle)
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(GridironPalette.surfaceAlt)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surfaceAlt)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
     }
 
     private var mockCategoryCard: some View {
         VStack(spacing: 0) {
-            GridironSubSectionBar(title: "SEASON TOTALS")
+            RinkSubSectionBar(title: "SEASON TOTALS")
             mockHeader
 
             mockRow(label: "Cmp/Att", priorVal: "348/530", recentVal: "385/566")
@@ -85,32 +85,32 @@ struct YearComparePreview: View {
             mockRow(label: "Pass TD", priorVal: "24", recentVal: "34")
             mockRow(label: "Rush Yds", priorVal: "285", recentVal: "412")
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 
     private var mockHeader: some View {
         HStack(spacing: 0) {
             Text("STAT")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Text("2025")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 72)
             Text("2026")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 72)
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .frame(height: 28)
-        .background(GridironPalette.surfaceAlt)
+        .background(RinkPalette.surfaceAlt)
     }
 
     private func mockRow(
@@ -120,8 +120,8 @@ struct YearComparePreview: View {
     ) -> some View {
         HStack(spacing: 0) {
             Text(label)
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.body)
+                .foregroundStyle(RinkPalette.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(1)
 
@@ -132,20 +132,20 @@ struct YearComparePreview: View {
                 .frame(width: 72)
         }
         .frame(height: 48)
-        .padding(.horizontal, GridironGeo.padInline)
-        .background(GridironPalette.surface)
+        .padding(.horizontal, RinkGeo.padInline)
+        .background(RinkPalette.surface)
         .overlay(
             Rectangle()
-                .fill(GridironPalette.divider)
-                .frame(height: GridironGeo.hairline),
+                .fill(RinkPalette.divider)
+                .frame(height: RinkGeo.hairline),
             alignment: .bottom
         )
     }
 
     private func mockYearValue(value: String, isFaded: Bool) -> some View {
         Text(value)
-            .font(GridironType.statSmall)
-            .foregroundStyle(isFaded ? GridironPalette.inkTertiary : GridironPalette.turf)
+            .font(RinkType.statSmall)
+            .foregroundStyle(isFaded ? RinkPalette.inkTertiary : RinkPalette.turf)
             .lineLimit(1)
     }
 }

@@ -1,1 +1,0 @@
-nfl,statistikk,spillere,epa,cpoe,yac,sammenlign,pasninger,løp,mottak,forsvar,tabell

@@ -50,7 +50,7 @@ struct RootTabView: View {
 
     var body: some View {
         tabView
-            .tint(GridironPalette.turf)
+            .tint(RinkPalette.turf)
             .sheet(isPresented: $showReviewPrompt, onDismiss: {
             // "Maybe later" already recorded a soft defer; calling markShown
             // here would clear it and apply the full 120-day cooldown to a
@@ -136,7 +136,7 @@ struct RootTabView: View {
             floatingTabBar
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         .ignoresSafeArea(edges: .bottom)
         #if DEBUG
         .onAppear {
@@ -219,9 +219,9 @@ struct RootTabView: View {
         // board. It still floats; it just no longer shares its pixels.
         .background {
             Capsule().fill(.regularMaterial)
-            Capsule().fill(GridironPalette.surface.opacity(0.9))
+            Capsule().fill(RinkPalette.surface.opacity(0.9))
         }
-        .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+        .overlay(Capsule().stroke(RinkPalette.hairline, lineWidth: 0.5))
         .shadow(color: .black.opacity(0.10), radius: 12, y: 4)
         .padding(.bottom, 12)
     }
@@ -234,7 +234,7 @@ struct RootTabView: View {
             )
                 .navigationTitle("Games · \(String(viewModel.freeSeason))")
                 .navigationBarTitleDisplayMode(.inline)
-                .modifier(GridironNavBar())
+                .modifier(RinkNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -244,7 +244,7 @@ struct RootTabView: View {
         NavigationStack {
             StatsView(viewModel: viewModel)
                 // Title and season pills come from SeasonPhaseNavBar.
-                .modifier(GridironNavBar())
+                .modifier(RinkNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -257,7 +257,7 @@ struct RootTabView: View {
                 isActive: selection == Tab.trends.rawValue
             )
                 // Title and season pills come from SeasonPhaseNavBar.
-                .modifier(GridironNavBar())
+                .modifier(RinkNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -267,7 +267,7 @@ struct RootTabView: View {
         NavigationStack(path: $teamsPath) {
             TeamsView(viewModel: viewModel, path: $teamsPath)
                 // Title and season pills come from SeasonPhaseNavBar.
-                .modifier(GridironNavBar())
+                .modifier(RinkNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -285,7 +285,7 @@ struct RootTabView: View {
             )
                 .navigationTitle("Compare")
                 .navigationBarTitleDisplayMode(.inline)
-                .modifier(GridironNavBar())
+                .modifier(RinkNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
@@ -308,14 +308,14 @@ private struct TabBarButton: View {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .semibold))
                 Text(label)
-                    .font(GridironType.smallBold)
+                    .font(RinkType.smallBold)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .foregroundStyle(isSelected ? GridironPalette.turf : GridironPalette.inkSecondary)
+            .foregroundStyle(isSelected ? RinkPalette.turf : RinkPalette.inkSecondary)
             .frame(width: 68, height: 52)
             .background(
-                isSelected ? GridironPalette.turf.opacity(0.12) : .clear,
+                isSelected ? RinkPalette.turf.opacity(0.12) : .clear,
                 in: Capsule()
             )
         }
@@ -326,10 +326,10 @@ private struct TabBarButton: View {
     }
 }
 
-private struct GridironNavBar: ViewModifier {
+private struct RinkNavBar: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .toolbarBackground(GridironPalette.midnight, for: .navigationBar)
+            .toolbarBackground(RinkPalette.midnight, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
     }
@@ -367,10 +367,10 @@ private struct HomeTabToolbar: ViewModifier {
                 Image(systemName: "crown.fill")
                     .font(.system(size: 10, weight: .bold))
                 Text(ctaLabel)
-                    .font(GridironType.micro)
+                    .font(RinkType.micro)
                     .fontWeight(.bold)
             }
-            .foregroundStyle(GridironPalette.midnight)
+            .foregroundStyle(RinkPalette.midnight)
             // Tight, because the season pill next to it now spells out
             // "Regular Season" and the bar has no slack left. Trimming padding
             // here is far cheaper than losing the verb: a bare crown reads as a
@@ -429,7 +429,7 @@ private struct HomeTabToolbar: ViewModifier {
                 )
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)
-                .modifier(GridironNavBar())
+                .modifier(RinkNavBar())
             }
             .toolbar {
                 // One trailing item holding both controls, not two items.
@@ -505,15 +505,15 @@ struct PlayerProfileDestination: ViewModifier {
                         defaultPhase: profilePhase
                     )
                 )
-                    .modifier(GridironNavBar())
+                    .modifier(RinkNavBar())
             }
             .navigationDestination(for: GameRoute.self) { route in
                 GameDetailView(viewModel: viewModel, gameId: route.gameId)
-                    .modifier(GridironNavBar())
+                    .modifier(RinkNavBar())
             }
             .navigationDestination(for: TeamScheduleRoute.self) { route in
                 TeamScheduleView(viewModel: viewModel, team: route.team)
-                    .modifier(GridironNavBar())
+                    .modifier(RinkNavBar())
             }
     }
 }
@@ -537,7 +537,7 @@ private struct StandardDestinations: ViewModifier {
                         )
                     }
                 )
-                    .modifier(GridironNavBar())
+                    .modifier(RinkNavBar())
             }
             .navigationDestination(for: MetricRoute.self) { route in
                 let season = route.season ?? viewModel.selectedSeason
@@ -549,7 +549,7 @@ private struct StandardDestinations: ViewModifier {
                     season: season,
                     viewModel: viewModel
                 )
-                    .modifier(GridironNavBar())
+                    .modifier(RinkNavBar())
             }
             .navigationDestination(for: StandardStatRoute.self) { route in
                 let season = route.season ?? viewModel.selectedSeason
@@ -570,7 +570,7 @@ private struct StandardDestinations: ViewModifier {
                             : SeasonLabel.text(season, phase: phase))
                     )
                     .navigationBarTitleDisplayMode(.inline)
-                    .modifier(GridironNavBar())
+                    .modifier(RinkNavBar())
             }
             .navigationDestination(for: ComparisonRoute.self) { route in
                 PlayerComparisonView(
@@ -581,7 +581,7 @@ private struct StandardDestinations: ViewModifier {
                         defaultPhase: route.playerA.seasonPhase
                     )
                 )
-                    .modifier(GridironNavBar())
+                    .modifier(RinkNavBar())
             }
     }
 }

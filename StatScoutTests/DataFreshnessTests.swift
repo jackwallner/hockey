@@ -1,5 +1,5 @@
 import XCTest
-@testable import Gridiron_StatScout
+@testable import Rink_StatScout
 
 final class DataFreshnessTests: XCTestCase {
     func testProductionStatusDecodesCoverageAndPendingEnrichment() throws {

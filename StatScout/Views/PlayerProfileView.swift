@@ -42,7 +42,7 @@ struct PlayerProfileView: View {
     // yearly trial directly. PaywallView stays for the deliberate upsell card.
     @State private var trialPitchTrigger: PaywallTrigger?
     @State private var formDisplayMode: FormDisplayMode = .season
-    @State private var recentWindowGames: Int = 5
+    @State private var recentWindowGames: Int = 4
     @State private var recentLogs: [PlayerGameLog] = []
     /// "<playerId>-<season>" the loaded logs belong to, so two cards asking for
     /// the same season share one fetch.
@@ -130,11 +130,11 @@ struct PlayerProfileView: View {
     private var groupedMetrics: [(family: MetricFamily, metrics: [Metric])] {
         let eligible = displayedPlayer.metrics(kind: profileMetricKind)
         let grouped = Dictionary(grouping: eligible) { metric in
-            FootballMetricRegistry.definition(for: metric.label, category: metric.category)?.family ?? .production
+            HockeyMetricRegistry.definition(for: metric.label, category: metric.category)?.family ?? .production
         }
         return MetricFamily.allCases.compactMap { family in
             guard let metrics = grouped[family], !metrics.isEmpty else { return nil }
-            return (family: family, metrics: FootballMetricRegistry.sorted(metrics))
+            return (family: family, metrics: HockeyMetricRegistry.sorted(metrics))
         }
     }
 
@@ -211,7 +211,7 @@ struct PlayerProfileView: View {
         .refreshable {
             await refreshProfile()
         }
-        .background(GridironPalette.canvas.ignoresSafeArea())
+        .background(RinkPalette.canvas.ignoresSafeArea())
         // First-tap activation: profile renders immediately (no full-screen
         // paywall blocking it), and a native half-sheet TrialPitchSheet
         // floats on top with a "Maybe later" dismiss. PaywallGate caps this
@@ -317,12 +317,12 @@ struct PlayerProfileView: View {
             generator.impactOccurred()
         }) {
             Text(PlayerStatTab.advanced.rawValue)
-                .font(GridironType.bodyBold)
-                .foregroundStyle(isSelected ? .white : GridironPalette.ink)
+                .font(RinkType.bodyBold)
+                .foregroundStyle(isSelected ? .white : RinkPalette.ink)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
-                .background(isSelected ? GridironPalette.turf : GridironPalette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(isSelected ? RinkPalette.turf : RinkPalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         }
         .buttonStyle(.plain)
     }
@@ -337,12 +337,12 @@ struct PlayerProfileView: View {
             generator.impactOccurred()
         }) {
             Text(PlayerStatTab.standard.rawValue)
-                .font(GridironType.bodyBold)
-                .foregroundStyle(isSelected ? .white : GridironPalette.ink)
+                .font(RinkType.bodyBold)
+                .foregroundStyle(isSelected ? .white : RinkPalette.ink)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
-                .background(isSelected ? GridironPalette.turf : GridironPalette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(isSelected ? RinkPalette.turf : RinkPalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         }
         .buttonStyle(.plain)
     }
@@ -360,12 +360,12 @@ struct PlayerProfileView: View {
             generator.impactOccurred()
         }) {
             Text(PlayerStatTab.yearCompare.rawValue)
-                .font(GridironType.bodyBold)
-                .foregroundStyle(isSelected ? .white : GridironPalette.ink)
+                .font(RinkType.bodyBold)
+                .foregroundStyle(isSelected ? .white : RinkPalette.ink)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
-                .background(isSelected ? GridironPalette.turf : GridironPalette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+                .background(isSelected ? RinkPalette.turf : RinkPalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         }
         .buttonStyle(.plain)
     }
@@ -418,8 +418,8 @@ struct PlayerProfileView: View {
                     Text(note)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
             }
@@ -448,11 +448,11 @@ struct PlayerProfileView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("YEAR-OVER-YEAR")
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                     Text("Compare how this profile changed by season.")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                 }
                 Spacer()
                 Button("Compare") {
@@ -462,18 +462,18 @@ struct PlayerProfileView: View {
                     }
                     if !store.isPro { trialPitchTrigger = .yearCompare }
                 }
-                .font(GridironType.smallBold)
+                .font(RinkType.smallBold)
                 .buttonStyle(.bordered)
-                .tint(GridironPalette.midnight)
+                .tint(RinkPalette.midnight)
             }
             if selectedTab == .yearCompare, store.isPro {
                 yearCompareContent
             }
         }
         .padding(16)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
-        .overlay(RoundedRectangle(cornerRadius: GridironGeo.radiusCard).stroke(GridironPalette.hairline, lineWidth: 0.5))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
+        .overlay(RoundedRectangle(cornerRadius: RinkGeo.radiusCard).stroke(RinkPalette.hairline, lineWidth: 0.5))
     }
 
     private var proUpsellCard: some View {
@@ -483,13 +483,13 @@ struct PlayerProfileView: View {
                     .font(.system(size: 14))
                     .foregroundStyle(Color.yellow)
                 Text("StatScout+")
-                    .font(GridironType.smallBold)
-                    .foregroundStyle(GridironPalette.ink)
+                    .font(RinkType.smallBold)
+                    .foregroundStyle(RinkPalette.ink)
             }
 
             Text("Get the full scouting picture on \(player.name).")
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.body)
+                .foregroundStyle(RinkPalette.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 6) {
@@ -504,31 +504,31 @@ struct PlayerProfileView: View {
             } label: {
                 HStack(spacing: 6) {
                     Text(store.paywallBlurCTA)
-                        .font(GridironType.bodyBold)
+                        .font(RinkType.bodyBold)
                     Image(systemName: "arrow.right")
                         .font(.system(size: 12, weight: .bold))
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 46)
-                .background(GridironPalette.turf)
+                .background(RinkPalette.turf)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
 
             if let subtext = store.paywallBlurSubtext {
                 Text(subtext)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkTertiary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
         }
         .padding(16)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -536,11 +536,11 @@ struct PlayerProfileView: View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(GridironPalette.turf)
+                .foregroundStyle(RinkPalette.turf)
                 .frame(width: 16)
             Text(text)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -591,21 +591,21 @@ struct PlayerProfileView: View {
         VStack(spacing: 14) {
             ProgressView(value: min(max(historicalLoadingProgress, 0), 1), total: 1)
                 .progressViewStyle(.linear)
-                .tint(GridironPalette.turf)
+                .tint(RinkPalette.turf)
             Text(historicalLoadingMessage)
-                .font(GridironType.bodyBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.bodyBold)
+                .foregroundStyle(RinkPalette.ink)
             Text("\(Int(min(max(historicalLoadingProgress, 0), 1) * 100))%")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -615,27 +615,27 @@ struct PlayerProfileView: View {
         VStack(spacing: 14) {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 36))
-                .foregroundStyle(GridironPalette.turf)
+                .foregroundStyle(RinkPalette.turf)
             Text("Load past seasons")
-                .font(GridironType.bodyBold)
-                .foregroundStyle(GridironPalette.ink)
+                .font(RinkType.bodyBold)
+                .foregroundStyle(RinkPalette.ink)
             Text("Year Compare loads historical data only when you need it.")
-                .font(GridironType.body)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.body)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
             Button("Load History") {
                 Task { await loadHistorical?() }
             }
             .buttonStyle(.borderedProminent)
-            .tint(GridironPalette.turf)
+            .tint(RinkPalette.turf)
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .padding(.horizontal, 12)
         .padding(.top, 12)
@@ -651,11 +651,11 @@ struct PlayerProfileView: View {
         }
         .padding(.vertical, 48)
         .frame(maxWidth: .infinity)
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
     }
 
@@ -690,20 +690,20 @@ struct PlayerProfileView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Text(seasonLabel)
-                            .font(GridironType.micro)
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkSecondary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                         Image(systemName: "chevron.down")
                             .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                            .foregroundStyle(RinkPalette.inkSecondary)
                     }
                 }
                 .menuOrder(.fixed)
             } else {
                 Text(seasonLabel)
-                    .font(GridironType.micro)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
@@ -718,33 +718,33 @@ struct PlayerProfileView: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 } label: {
                     Text(mode.rawValue)
-                        .font(GridironType.smallBold)
-                        .foregroundStyle(formDisplayMode == mode ? .white : GridironPalette.inkSecondary)
+                        .font(RinkType.smallBold)
+                        .foregroundStyle(formDisplayMode == mode ? .white : RinkPalette.inkSecondary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 30)
-                        .background(formDisplayMode == mode ? GridironPalette.turf : GridironPalette.surface)
+                        .background(formDisplayMode == mode ? RinkPalette.turf : RinkPalette.surface)
                         .clipShape(Capsule())
-                        .overlay(Capsule().stroke(GridironPalette.hairline, lineWidth: 0.5))
+                        .overlay(Capsule().stroke(RinkPalette.hairline, lineWidth: 0.5))
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .padding(.vertical, 10)
-        .background(GridironPalette.surfaceAlt)
+        .background(RinkPalette.surfaceAlt)
     }
 
     private var percentileRankingsCard: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(
+            RinkSectionBar(
                 title: displayedPlayer.positionGroup == .defense ? "PRODUCTION PERCENTILES" : "ADVANCED PERCENTILES",
                 trailing: AnyView(
                     HStack(spacing: 4) {
                         seasonMenu
                         Button(action: { showPercentileInfo = true }) {
                             Text("ⓘ")
-                                .font(GridironType.micro)
-                                .foregroundStyle(GridironPalette.linkBlue)
+                                .font(RinkType.micro)
+                                .foregroundStyle(RinkPalette.linkBlue)
                         }
                         .buttonStyle(.plain)
                     }
@@ -764,22 +764,22 @@ struct PlayerProfileView: View {
                     HStack(spacing: 10) {
                         ProgressView().scaleEffect(0.75)
                         Text("Loading recent games…")
-                            .font(GridironType.small)
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                            .font(RinkType.small)
+                            .foregroundStyle(RinkPalette.inkSecondary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                 } else if let recentLoadError {
                     Text(recentLoadError)
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                 } else if recentWindow == nil {
                     Text(recentEmptyStateText)
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                 }
@@ -796,7 +796,7 @@ struct PlayerProfileView: View {
                 ForEach(groupedMetrics, id: \.family) { group in
                     let rows = displayedMetrics(in: group.metrics)
                     if !rows.isEmpty {
-                        GridironSubSectionBar(
+                        RinkSubSectionBar(
                             title: group.family.rawValue.uppercased()
                         )
 
@@ -807,11 +807,11 @@ struct PlayerProfileView: View {
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .task(id: "\(formDisplayMode)-\(recentWindowGames)-\(player.playerId)-\(activeSeason ?? 0)-\(store.isPro)-\(freshnessViewModel?.freshnessRevision ?? "none")") {
             guard store.isPro, effectiveFormDisplayMode != .season else { return }
@@ -852,7 +852,7 @@ struct PlayerProfileView: View {
         case .offline, .failed:
             return "Recent game data is unavailable right now"
         default:
-            return "No games in the last \(recentWindowGames) games"
+            return "No games in the last \(recentWindowGames) weeks"
         }
     }
 
@@ -870,10 +870,10 @@ struct PlayerProfileView: View {
     }
 
     private var recentWindowPicker: some View {
-        GridironSegmented(
+        RinkSegmented(
             segments: RecentWindow.allCases.map { .init(value: $0, label: $0.segmentLabel) },
             selection: Binding(
-                get: { RecentWindow(rawValue: recentWindowGames) ?? .three },
+                get: { RecentWindow(rawValue: recentWindowGames) ?? .four },
                 set: { recentWindowGames = $0.rawValue }
             )
         )
@@ -884,7 +884,7 @@ struct PlayerProfileView: View {
         // Recent mode: show every season bar - metrics with window data render the
         // recent value, the rest fall back to the season bar (handled in
         // `percentileMetricRow`). Additionally inject a stub for any game-log spec
-        // the season snapshot omits (Gridiron sometimes drops e.g. Hard-Hit%) so its
+        // the season snapshot omits (Rink sometimes drops e.g. Hard-Hit%) so its
         // recent bar still appears even with no season row to hang it on.
         let targetCategory: MetricCategory = category
         guard metrics.first?.category == targetCategory else { return metrics }
@@ -999,17 +999,17 @@ struct PlayerProfileView: View {
     @ViewBuilder
     private func percentileMetricRow(metric: Metric, index: Int) -> some View {
         let recentMetric = recentMetric(for: metric)
-        let rowBackground = index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt
+        let rowBackground = index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt
 
         switch effectiveFormDisplayMode {
         case .season:
             NavigationLink(value: MetricRoute(label: metric.label, category: metric.category, season: activeSeason, phase: activePhase)) {
                 MetricBar(metric: metric)
-                    .padding(.horizontal, GridironGeo.padCard)
+                    .padding(.horizontal, RinkGeo.padCard)
                     .padding(.vertical, 12)
                     .background(rowBackground)
                     .overlay(
-                        Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                        Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                         alignment: .bottom
                     )
             }
@@ -1017,11 +1017,11 @@ struct PlayerProfileView: View {
         case .recent:
             if let recentMetric {
                 MetricBar(metric: recentMetric)
-                    .padding(.horizontal, GridironGeo.padCard)
+                    .padding(.horizontal, RinkGeo.padCard)
                     .padding(.vertical, 12)
                     .background(rowBackground)
                     .overlay(
-                        Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                        Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                         alignment: .bottom
                     )
             } else if !metric.id.hasPrefix("recent-stub-") {
@@ -1029,11 +1029,11 @@ struct PlayerProfileView: View {
                 // so the recent view still shows every percentile bar.
                 NavigationLink(value: MetricRoute(label: metric.label, category: metric.category, season: activeSeason, phase: activePhase)) {
                     MetricBar(metric: metric)
-                        .padding(.horizontal, GridironGeo.padCard)
+                        .padding(.horizontal, RinkGeo.padCard)
                         .padding(.vertical, 12)
                         .background(rowBackground)
                         .overlay(
-                            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                            Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                             alignment: .bottom
                         )
                 }
@@ -1046,11 +1046,11 @@ struct PlayerProfileView: View {
                     recent: recentMetric,
                     recentCaption: "Last \(recentWindowGames)"
                 )
-                .padding(.horizontal, GridironGeo.padCard)
+                .padding(.horizontal, RinkGeo.padCard)
                 .padding(.vertical, 12)
                 .background(rowBackground)
                 .overlay(
-                    Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                    Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                     alignment: .bottom
                 )
             }
@@ -1307,7 +1307,7 @@ struct PlayerProfileView: View {
         VStack(spacing: 0) {
             // The season already appears in the picker on the right; printing
             // it in the title too was saying it twice.
-            GridironSectionBar(
+            RinkSectionBar(
                 title: "STANDARD STATS",
                 trailing: AnyView(seasonMenu)
             )
@@ -1337,20 +1337,20 @@ struct PlayerProfileView: View {
                 let labelled = !rates.isEmpty && !counts.isEmpty
 
                 if !rates.isEmpty {
-                    if labelled { GridironSubSectionBar(title: "RATE") }
+                    if labelled { RinkSubSectionBar(title: "RATE") }
                     standardRows(rates)
                 }
                 if !counts.isEmpty {
-                    if labelled { GridironSubSectionBar(title: "VOLUME") }
+                    if labelled { RinkSubSectionBar(title: "VOLUME") }
                     standardRows(counts, startingIndex: rates.count)
                 }
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         // Standard Stats is its own tab, so the percentile card's loader never
         // runs while you are looking at this one. Without this the Recent /
@@ -1367,33 +1367,33 @@ struct PlayerProfileView: View {
     }
 
     private var standardModePicker: some View {
-        GridironSegmented(
+        RinkSegmented(
             segments: FormDisplayMode.allCases.map {
                 .init(value: $0, label: $0.rawValue, isLocked: !store.isPro && $0 != .season)
             },
             selection: $standardMode,
             onLockedTap: { _ in trialPitchTrigger = .recentForm }
         )
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .padding(.vertical, 10)
-        .background(GridironPalette.surfaceAlt)
+        .background(RinkPalette.surfaceAlt)
     }
 
     private var standardWindowPicker: some View {
-        GridironSegmented(
+        RinkSegmented(
             segments: RecentWindow.allCases.map { .init(value: $0, label: $0.segmentLabel) },
             selection: $standardWindow
         )
-        .padding(.horizontal, GridironGeo.padInline)
+        .padding(.horizontal, RinkGeo.padInline)
         .padding(.bottom, 8)
-        .background(GridironPalette.surfaceAlt)
+        .background(RinkPalette.surfaceAlt)
     }
 
     @ViewBuilder
     private func standardRows(_ metrics: [Metric], startingIndex: Int = 0) -> some View {
         ForEach(Array(metrics.enumerated()), id: \.element.id) { offset, metric in
             let recent = recentStandardMetric(for: metric)
-            let background = (startingIndex + offset) % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt
+            let background = (startingIndex + offset) % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt
 
             NavigationLink(value: StandardStatRoute(
                 stat: standardStatKey(for: metric.label),
@@ -1418,11 +1418,11 @@ struct PlayerProfileView: View {
                         )
                     }
                 }
-                .padding(.horizontal, GridironGeo.padCard)
+                .padding(.horizontal, RinkGeo.padCard)
                 .padding(.vertical, 12)
                 .background(background)
                 .overlay(
-                    Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                    Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                     alignment: .bottom
                 )
             }
@@ -1438,33 +1438,33 @@ struct PercentileInfoSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Percentile Rankings")
-                        .font(GridironType.playerName)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.playerName)
+                        .foregroundStyle(RinkPalette.ink)
 
                     Text("Percentile rankings compare a player to others at the same position. A 90th percentile means the player ranks in the top 10% of the league for that metric.")
-                        .font(GridironType.body)
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .font(RinkType.body)
+                        .foregroundStyle(RinkPalette.inkSecondary)
 
                     VStack(alignment: .leading, spacing: 8) {
                         Label("Elite (75-100): Green bars", systemImage: "flame.fill")
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.performanceHigh)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.performanceHigh)
                         Label("Average (25-75): Charcoal bars", systemImage: "minus")
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.inkSecondary)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.inkSecondary)
                         Label("Below Average (0-25): Rust bars", systemImage: "snowflake")
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.performanceLow)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.performanceLow)
                     }
                     .padding(.vertical, 8)
 
                     Text("Stats update after new source data is validated. Advanced metrics may arrive later than game totals. Not every metric is tracked for every player.")
-                        .font(GridironType.small)
-                        .foregroundStyle(GridironPalette.inkTertiary)
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkTertiary)
                 }
                 .padding(24)
             }
-            .background(GridironPalette.canvas.ignoresSafeArea())
+            .background(RinkPalette.canvas.ignoresSafeArea())
             .navigationTitle("About Percentiles")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -1496,11 +1496,11 @@ private struct PlayerPickerSheet: View {
                         PlayerHeadshot(team: player.team, initials: player.initials, size: 36)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(player.name)
-                                .font(GridironType.bodyBold)
-                                .foregroundStyle(GridironPalette.ink)
+                                .font(RinkType.bodyBold)
+                                .foregroundStyle(RinkPalette.ink)
                             Text("\(player.team) · \(player.displayPosition)")
-                                .font(GridironType.small)
-                                .foregroundStyle(GridironPalette.inkTertiary)
+                                .font(RinkType.small)
+                                .foregroundStyle(RinkPalette.inkTertiary)
                         }
                     }
                     .padding(.vertical, 4)

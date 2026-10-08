@@ -1,1 +1,0 @@
-Os quadros por posição abrem agora com a estatística predefinida de cada posição. Ao mudar de posição, só é mantida a estatística que selecionou.

@@ -29,7 +29,7 @@ struct TeamStandardCard: View {
 
     @State private var side: TeamRankingsCard.Side = .offense
     @State private var showingRecent = false
-    @State private var windowGames: Int = 5
+    @State private var windowGames: Int = 4
     @State private var logs: [PlayerGameLog] = []
     @State private var loading = false
     @State private var loadError: String?
@@ -75,7 +75,7 @@ struct TeamStandardCard: View {
     }
 
     private var window: RecentWindow {
-        RecentWindow(rawValue: windowGames) ?? .five
+        RecentWindow(rawValue: windowGames) ?? .four
     }
 
     /// What the card actually renders. The toggle survives a season change (it
@@ -88,16 +88,16 @@ struct TeamStandardCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GridironSectionBar(title: "TEAM STANDARD STATS")
+            RinkSectionBar(title: "TEAM STANDARD STATS")
 
-            GridironPickerRow {
-                GridironSegmented(
+            RinkPickerRow {
+                RinkSegmented(
                     segments: TeamRankingsCard.Side.allCases.map { .init(value: $0, label: $0.label) },
                     selection: $side
                 )
                 .segmentCount(TeamRankingsCard.Side.allCases.count)
                 if supportsRecent {
-                    GridironSegmented(
+                    RinkSegmented(
                         segments: [
                             .init(value: false, label: "Season"),
                             .init(value: true, label: "Recent", isLocked: !store.isPro),
@@ -108,21 +108,21 @@ struct TeamStandardCard: View {
                     .segmentCount(2)
                 }
             }
-            .padding(.horizontal, GridironGeo.padInline)
+            .padding(.horizontal, RinkGeo.padInline)
             .padding(.vertical, 8)
-            .background(GridironPalette.surfaceAlt)
+            .background(RinkPalette.surfaceAlt)
 
             if isRecent {
-                GridironSegmented(
+                RinkSegmented(
                     segments: RecentWindow.allCases.map { .init(value: $0, label: $0.segmentLabel) },
                     selection: Binding(
                         get: { window },
                         set: { windowGames = $0.rawValue }
                     )
                 )
-                .padding(.horizontal, GridironGeo.padInline)
+                .padding(.horizontal, RinkGeo.padInline)
                 .padding(.bottom, 8)
-                .background(GridironPalette.surfaceAlt)
+                .background(RinkPalette.surfaceAlt)
             }
 
             if isRecent {
@@ -131,11 +131,11 @@ struct TeamStandardCard: View {
                 seasonContent
             }
         }
-        .background(GridironPalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: GridironGeo.radiusCard))
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
         .overlay(
-            RoundedRectangle(cornerRadius: GridironGeo.radiusCard)
-                .stroke(GridironPalette.hairline, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
         .task(id: "\(team)-\(season)-\(seasonPhase.rawValue)-\(isRecent)-\(store.isPro)") {
             if isRecent, store.isPro { await load() }
@@ -154,9 +154,9 @@ struct TeamStandardCard: View {
             barGroup(title: "RATE", labels: rateLabels, line: line, league: league, startIndex: 0)
             barGroup(title: "VOLUME", labels: countingLabels, line: line, league: league, startIndex: rateLabels.count)
             Text("Totals add up the current roster's season lines, so a player traded at the deadline brings his whole year with him.")
-                .font(GridironType.micro)
-                .foregroundStyle(GridironPalette.inkTertiary)
-                .padding(.horizontal, GridironGeo.padCard)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
+                .padding(.horizontal, RinkGeo.padCard)
                 .padding(.vertical, 10)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -172,7 +172,7 @@ struct TeamStandardCard: View {
         let present = labels.filter { line[$0] != nil }
         return Group {
             if !present.isEmpty {
-                GridironSubSectionBar(title: title)
+                RinkSubSectionBar(title: title)
                 ForEach(Array(present.enumerated()), id: \.element) { offset, label in
                     let value = line[label] ?? 0
                     MetricBar(
@@ -184,11 +184,11 @@ struct TeamStandardCard: View {
                             category: side == .defense ? .defense : .passing
                         )
                     )
-                    .padding(.horizontal, GridironGeo.padCard)
+                    .padding(.horizontal, RinkGeo.padCard)
                     .padding(.vertical, 12)
-                    .background((startIndex + offset) % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                    .background((startIndex + offset) % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                     .overlay(
-                        Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                        Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                         alignment: .bottom
                     )
                 }
@@ -214,8 +214,8 @@ struct TeamStandardCard: View {
             HStack(spacing: 10) {
                 ProgressView().scaleEffect(0.75)
                 Text("Loading recent games…")
-                    .font(GridironType.small)
-                    .foregroundStyle(GridironPalette.inkSecondary)
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 24)
@@ -236,25 +236,25 @@ struct TeamStandardCard: View {
                 // club's own season number is the real information, and it's the
                 // same framing the Trends board uses.
                 if !rates.isEmpty {
-                    GridironSubSectionBar(title: "RATE · \(windowTitle)")
+                    RinkSubSectionBar(title: "RATE · \(windowTitle)")
                     ForEach(Array(rates.keys.sorted(by: sortByOrder).enumerated()), id: \.element) { index, label in
                         let now = rates[label] ?? 0
                         let then = seasonLine[label]
                         HStack(spacing: 10) {
                             Text(label)
-                                .font(GridironType.bodyBold)
-                                .foregroundStyle(GridironPalette.ink)
+                                .font(RinkType.bodyBold)
+                                .foregroundStyle(RinkPalette.ink)
                                 .frame(width: 68, alignment: .leading)
                             if let then, !windowIsWholeSeason {
                                 Text("\(format(label, then)) → \(format(label, now))")
-                                    .font(GridironType.small)
+                                    .font(RinkType.small)
                                     .monospacedDigit()
-                                    .foregroundStyle(GridironPalette.inkSecondary)
+                                    .foregroundStyle(RinkPalette.inkSecondary)
                             } else {
                                 Text(format(label, now))
-                                    .font(GridironType.small)
+                                    .font(RinkType.small)
                                     .monospacedDigit()
-                                    .foregroundStyle(GridironPalette.inkSecondary)
+                                    .foregroundStyle(RinkPalette.inkSecondary)
                             }
                             Spacer(minLength: 0)
                             if let then, !windowIsWholeSeason {
@@ -265,11 +265,11 @@ struct TeamStandardCard: View {
                                 )
                             }
                         }
-                        .padding(.horizontal, GridironGeo.padCard)
-                        .frame(height: GridironGeo.rowHeight)
-                        .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                        .padding(.horizontal, RinkGeo.padCard)
+                        .frame(height: RinkGeo.rowHeight)
+                        .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                         .overlay(
-                            Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                            Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                             alignment: .bottom
                         )
                     }
@@ -278,9 +278,9 @@ struct TeamStandardCard: View {
                             ? "Every game this club has played so far."
                             : "Compared with the same club's season line."
                     )
-                        .font(GridironType.micro)
-                        .foregroundStyle(GridironPalette.inkTertiary)
-                        .padding(.horizontal, GridironGeo.padCard)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
+                        .padding(.horizontal, RinkGeo.padCard)
                         .padding(.vertical, 8)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -288,24 +288,24 @@ struct TeamStandardCard: View {
                 // Counting stats get no bar. Five games of touchdowns against
                 // thirty-two season totals would sit at the first percentile for
                 // every club in the league, which says nothing.
-                GridironSubSectionBar(title: "TOTALS · \(windowTitle)")
+                RinkSubSectionBar(title: "TOTALS · \(windowTitle)")
                 let counts = countingWindowKeys.filter { totals[$0.label] != nil }
                 ForEach(Array(counts.enumerated()), id: \.element.label) { index, entry in
                     HStack {
                         Text(entry.label)
-                            .font(GridironType.bodyBold)
-                            .foregroundStyle(GridironPalette.ink)
+                            .font(RinkType.bodyBold)
+                            .foregroundStyle(RinkPalette.ink)
                         Spacer()
                         Text(String(format: "%.0f", totals[entry.label] ?? 0))
-                            .font(GridironType.statSmall)
+                            .font(RinkType.statSmall)
                             .monospacedDigit()
-                            .foregroundStyle(GridironPalette.ink)
+                            .foregroundStyle(RinkPalette.ink)
                     }
-                    .padding(.horizontal, GridironGeo.padCard)
-                    .frame(height: GridironGeo.rowHeight)
-                    .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                    .padding(.horizontal, RinkGeo.padCard)
+                    .frame(height: RinkGeo.rowHeight)
+                    .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
                     .overlay(
-                        Rectangle().fill(GridironPalette.divider).frame(height: GridironGeo.hairline),
+                        Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline),
                         alignment: .bottom
                     )
                 }
@@ -319,39 +319,39 @@ struct TeamStandardCard: View {
     private var teaser: some View {
         let rows = teaserRows
         return VStack(spacing: 0) {
-            GridironSubSectionBar(title: "RATE · LAST \(windowGames) GAMES")
+            RinkSubSectionBar(title: "RATE · LAST \(windowGames) GAMES")
             ForEach(Array(rows.enumerated()), id: \.element.0) { index, row in
                 HStack(spacing: 10) {
                     Text(row.0)
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.bodyBold)
+                        .foregroundStyle(RinkPalette.ink)
                         .frame(width: 68, alignment: .leading)
                     Text("\(format(row.0, row.1)) → \(format(row.0, row.2))")
-                        .font(GridironType.small)
+                        .font(RinkType.small)
                         .monospacedDigit()
-                        .foregroundStyle(GridironPalette.inkSecondary)
+                        .foregroundStyle(RinkPalette.inkSecondary)
                     Spacer(minLength: 0)
                     TrendArrow(delta: row.2 - row.1, decimals: 1)
                 }
-                .padding(.horizontal, GridironGeo.padCard)
-                .frame(height: GridironGeo.rowHeight)
-                .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .padding(.horizontal, RinkGeo.padCard)
+                .frame(height: RinkGeo.rowHeight)
+                .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
             }
-            GridironSubSectionBar(title: "TOTALS · LAST \(windowGames) GAMES")
+            RinkSubSectionBar(title: "TOTALS · LAST \(windowGames) GAMES")
             ForEach(Array(teaserTotals.enumerated()), id: \.element.0) { index, row in
                 HStack {
                     Text(row.0)
-                        .font(GridironType.bodyBold)
-                        .foregroundStyle(GridironPalette.ink)
+                        .font(RinkType.bodyBold)
+                        .foregroundStyle(RinkPalette.ink)
                     Spacer()
                     Text("\(row.1)")
-                        .font(GridironType.statSmall)
+                        .font(RinkType.statSmall)
                         .monospacedDigit()
-                        .foregroundStyle(GridironPalette.ink)
+                        .foregroundStyle(RinkPalette.ink)
                 }
-                .padding(.horizontal, GridironGeo.padCard)
-                .frame(height: GridironGeo.rowHeight)
-                .background(index % 2 == 0 ? GridironPalette.surface : GridironPalette.surfaceAlt)
+                .padding(.horizontal, RinkGeo.padCard)
+                .frame(height: RinkGeo.rowHeight)
+                .background(index % 2 == 0 ? RinkPalette.surface : RinkPalette.surfaceAlt)
             }
         }
     }
@@ -618,10 +618,10 @@ struct TeamStandardCard: View {
         VStack(spacing: 6) {
             Image(systemName: "list.bullet.rectangle")
                 .font(.system(size: 22))
-                .foregroundStyle(GridironPalette.inkTertiary)
+                .foregroundStyle(RinkPalette.inkTertiary)
             Text(message)
-                .font(GridironType.small)
-                .foregroundStyle(GridironPalette.inkSecondary)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)

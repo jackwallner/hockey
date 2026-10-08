@@ -1,1 +1,0 @@
-Papan posisi kini terbuka dengan statistik default untuk setiap posisi. Saat berganti posisi, hanya statistik yang Anda pilih yang dipertahankan.

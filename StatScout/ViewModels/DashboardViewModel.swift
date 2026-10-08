@@ -10,8 +10,8 @@ final class DashboardViewModel {
     var players: [Player] = []
     var playerHistories: [Int: [Player]] = [:]
     var searchText = ""
-    var selectedConference: NFLConference = .all
-    var selectedPosition: PlayerPositionGroup = .qb {
+    var selectedConference: LeagueConference = .all
+    var selectedPosition: PlayerPositionGroup = .forward {
         didSet {
             guard oldValue != selectedPosition else { return }
             userSortMetric = nil
@@ -23,10 +23,9 @@ final class DashboardViewModel {
         get { selectedPosition.primaryCategory }
         set {
             switch newValue {
-            case .passing: selectedPosition = .qb
-            case .rushing: selectedPosition = .rb
-            case .receiving: selectedPosition = .wr
-            case .defense: selectedPosition = .defense
+            case .scoring, .shotQuality: selectedPosition = .forward
+            case .playDriving: selectedPosition = .defense
+            case .goaltending: selectedPosition = .goalie
             case nil: break
             }
         }
@@ -48,7 +47,7 @@ final class DashboardViewModel {
 
     var availableSortMetrics: [String] {
         var seen = Set<String>()
-        return FootballMetricRegistry.sorted(eligibleMetrics)
+        return HockeyMetricRegistry.sorted(eligibleMetrics)
             .filter { seen.insert($0.label).inserted }
             .map(\.label)
     }
@@ -57,7 +56,7 @@ final class DashboardViewModel {
         availableSortMetrics.filter { label in
             eligibleMetrics.contains { metric in
                 metric.label == label
-                    && FootballMetricRegistry.definition(
+                    && HockeyMetricRegistry.definition(
                         for: metric.label,
                         category: metric.category
                     )?.kind == .advanced
@@ -86,7 +85,7 @@ final class DashboardViewModel {
             sortDescending = true
             return
         }
-        sortDescending = FootballMetricRegistry.definition(for: label, category: metric.category)?.higherIsBetter ?? true
+        sortDescending = HockeyMetricRegistry.definition(for: label, category: metric.category)?.higherIsBetter ?? true
     }
     // Mirrors StoreService.isPro. Set by the view layer so season gating and
     // selectedSeason clamping stay consistent without the VM depending on the store.
@@ -402,7 +401,7 @@ final class DashboardViewModel {
     private(set) var gamesLoadedAt: Date?
     private var gamesTask: Task<Void, Never>?
 
-    var currentGameWeek: GameWeek? { GameWeek.current(in: games) }
+    var currentGameDay: GameDay? { GameDay.current(in: games) }
 
     // MARK: - Enrichment
 
@@ -438,7 +437,7 @@ final class DashboardViewModel {
 
     /// Division and league standings from posted finals, every club present.
     var standings: [String: StandingsRow] {
-        StandingsRow.build(from: games, teams: nflTeamAbbreviations)
+        StandingsRow.build(from: games, teams: leagueTeamAbbreviations)
     }
 
     /// The first regular-season week a club has not finished yet, which is the
@@ -564,10 +563,14 @@ final class DashboardViewModel {
         games.first { $0.id == id }
     }
 
-    /// A team's game in the week the Games tab calls current, or nil on a bye.
+    /// A team's game on the day the Games tab calls current, else its next
+    /// game, else its last one.
     func currentGame(forTeam team: String) -> Game? {
-        guard let week = currentGameWeek else { return nil }
-        return week.games(from: games).first { $0.involves(team) }
+        if let day = currentGameDay, let game = day.games(from: games).first(where: { $0.involves(team) }) {
+            return game
+        }
+        let mine = games.filter { $0.involves(team) }.sorted { ($0.kickoff ?? $0.gameDate) < ($1.kickoff ?? $1.gameDate) }
+        return mine.first { !$0.isFinal } ?? mine.last
     }
 
     /// Regular-season record from posted finals, "2-1" or "2-1-1". When
@@ -613,7 +616,7 @@ final class DashboardViewModel {
     // MARK: - Recent form
 
     /// Rolling windows keyed by length, cached per season so flipping between
-    /// 3 / 5 / 8 doesn't refetch what's already in hand.
+    /// 2 / 4 / 8 does not refetch what's already in hand.
     var recentFormByWindow: [Int: [Int: RecentForm]] = [:]
     var recentFormLoadingWindows: Set<Int> = []
     var recentFormError: String?
@@ -622,10 +625,10 @@ final class DashboardViewModel {
 
     /// The window the Trends board and the trend arrows read from.
     ///
-    /// Three weeks, so movement exists from Week 4. Five left the paid board
-    /// with nothing to rank through the first five weeks of every season,
-    /// which is when the installs happen.
-    var recentWindow: TrendWindow = .three
+    /// Two weeks, so movement exists by the third week of October. A longer
+    /// default left the paid board with nothing to rank through the opening
+    /// month of every season, which is when the installs happen.
+    var recentWindow: TrendWindow = .two
 
     /// True while a board is showing recent form rather than season totals.
     /// Pro-gated at the call site, free users get a blurred teaser.
@@ -844,7 +847,7 @@ final class DashboardViewModel {
         seasonPlayers
             .filter { $0.positionGroup == selectedPosition }
             .flatMap(\.metrics)
-            .filter { FootballMetricRegistry.isSupported($0, by: selectedPosition) }
+            .filter { HockeyMetricRegistry.isSupported($0, by: selectedPosition) }
     }
 
     var filteredPlayers: [Player] {
@@ -858,7 +861,7 @@ final class DashboardViewModel {
             let matchesPosition = player.positionGroup == selectedPosition
             let matchesConference = matchesSelectedConference(player)
             let matchingMetrics = player.metrics.filter {
-                FootballMetricRegistry.isSupported($0, by: selectedPosition)
+                HockeyMetricRegistry.isSupported($0, by: selectedPosition)
             }
             let qualifies = isQualifiedForBoard(player, metrics: matchingMetrics, sortLabel: gateLabel)
             return matchesSearch
@@ -1055,7 +1058,7 @@ final class DashboardViewModel {
     }
 
     static func lowerIsBetter(label: String, category: MetricCategory) -> Bool {
-        guard let definition = FootballMetricRegistry.definition(for: label, category: category) else { return false }
+        guard let definition = HockeyMetricRegistry.definition(for: label, category: category) else { return false }
         return !definition.higherIsBetter
     }
 
@@ -1123,12 +1126,12 @@ final class DashboardViewModel {
         }
         return metricMap.compactMap { (key, data) -> MetricLeaderEntry? in
             let label = key.split(separator: "|").first.map(String.init) ?? key
-            // Rank Best/Worst by Gridiron percentile, NOT by parsing the value
+            // Rank Best/Worst by Rink percentile, NOT by parsing the value
             // string. Roughly half of xISO / xOBP / Hard-Hit% (and 100% of
             // Arm Strength / Squared-Up%) ship a valid percentile but a blank
             // value; rawNumeric("") collapsed them all to 0, every player tied,
             // and the sort returned the same player (e.g. Ohtani) for both
-            // ends with empty cells. Percentile is Gridiron's normalized
+            // ends with empty cells. Percentile is Rink's normalized
             // goodness - already direction-correct (it inverts for pitchers),
             // so highest = best, lowest = worst with no per-metric polarity
             // table needed.

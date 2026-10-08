@@ -1,1 +1,0 @@
-Panourile pe poziții se deschid acum cu statistica implicită pentru fiecare poziție. La schimbarea poziției, se păstrează doar statistica selectată de tine.
