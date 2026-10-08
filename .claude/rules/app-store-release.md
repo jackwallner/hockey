@@ -19,7 +19,10 @@ paths:
   `com.jackwallner.hockey.pro` ($19.99 lifetime). Created in RevenueCat
   (`proj5c659dbc`) and in ASC on 2026-10-08 (subs `6820647519` monthly,
   `6820648105` yearly, with 1-week FREE_TRIAL intros; lifetime at $19.99 in
-  175 territories). PPP ladders still to apply with `~/ios/pricing`.
+  175 territories). PPP ladders applied 2026-10-08 with `~/ios/pricing/plan_hockey.py`
+  (348 sub rows, 23 lifetime territories). Products sit at `MISSING_METADATA`
+  until `scripts/asc-finish-products.py --screenshot <paywall.png>` adds the
+  availability records and review screenshot.
 - The first IAP submission must ride with the version (Guideline 2.1(b)),
   and the "Add for Review" step is UI-only: see the `ios-dev` skill.
 
