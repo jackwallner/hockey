@@ -1,6 +1,6 @@
 import Foundation
 
-/// The state users need to understand while a new NFL source release moves
+/// The state users need to understand while a new NHL source release moves
 /// through the pipeline. The server may use more specific names, but the app
 /// keeps the presentation vocabulary small and stable.
 enum DataFreshnessStatus: String, Codable, CaseIterable, Sendable {
@@ -58,12 +58,13 @@ enum DataFreshnessStatus: String, Codable, CaseIterable, Sendable {
     }
 }
 
-/// Coverage describes the football included in a dataset. It is intentionally
+/// Coverage describes the hockey included in a dataset. It is intentionally
 /// separate from the time the database row was written.
 struct DataCoverage: Sendable, Equatable, Codable {
     /// Date of the last game included.
     let asOf: Date
-    /// NFL week number of that game, when the rollup carries one.
+    /// League week number of that game, when the rollup carries one. Never
+    /// shown to a user; captions use `asOf`.
     let week: Int?
     let phase: SeasonPhase
     /// Number of completed games included, when the publisher exposes it.
@@ -103,15 +104,16 @@ struct DataFreshness: Codable, Equatable, Sendable {
     let coverage: DataCoverage?
     let message: String?
     let isCached: Bool
-    /// Publisher state of the optional enrichment feeds ("ready", "pending").
+    /// Publisher state of the two NHL source feeds: MoneyPuck's shot file
+    /// (`shots_status`) and the NHL summary (`summary_status`) ("ready", "pending").
     /// A complete slate of games can still be waiting on these.
-    var nextGenStatus: String? = nil
-    var advancedDefenseStatus: String? = nil
+    var shotsStatus: String? = nil
+    var summaryStatus: String? = nil
 
-    /// True while Next Gen Stats or PFR advanced defense has not caught up with
-    /// the games already published.
+    /// True while the MoneyPuck shot file or the NHL summary has not caught up
+    /// with the games already published.
     var isAdvancedPending: Bool {
-        [nextGenStatus, advancedDefenseStatus].contains { status in
+        [shotsStatus, summaryStatus].contains { status in
             guard let status = status?.lowercased() else { return false }
             return status != "ready" && status != "not_applicable" && status != "unavailable"
         }
@@ -126,8 +128,8 @@ struct DataFreshness: Codable, Equatable, Sendable {
         coverage: DataCoverage? = nil,
         message: String? = nil,
         isCached: Bool = false,
-        nextGenStatus: String? = nil,
-        advancedDefenseStatus: String? = nil
+        shotsStatus: String? = nil,
+        summaryStatus: String? = nil
     ) {
         self.status = status
         self.revision = revision
@@ -137,8 +139,8 @@ struct DataFreshness: Codable, Equatable, Sendable {
         self.coverage = coverage
         self.message = message
         self.isCached = isCached
-        self.nextGenStatus = nextGenStatus
-        self.advancedDefenseStatus = advancedDefenseStatus
+        self.shotsStatus = shotsStatus
+        self.summaryStatus = summaryStatus
     }
 
     /// Returns a copy with local display state changed without altering the
@@ -160,8 +162,8 @@ struct DataFreshness: Codable, Equatable, Sendable {
             coverage: coverage ?? self.coverage,
             message: message ?? self.message,
             isCached: isCached ?? self.isCached,
-            nextGenStatus: nextGenStatus,
-            advancedDefenseStatus: advancedDefenseStatus
+            shotsStatus: shotsStatus,
+            summaryStatus: summaryStatus
         )
     }
 
@@ -188,8 +190,8 @@ struct DataFreshness: Codable, Equatable, Sendable {
         case message
         case errorMessage = "error_message"
         case cached = "is_cached"
-        case ngsStatus = "ngs_status"
-        case pfrStatus = "pfr_status"
+        case shotsStatusKey = "shots_status"
+        case summaryStatusKey = "summary_status"
     }
 
     private struct CoveragePayload: Decodable {
@@ -227,8 +229,8 @@ struct DataFreshness: Codable, Equatable, Sendable {
         message = try c.decodeIfPresent(String.self, forKey: .message)
             ?? c.decodeIfPresent(String.self, forKey: .errorMessage)
         isCached = try c.decodeIfPresent(Bool.self, forKey: .cached) ?? false
-        nextGenStatus = try c.decodeIfPresent(String.self, forKey: .ngsStatus)
-        advancedDefenseStatus = try c.decodeIfPresent(String.self, forKey: .pfrStatus)
+        shotsStatus = try c.decodeIfPresent(String.self, forKey: .shotsStatusKey)
+        summaryStatus = try c.decodeIfPresent(String.self, forKey: .summaryStatusKey)
 
         let nestedCoverage: CoveragePayload?
         do {
@@ -283,8 +285,8 @@ struct DataFreshness: Codable, Equatable, Sendable {
         try c.encodeIfPresent(coverage?.expectedGames, forKey: .expectedGames)
         try c.encodeIfPresent(message, forKey: .message)
         try c.encode(isCached, forKey: .cached)
-        try c.encodeIfPresent(nextGenStatus, forKey: .ngsStatus)
-        try c.encodeIfPresent(advancedDefenseStatus, forKey: .pfrStatus)
+        try c.encodeIfPresent(shotsStatus, forKey: .shotsStatusKey)
+        try c.encodeIfPresent(summaryStatus, forKey: .summaryStatusKey)
     }
 
     private static func decodeDate(

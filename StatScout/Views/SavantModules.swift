@@ -24,9 +24,8 @@ struct PlayerIdentityStrip: View {
     var showOverallBadge: Bool = false
     /// Bio from `player_profiles`; nil keeps the strip to team and position.
     var profile: PlayerProfile? = nil
-    var injury: InjuryReport? = nil
 
-    /// "#11 · WR · 24 yrs · 6-1, 196".
+    /// "#97 · C · 28 yrs · 6-1, 196".
     private var bioLine: String {
         guard let profile else { return positionAndHandedness(player) }
         return [
@@ -39,10 +38,10 @@ struct PlayerIdentityStrip: View {
         .joined(separator: " · ")
     }
 
-    /// "Ohio State · 2023 R1 #20".
+    /// "Richmond Hill, ON, CAN · 2015 R1 #1".
     private var originLine: String? {
         guard let profile else { return nil }
-        let parts = [profile.college, profile.draftLabel].compactMap { $0 }
+        let parts = [profile.birthplace, profile.draftLabel].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
@@ -55,16 +54,11 @@ struct PlayerIdentityStrip: View {
                     .font(RinkType.playerName)
                     .foregroundStyle(RinkPalette.inkOnDark)
                     .lineLimit(1).minimumScaleFactor(0.7)
-                HStack(spacing: 8) {
-                    Text(displayTeamFullName(player.team))
-                        .font(RinkType.bodyBold)
-                        .foregroundStyle(.white.opacity(0.85))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    if let injury {
-                        InjuryBadge(report: injury)
-                    }
-                }
+                Text(displayTeamFullName(player.team))
+                    .font(RinkType.bodyBold)
+                    .foregroundStyle(.white.opacity(0.85))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 Text(bioLine)
                     .font(RinkType.small)
                     .foregroundStyle(.white.opacity(0.65))
@@ -90,25 +84,6 @@ struct PlayerIdentityStrip: View {
     }
 }
 
-/// "OUT · Hamstring", "Q · Ankle": the player's status for his club's next
-/// game, from the weekly injury report.
-struct InjuryBadge: View {
-    let report: InjuryReport
-
-    var body: some View {
-        Text([report.shortStatus.uppercased(), report.injury].compactMap { $0 }.joined(separator: " · "))
-            .font(RinkType.micro)
-            .foregroundStyle(.white)
-            .lineLimit(1)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .background(
-                Capsule().fill(report.isOut ? RinkPalette.performanceLow : Color(red: 0.72, green: 0.49, blue: 0.08))
-            )
-            .accessibilityLabel("Injury report: \(report.status)\(report.injury.map { ", \($0)" } ?? "")")
-    }
-}
-
 struct TeamIdentityStrip: View {
     let team: String
     var season: Int? = nil
@@ -118,8 +93,7 @@ struct TeamIdentityStrip: View {
     }
 
     private var seasonLabel: String {
-        let year = season ?? Calendar(identifier: .gregorian).component(.year, from: Date())
-        return String(year) + " Season"
+        SeasonLabel.display(season ?? StatScoutSeason.current) + " Season"
     }
 
     var body: some View {
@@ -229,5 +203,25 @@ struct RinkTabs: View {
         .frame(maxWidth: .infinity)
         .background(RinkPalette.surface)
         .overlay(Rectangle().fill(RinkPalette.hairline).frame(height: RinkGeo.hairline), alignment: .bottom)
+    }
+}
+
+/// The three cohort tabs, equal width: Forwards, Defensemen, Goalies.
+struct PositionTabs: View {
+    @Binding var selection: PlayerPositionGroup
+
+    var body: some View {
+        RinkTabs(
+            tabs: PlayerPositionGroup.allCases.map(\.displayName),
+            selected: Binding(
+                get: { selection.displayName },
+                set: { name in
+                    guard let position = PlayerPositionGroup.allCases.first(where: { $0.displayName == name }) else { return }
+                    selection = position
+                }
+            )
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Position")
     }
 }

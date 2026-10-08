@@ -2,7 +2,7 @@ import Foundation
 
 extension Notification.Name {
     /// Posted after a satisfaction moment, host may present the enjoyment funnel after a short delay.
-    static let statscoutPositiveMomentForReview = Notification.Name("com.jackwallner.football.positiveMomentForReview")
+    static let statscoutPositiveMomentForReview = Notification.Name("com.jackwallner.hockey.positiveMomentForReview")
 }
 
 /// How the user last resolved the in-app review / feedback prompt.

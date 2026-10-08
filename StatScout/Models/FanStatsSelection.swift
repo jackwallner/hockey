@@ -15,10 +15,9 @@ enum FanStatsSelection {
     static func summary(for player: Player) -> [StandardStat] {
         let labels: [String]
         switch player.positionGroup {
-        case .qb: labels = ["Pass Yds", "Pass TD", "INT"]
-        case .rb: labels = ["Rush Yds", "Rush TD", "Rec Yds"]
-        case .wr, .te: labels = ["Rec Yds", "Rec TD", "Rec/Tgt"]
-        case .defense: labels = ["Tackles", "Sacks", "Def INT"]
+        case .forward: labels = ["G", "A", "P", "SOG"]
+        case .defense: labels = ["P", "+/-", "Blk", "TOI/GP"]
+        case .goalie: labels = ["W", "GAA", "SV%"]
         }
         return labels.compactMap { label in
             player.standardStats?.first { $0.label == label }

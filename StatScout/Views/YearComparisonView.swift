@@ -51,7 +51,7 @@ struct YearComparisonView: View {
         } description: {
             Text(availableYears.isEmpty
                  ? "No historical data is available for this player."
-                 : "Data for \(String(recentYear)) or \(String(priorYear)) is not available.")
+                 : "Data for \(SeasonLabel.display(recentYear)) or \(SeasonLabel.display(priorYear)) is not available.")
         }
         .padding(.vertical, 48)
         .frame(maxWidth: .infinity)
@@ -68,11 +68,11 @@ struct YearComparisonView: View {
     private var yearPickerCard: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
-                yearButton(year: $yearB, otherYear: yearA, label: yearB > 0 ? String(yearB) : "Select")
+                yearButton(year: $yearB, otherYear: yearA, label: yearB > 0 ? SeasonLabel.display(yearB) : "Select")
                 Image(systemName: "arrow.right")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(RinkPalette.inkTertiary)
-                yearButton(year: $yearA, otherYear: yearB, label: yearA > 0 ? String(yearA) : "Select")
+                yearButton(year: $yearA, otherYear: yearB, label: yearA > 0 ? SeasonLabel.display(yearA) : "Select")
             }
         }
         .padding(16)
@@ -91,7 +91,7 @@ struct YearComparisonView: View {
                     year.wrappedValue = y
                 } label: {
                     HStack {
-                        Text(String(y))
+                        Text(SeasonLabel.display(y))
                         if year.wrappedValue == y {
                             Image(systemName: "checkmark")
                         }
@@ -192,12 +192,12 @@ struct YearComparisonView: View {
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(String(priorYear))
+            Text(SeasonLabel.display(priorYear))
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 72)
 
-            Text(String(recentYear))
+            Text(SeasonLabel.display(recentYear))
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 72)
@@ -395,9 +395,9 @@ struct YearComparisonView: View {
             uniqueKeysWithValues: (p2.standardStats ?? []).map { ($0.label, $0.value) }
         )
         let preferredOrder = [
-            "G", "Cmp/Att", "Pass Yds", "Pass TD", "INT",
-            "Car", "Rush Yds", "Rush TD", "Rec/Tgt", "Rec Yds", "Rec TD",
-            "Tackles", "Sacks", "Def INT",
+            "GP", "G", "A", "P", "+/-", "PIM", "PPG", "PPP", "SHG", "GWG", "SOG",
+            "Sh%", "TOI/GP", "Hits", "Blk", "FO%",
+            "GS", "W", "L", "OT", "GAA", "SV%", "SO", "SA", "SV",
         ]
         return Set(recent.keys).union(prior.keys)
             .sorted {

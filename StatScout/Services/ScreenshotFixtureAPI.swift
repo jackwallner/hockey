@@ -1,7 +1,7 @@
 #if DEBUG
 import Foundation
 
-/// Deterministic, fictional NFL rows used only by the release screenshot
+/// Deterministic, fictional NHL rows used only by the release screenshot
 /// harness. The capture suite still drives the shipped views and navigation,
 /// while this provider keeps a screenshot run independent of network timing,
 /// source publication lag, and the shared simulator's cache.
@@ -17,8 +17,8 @@ struct ScreenshotFixtureAPI: StatcastProviding {
     /// the Following board deterministic without teaching a product view about
     /// test data.
     static func prepareUserDefaults() {
-        UserDefaults.standard.set([12001, 12007, 12011], forKey: "favorites.playerIds")
-        UserDefaults.standard.set("KC", forKey: "favoriteTeam")
+        UserDefaults.standard.set([12001, 12008, 12013], forKey: "favorites.playerIds")
+        UserDefaults.standard.set("SEA", forKey: "favoriteTeam")
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         UserDefaults.standard.set("standard", forKey: "stats.board")
         UserDefaults.standard.removeObject(forKey: "statcast.dataFreshness")
@@ -27,9 +27,10 @@ struct ScreenshotFixtureAPI: StatcastProviding {
 
     private static let season = StatScoutSeason.current
     private static let priorSeason = season - 1
-    // Week 2 is a coherent fictional capture date for the 2026 season. It
-    // keeps the current-season windows honest and repeatable.
-    private static let asOf = makeDate("2026-09-16T20:00:00Z")
+    // Oct 21 is a coherent fictional capture date for the 2026-27 season, two
+    // weeks after opening night. It keeps the current-season windows honest
+    // and repeatable.
+    private static let asOf = makeDate("2026-10-21T20:00:00Z")
     private static let playersBySeason: [Int: [Player]] = [
         season: makePlayers(season: season, prior: false),
         priorSeason: makePlayers(season: priorSeason, prior: true),
@@ -89,19 +90,19 @@ struct ScreenshotFixtureAPI: StatcastProviding {
 
     func fetchDataCoverage(season: Int) async throws -> DataCoverage? {
         guard season == Self.season else { return nil }
-        return DataCoverage(asOf: Self.asOf, week: 2, phase: .regular, gamesIncluded: 32)
+        return DataCoverage(asOf: Self.asOf, week: 3, phase: .regular, gamesIncluded: 112)
     }
 
     func fetchDataFreshness(season: Int) async throws -> DataFreshness? {
         guard season == Self.season else { return nil }
         return DataFreshness(
             status: .ready,
-            revision: "screenshot-fixture-v12",
+            revision: "screenshot-fixture-v13",
             sourcePublishedAt: Self.asOf,
             publishedAt: Self.asOf,
             checkedAt: Self.asOf,
-            coverage: DataCoverage(asOf: Self.asOf, week: 2, phase: .regular, gamesIncluded: 32),
-            message: "Fixture data through Week 2",
+            coverage: DataCoverage(asOf: Self.asOf, week: 3, phase: .regular, gamesIncluded: 112),
+            message: "Fixture data through Oct 21",
             isCached: false
         )
     }
@@ -115,28 +116,27 @@ extension ScreenshotFixtureAPI {
         let position: String
         let type: String
         let percentile: Int
+        /// ixG for a skater (after eight games), GSAx for a goalie.
         let headline: Double
     }
 
     static let seeds: [PlayerSeed] = [
-        .init(id: 12001, name: "Caleb Mercer", team: "KC", position: "QB", type: "qb", percentile: 96, headline: 0.31),
-        .init(id: 12002, name: "Mason Reed", team: "SEA", position: "QB", type: "qb", percentile: 91, headline: 0.24),
-        .init(id: 12003, name: "Jordan Vale", team: "SF", position: "QB", type: "qb", percentile: 87, headline: 0.19),
-        .init(id: 12004, name: "Tyler Knox", team: "BUF", position: "QB", type: "qb", percentile: 83, headline: 0.13),
-        .init(id: 12005, name: "Darius Cole", team: "DET", position: "QB", type: "qb", percentile: 78, headline: 0.09),
-        .init(id: 12006, name: "Eli Brooks", team: "PHI", position: "QB", type: "qb", percentile: 73, headline: 0.05),
-        .init(id: 12007, name: "Marcus Hale", team: "KC", position: "RB", type: "rb", percentile: 94, headline: 0.22),
-        .init(id: 12008, name: "Devon Price", team: "BAL", position: "RB", type: "rb", percentile: 89, headline: 0.17),
-        .init(id: 12009, name: "Andre Lewis", team: "DET", position: "RB", type: "rb", percentile: 84, headline: 0.12),
-        .init(id: 12010, name: "Nico Grant", team: "DAL", position: "RB", type: "rb", percentile: 77, headline: 0.06),
-        .init(id: 12011, name: "Jalen Cross", team: "CIN", position: "WR", type: "wr", percentile: 95, headline: 0.29),
-        .init(id: 12012, name: "Cam Porter", team: "MIA", position: "WR", type: "wr", percentile: 86, headline: 0.16),
-        .init(id: 12013, name: "Theo Banks", team: "KC", position: "TE", type: "te", percentile: 90, headline: 0.21),
-        .init(id: 12014, name: "Roman Ellis", team: "GB", position: "TE", type: "te", percentile: 81, headline: 0.11),
-        .init(id: 12015, name: "Isaiah Boone", team: "PIT", position: "LB", type: "def", percentile: 93, headline: 0.0),
-        .init(id: 12016, name: "Malik Ford", team: "DAL", position: "EDGE", type: "def", percentile: 88, headline: 0.0),
-        .init(id: 12017, name: "Trent York", team: "SF", position: "CB", type: "def", percentile: 84, headline: 0.0),
-        .init(id: 12018, name: "Kade Rivers", team: "BUF", position: "S", type: "def", percentile: 79, headline: 0.0),
+        .init(id: 12001, name: "Callum Therrien", team: "SEA", position: "C", type: "f", percentile: 96, headline: 4.9),
+        .init(id: 12002, name: "Rasmus Holloway", team: "EDM", position: "L", type: "f", percentile: 92, headline: 3.8),
+        .init(id: 12003, name: "Jonas Whitlock", team: "TOR", position: "R", type: "f", percentile: 88, headline: 3.4),
+        .init(id: 12004, name: "Tobias Marchetti", team: "COL", position: "C", type: "f", percentile: 85, headline: 3.1),
+        .init(id: 12005, name: "Anders Pelletier", team: "BOS", position: "L", type: "f", percentile: 80, headline: 2.7),
+        .init(id: 12006, name: "Dmitri Vasko", team: "DAL", position: "C", type: "f", percentile: 74, headline: 2.2),
+        .init(id: 12007, name: "Owen Castellan", team: "SEA", position: "R", type: "f", percentile: 90, headline: 3.5),
+        .init(id: 12008, name: "Mikael Sandvik", team: "SEA", position: "D", type: "d", percentile: 94, headline: 57.4),
+        .init(id: 12009, name: "Lucas Brannigan", team: "NJD", position: "D", type: "d", percentile: 89, headline: 55.8),
+        .init(id: 12010, name: "Pavel Drozdov", team: "CAR", position: "D", type: "d", percentile: 84, headline: 54.6),
+        .init(id: 12011, name: "Hunter Leclair", team: "VGK", position: "D", type: "d", percentile: 79, headline: 53.1),
+        .init(id: 12012, name: "Gustav Nyqvist", team: "MIN", position: "D", type: "d", percentile: 73, headline: 51.9),
+        .init(id: 12013, name: "Henrik Dalgaard", team: "SEA", position: "G", type: "g", percentile: 93, headline: 3.4),
+        .init(id: 12014, name: "Ilya Morozov", team: "FLA", position: "G", type: "g", percentile: 88, headline: 2.6),
+        .init(id: 12015, name: "Samuel Whitaker", team: "WPG", position: "G", type: "g", percentile: 82, headline: 1.7),
+        .init(id: 12016, name: "Teodor Lindahl", team: "NYR", position: "G", type: "g", percentile: 76, headline: 0.9),
     ]
 
     static func makePlayers(season: Int, prior: Bool) -> [Player] {
@@ -148,78 +148,79 @@ extension ScreenshotFixtureAPI {
                 name: seed.name,
                 team: seed.team,
                 position: seed.position,
-                handedness: seed.type == "def" ? "" : "R",
+                handedness: seed.position == "G" ? "L" : "R",
                 updatedAt: asOf,
                 season: season,
                 seasonPhase: .regular,
                 playerType: seed.type,
                 source: "screenshot-fixture",
-                metrics: metrics(for: seed, scale: scale, percentile: percentile),
-                standardStats: standardStats(for: seed, scale: scale),
+                metrics: metrics(for: seed, scale: scale, volume: prior ? 9.5 : 1, percentile: percentile),
+                standardStats: standardStats(for: seed, scale: scale, volume: prior ? 9.5 : 1),
                 games: gameTrends(for: seed, prior: prior)
             )
         }
     }
 
+    /// One metric per registry label, values scaled by how good the player is
+    /// (`scale` shrinks a rate for the prior season, `volume` grows a count).
     static func metrics(
         for seed: PlayerSeed,
         scale: Double,
+        volume: Double,
         percentile: Int
     ) -> [Metric] {
+        let rank = 0.72 + Double(percentile) / 100 * 0.28
+        func rate(_ label: String, _ base: Double, _ offset: Int, _ category: MetricCategory) -> Metric {
+            metric(label, base * rank * scale, max(50, percentile - offset), category)
+        }
+        func count(_ label: String, _ base: Double, _ offset: Int, _ category: MetricCategory) -> Metric {
+            metric(label, base * rank * scale * volume, max(50, percentile - offset), category)
+        }
         switch seed.type {
-        case "qb":
+        case "f":
             return [
-                metric("epa-play", "EPA/Play", seed.headline * scale, percentile, .passing),
-                metric("cpoe", "CPOE", 6.4 * scale, max(50, percentile - 3), .passing),
-                metric("int-rate", "INT%", 1.3 / scale, max(50, percentile - 7), .passing),
-                metric("sack-rate", "Sack%", 4.8 / scale, max(50, percentile - 4), .passing),
-                metric("time-to-throw", "Time to Throw", 2.63 / scale, max(50, percentile - 5), .passing),
-                metric("aggressiveness", "Aggressiveness", 18.2 * scale, max(50, percentile - 8), .passing),
-                metric("air-yards", "Intended Air Yds", 8.7 * scale, max(50, percentile - 2), .passing),
-                metric("rush-epa", "EPA/Rush", 0.12 * scale, max(50, percentile - 8), .rushing),
-                metric("rush-yoe", "RYOE", 34 * scale, max(50, percentile - 12), .rushing),
+                rate("P/60", 3.6, 0, .scoring), count("Primary P", 8, 2, .scoring),
+                count("G", 5, 3, .scoring), count("A", 6, 4, .scoring), count("P", 11, 1, .scoring),
+                count("SOG", 28, 6, .scoring), rate("Sh%", 16, 8, .scoring),
+                metric("ixG", seed.headline * scale * volume, percentile, .shotQuality),
+                metric("GAx", 1.2 * scale * volume, max(50, percentile - 9), .shotQuality),
+                rate("ixG/60", 1.3, 2, .shotQuality), rate("Shots/60", 12.4, 5, .shotQuality),
+                count("HD Shots", 11, 5, .shotQuality),
+                rate("xGF%", 56, 4, .playDriving), rate("CF%", 54, 6, .playDriving),
+                rate("xGF/60", 3.1, 7, .playDriving), count("Hits", 12, 25, .playDriving),
             ]
-        case "rb":
+        case "d":
             return [
-                metric("epa-rush", "EPA/Rush", seed.headline * scale, percentile, .rushing),
-                metric("ryoe", "RYOE", 49 * scale, max(50, percentile - 3), .rushing),
-                metric("explosive", "Explosive%", 14.2 * scale, max(50, percentile - 7), .rushing),
-                metric("rush-epa", "Rush EPA", 11.4 * scale, max(50, percentile - 4), .rushing),
-                metric("fumble-rate", "Fumble%", 1.1 / scale, max(50, percentile - 6), .rushing),
-                metric("epa-target", "EPA/Tgt", 0.16 * scale, max(50, percentile - 7), .receiving),
-            ]
-        case "wr", "te":
-            return [
-                metric("epa-target", "EPA/Tgt", seed.headline * scale, percentile, .receiving),
-                metric("wopr", "WOPR", 0.51 * scale, max(50, percentile - 3), .receiving),
-                metric("target-share", "Target Share", 24.8 * scale, max(50, percentile - 5), .receiving),
-                metric("racr", "RACR", 1.34 * scale, max(50, percentile - 2), .receiving),
-                metric("separation", "Separation", 3.1 * scale, max(50, percentile - 8), .receiving),
-                metric("yac-plus", "YAC+", 2.4 * scale, max(50, percentile - 5), .receiving),
-                metric("rec-epa", "Rec EPA", 17.7 * scale, max(50, percentile - 3), .receiving),
+                metric("xGF%", seed.headline * scale, percentile, .playDriving),
+                metric("Rel xGF%", 4.6 * scale, max(50, percentile - 3), .playDriving),
+                metric("xGA/60", 2.1 / scale, max(50, percentile - 5), .playDriving),
+                count("Blocks", 14, 8, .playDriving), count("Hits", 11, 20, .playDriving),
+                rate("P/60", 1.9, 6, .scoring), count("P", 6, 5, .scoring), count("A", 5, 6, .scoring),
+                metric("ixG", 1.4 * scale * volume, max(50, percentile - 10), .shotQuality),
             ]
         default:
             return [
-                metric("pressures", "Pressures", 29 * scale, percentile, .defense),
-                metric("hurries", "Hurries", 21 * scale, max(50, percentile - 4), .defense),
-                metric("qb-kd", "QB KD", 8 * scale, max(50, percentile - 6), .defense),
-                metric("cmp-allowed", "Cmp% Allowed", 48.2 / scale, max(50, percentile - 6), .defense),
-                metric("yards-target", "Yds/Tgt Allowed", 6.1 / scale, max(50, percentile - 4), .defense),
-                metric("rating-allowed", "Rating Allowed", 71.4 / scale, max(50, percentile - 5), .defense),
-                metric("missed-tackle", "Missed Tkl%", 7.8 / scale, max(50, percentile - 4), .defense),
+                metric("GSAx", seed.headline * scale * volume, percentile, .goaltending),
+                metric("GSAx/60", 0.38 * scale, max(50, percentile - 2), .goaltending),
+                metric("SV%", 0.925 * (0.97 + 0.03 * scale), max(50, percentile - 1), .goaltending),
+                metric("GAA", 2.2 / scale, max(50, percentile - 3), .goaltending),
+                metric("HD SV%", 0.858 * (0.97 + 0.03 * scale), max(50, percentile - 6), .goaltending),
+                metric("xGA/60", 2.5, max(50, percentile - 10), .goaltending),
+                metric("Rebound%", 6.8 / scale, max(50, percentile - 7), .goaltending),
+                metric("Saves", 150 * volume, max(50, percentile - 12), .goaltending),
+                metric("W", 4 * volume, max(50, percentile - 9), .goaltending),
             ]
         }
     }
 
     static func metric(
-        _ id: String,
         _ label: String,
         _ value: Double,
         _ percentile: Int,
         _ category: MetricCategory
     ) -> Metric {
         Metric(
-            id: id,
+            id: "\(category.rawValue)-\(label)",
             label: label,
             value: formattedMetricValue(label: label, value: value),
             percentile: percentile,
@@ -230,168 +231,162 @@ extension ScreenshotFixtureAPI {
 
     static func formattedMetricValue(label: String, value: Double) -> String {
         switch label {
-        case "CPOE", "Aggressiveness", "Target Share", "Explosive%", "Cmp% Allowed", "Missed Tkl%":
+        case "Sh%", "xGF%", "CF%", "HDCF%", "GF%", "Rebound%":
             return String(format: "%.1f%%", value)
-        case "INT%", "Sack%", "Fumble%":
-            return String(format: "%.1f%%", value)
-        case "EPA/Play", "EPA/Rush": return String(format: "%.2f", value)
-        case "Time to Throw": return String(format: "%.2f s", value)
-        case "WOPR", "RACR": return String(format: "%.2f", value)
-        case "EPA/Tgt": return String(format: "%.2f", value)
-        case "Yds/Tgt Allowed": return String(format: "%.1f", value)
-        case "Rating Allowed": return String(format: "%.1f", value)
-        case "YAC+", "Separation": return String(format: "%.1f", value)
-        default: return String(format: "%.1f", value)
+        case "GAx", "GSAx", "Rel xGF%", "Rel CF%":
+            return String(format: "%+.1f", value)
+        case "SV%", "HD SV%":
+            return RecentMetricKey.savePercentage(value)
+        case "P/60", "ixG/60", "xGF/60", "xGA/60", "GSAx/60", "GAA", "Game Score":
+            return String(format: "%.2f", value)
+        case "ixG", "Shots/60":
+            return String(format: "%.1f", value)
+        default:
+            return Int(value.rounded()).formatted(.number.grouping(.automatic))
         }
     }
 
-    static func standardStats(for seed: PlayerSeed, scale: Double) -> [StandardStat] {
+    static func standardStats(for seed: PlayerSeed, scale: Double, volume: Double) -> [StandardStat] {
         func stat(_ label: String, _ value: String) -> StandardStat {
-            StandardStat(id: label.lowercased().replacingOccurrences(of: " ", with: "-"), label: label, value: value)
+            StandardStat(id: "std-\(label)", label: label, value: value)
         }
-        let games = max(1, Int((5 * scale).rounded()))
-        let rankFactor = 0.72 + (Double(seed.percentile) / 100.0 * 0.28)
-        switch seed.type {
-        case "qb":
-            let yards = Int((1_650 * rankFactor * scale).rounded())
-            let attempts = Int((178 * rankFactor * scale).rounded())
-            let completions = Int((122 * rankFactor * scale).rounded())
+        let rank = 0.72 + (Double(seed.percentile) / 100.0 * 0.28)
+        func total(_ base: Double) -> String {
+            "\(Int((base * rank * scale * volume).rounded()))"
+        }
+        let games = volume > 1 ? 76 : 8
+        if seed.type == "g" {
+            let started = volume > 1 ? 58 : 6
+            let shots = Int((29 * Double(started)).rounded())
+            let saves = Int((Double(shots) * (0.905 + 0.03 * rank * scale)).rounded())
+            let wins = Int((Double(started) * 0.45 * rank * scale).rounded())
             return [
-                stat("G", "\(games)"), stat("Cmp/Att", "\(completions)/\(attempts)"),
-                stat("Pass Yds", "\(yards)"), stat("Pass TD", "\(Int((16 * rankFactor * scale).rounded()))"),
-                stat("INT", "\(max(1, Int((2 * scale).rounded())))"),
-                stat("Car", "\(Int((18 * rankFactor * scale).rounded()))"), stat("Rush Yds", "\(Int((108 * rankFactor * scale).rounded()))"),
-                stat("Rush TD", "\(max(1, Int((2 * rankFactor * scale).rounded())))"),
-            ]
-        case "rb":
-            return [
-                stat("G", "\(games)"), stat("Car", "\(Int((82 * rankFactor * scale).rounded()))"),
-                stat("Rush Yds", "\(Int((496 * rankFactor * scale).rounded()))"), stat("Rush TD", "\(Int((6 * rankFactor * scale).rounded()))"),
-                stat("Rec/Tgt", "\(Int((19 * rankFactor * scale).rounded()))/\(Int((25 * rankFactor * scale).rounded()))"),
-                stat("Rec Yds", "\(Int((164 * rankFactor * scale).rounded()))"), stat("Rec TD", "\(max(1, Int((2 * rankFactor * scale).rounded())))"),
-            ]
-        case "wr", "te":
-            let rec = seed.type == "wr" ? 31 : 23
-            let tgt = seed.type == "wr" ? 46 : 34
-            return [
-                stat("G", "\(games)"), stat("Rec/Tgt", "\(Int((Double(rec) * rankFactor * scale).rounded()))/\(Int((Double(tgt) * rankFactor * scale).rounded()))"),
-                stat("Rec Yds", "\(Int((412 * rankFactor * scale).rounded()))"), stat("Rec TD", "\(Int((4 * rankFactor * scale).rounded()))"),
-                stat("YAC", "\(Int((146 * rankFactor * scale).rounded()))"), stat("Car", "\(Int((3 * rankFactor * scale).rounded()))"),
-                stat("Rush Yds", "\(Int((19 * rankFactor * scale).rounded()))"), stat("Rush TD", "0"),
-            ]
-        default:
-            return [
-                stat("G", "\(games)"), stat("Tackles", "\(Int((42 * rankFactor * scale).rounded()))"),
-                stat("Sacks", String(format: "%.1f", 3.5 * rankFactor * scale)), stat("Def INT", "\(max(1, Int((2 * rankFactor * scale).rounded())))"),
-                stat("PD", "\(Int((6 * rankFactor * scale).rounded()))"), stat("TFL", "\(Int((5 * rankFactor * scale).rounded()))"),
-                stat("QB Hits", "\(Int((9 * rankFactor * scale).rounded()))"), stat("FF", "\(max(1, Int((1 * rankFactor * scale).rounded())))"),
+                stat("GP", "\(started)"), stat("GS", "\(started)"),
+                stat("W", "\(wins)"), stat("L", "\(max(0, started - wins - 2))"), stat("OT", "2"),
+                stat("GAA", String(format: "%.2f", Double(shots - saves) / (Double(started) * 60) * 60)),
+                stat("SV%", RecentMetricKey.savePercentage(Double(saves) / Double(shots))),
+                stat("SO", "\(volume > 1 ? 4 : 1)"),
+                stat("SA", "\(shots)"), stat("SV", "\(saves)"),
             ]
         }
+        let goals = Int((5 * rank * scale * volume).rounded())
+        let assists = Int((6 * rank * scale * volume).rounded())
+        let shots = Int((27 * rank * scale * volume).rounded())
+        var stats = [
+            stat("GP", "\(games)"), stat("G", "\(goals)"), stat("A", "\(assists)"),
+            stat("P", "\(goals + assists)"), stat("+/-", "+\(Int((4 * rank * scale * volume).rounded()))"),
+            stat("PIM", total(4)), stat("PPG", total(1.5)), stat("PPP", total(3.5)),
+            stat("SHG", "0"), stat("GWG", total(1)), stat("SOG", "\(shots)"),
+            stat("Sh%", String(format: "%.1f%%", shots > 0 ? Double(goals) / Double(shots) * 100 : 0)),
+            stat("TOI/GP", seed.type == "d" ? "23:48" : "18:52"),
+            stat("Hits", total(12)), stat("Blk", total(seed.type == "d" ? 14 : 5)),
+        ]
+        if seed.position == "C" { stats.append(stat("FO%", "52.4%")) }
+        return stats
     }
 
     static func gameTrends(for seed: PlayerSeed, prior: Bool) -> [GameTrend] {
-        (0..<5).map { index in
+        let opponents = ["VAN", "CGY", "LAK", "SJS", "ANA"]
+        return (0..<5).map { index in
             GameTrend(
                 id: "\(seed.id)-\(prior ? "prior" : "current")-\(index)",
-                date: Calendar.current.date(byAdding: .day, value: -(index * 7), to: asOf) ?? asOf,
-                opponent: ["LV", "LAC", "DEN", "CIN", "BUF"][index],
-                summary: index == 0 ? "Strong finish" : "Complete game",
+                date: Calendar.current.date(byAdding: .day, value: -(index * 2), to: asOf) ?? asOf,
+                opponent: opponents[index],
+                summary: index == 0 ? "Strong finish" : "Solid night",
                 percentileDelta: (prior ? 1 : 2) * (5 - index),
-                keyMetric: seed.type == "def" ? "Pressures" : "EPA/Play"
+                keyMetric: seed.type == "g" ? "GSAx" : "ixG"
             )
         }
     }
 
+    /// Eight games over the two weeks before the capture date.
+    private static let gameDayOffsets = [12, 10, 9, 7, 5, 3, 2, 0]
+
     static func makeGameLogs(for player: Player) -> [PlayerGameLog] {
-        (0..<5).map { index in
-            let date = Calendar.current.date(byAdding: .day, value: -((4 - index) * 7), to: asOf) ?? asOf
+        let type = player.playerType ?? "f"
+        let opponents = ["VAN", "CGY", "LAK", "SJS", "ANA", "VGK", "UTA", "STL"]
+        return gameDayOffsets.enumerated().map { index, offset in
+            let date = Calendar.current.date(byAdding: .day, value: -offset, to: asOf) ?? asOf
             let factor = 1.0 + (Double(index) * 0.04)
             return PlayerGameLog(
                 fixturePlayerId: player.playerId,
                 season: season,
                 seasonPhase: .regular,
                 gameDate: date,
-                playerType: player.playerType ?? "qb",
+                playerType: type,
                 team: player.team,
-                opponent: ["LV", "LAC", "DEN", "CIN", "BUF"][index],
-                plays: plays(for: player.playerType ?? "qb"),
-                touches: touches(for: player.playerType ?? "qb"),
-                metrics: gameMetrics(for: player.playerType ?? "qb", factor: factor)
+                opponent: opponents[index],
+                plays: plays(for: type),
+                touches: touches(for: type),
+                metrics: gameMetrics(for: type, factor: factor)
             )
         }
     }
 
+    /// Ice time in whole minutes.
     static func plays(for type: String) -> Int {
         switch type {
-        case "qb": return 34
-        case "rb": return 21
-        case "wr": return 13
-        case "te": return 11
-        default: return 0
+        case "f": return 19
+        case "d": return 24
+        default: return 60
         }
     }
 
+    /// Shot attempts for a skater, shots against for a goalie.
     static func touches(for type: String) -> Int {
         switch type {
-        case "qb": return 31
-        case "rb": return 17
-        case "wr": return 8
-        case "te": return 7
-        default: return 0
+        case "f": return 6
+        case "d": return 4
+        default: return 28
         }
     }
 
     static func gameMetrics(for type: String, factor: Double) -> [String: Double?] {
         switch type {
-        case "qb":
+        case "g":
             return [
-                "passing_epa": 0.24 * factor, "cpoe": 4.8 * factor, "ypa": 8.3 * factor,
-                "cmp_pct": 69.0 * factor, "passer_rating": 108.0 * factor, "int_rate": 1.0 / factor,
-                "sack_rate": 4.0 / factor, "avg_time_to_throw": 2.55 / factor,
-                "pass_yards": 278 * factor, "pass_tds": 2 * factor, "completions": 24 * factor,
-                "attempts": 34 * factor, "interceptions": 0, "rush_yards": 18 * factor,
-                "rush_tds": 0, "carries": 4 * factor,
-            ]
-        case "rb":
-            return [
-                "rushing_epa": 0.18 * factor, "rush_yoe": 9.0 * factor,
-                "ypc": 5.8 * factor, "rush_yards": 96 * factor, "rush_tds": 1 * factor,
-                "carries": 17 * factor, "rush_first_downs": 5 * factor,
-                "receptions": 4 * factor, "rec_yards": 33 * factor, "rec_tds": 0,
-                "catch_pct": 80.0 * factor, "fumble_rate": 0.5 / factor,
-            ]
-        case "wr", "te":
-            return [
-                "receiving_epa": 0.35 * factor, "catch_pct": 72.0 * factor,
-                "avg_separation": 3.2 * factor, "avg_yac_above_expectation": 2.4 * factor,
-                "racr": 1.42 * factor, "rec_yards": (type == "wr" ? 92 : 67) * factor,
-                "receptions": (type == "wr" ? 7 : 5) * factor, "rec_tds": 1 * factor,
-                "targets": (type == "wr" ? 10 : 7) * factor, "yac": 37 * factor,
+                "shots_against": 28 * factor, "saves": 26 * factor, "goals_against": 2,
+                "xga": 2.4 * factor, "hd_shots_against": 8 * factor, "hd_goals_against": 1,
+                "toi_seconds": 3_600, "decision_win": 1, "shutout": 0, "started": 1,
             ]
         default:
+            let toi = type == "d" ? 1_440.0 : 1_140.0
             return [
-                "tackles": 8 * factor, "sacks": 0.5 * factor, "def_ints": 0,
-                "passes_defended": 1 * factor, "tfl": 1 * factor, "qb_hits": 2 * factor,
-                "forced_fumbles": 0,
+                "goals": 0.6 * factor, "assists": 0.7 * factor, "primary_assists": 0.4 * factor,
+                "points": 1.3 * factor, "shots_on_goal": 3.4 * factor, "shot_attempts": 6 * factor,
+                "ixg": 0.62 * factor, "hd_shots": 1.4 * factor, "hits": 1.6 * factor,
+                "blocks": 0.9 * factor, "takeaways": 0.8 * factor, "giveaways": 0.7,
+                "pim": 0.5, "plus_minus": 0.4 * factor, "pp_goals": 0.2 * factor,
+                "faceoffs_won": 7, "faceoffs_lost": 6, "toi_seconds": toi,
             ]
         }
     }
 
     static func makeRecentForm(for player: Player, windowWeeks: Int) -> RecentForm {
-        let current = player.playerId == 12001 ? 0.34 : player.playerId == 12002 ? 0.19 : 0.07
-        let prior = current - (player.playerId == 12001 ? 0.18 : player.playerId == 12002 ? 0.04 : 0.01)
-        let type = player.playerType ?? "qb"
-        var metrics = gameMetrics(for: type, factor: 1.0).compactMapValues { $0 }
-        var priorMetrics = metrics
-        var delta = metrics.mapValues { _ in 0.0 }
-        if type == "qb" {
-            metrics["passing_epa"] = current
-            priorMetrics["passing_epa"] = prior
-            delta["passing_epa"] = current - prior
-            metrics["ypa"] = 8.5 + current
-            priorMetrics["ypa"] = 7.4 + prior
-            delta["ypa"] = current - prior + 0.9
+        let type = player.playerType ?? "f"
+        let seed = Double(player.playerId % 7) / 10
+        let games = type == "g" ? max(2, windowWeeks) : min(windowWeeks * 3, 8)
+        let metrics: [String: Double]
+        let delta: [String: Double]
+        if type == "g" {
+            metrics = ["sv_pct": 0.931 - seed / 20, "gaa": 2.1 + seed, "gsax": 3.2 - seed * 2,
+                       "gsax_per_60": 0.41 - seed / 5, "hd_sv_pct": 0.861 - seed / 20,
+                       "shots_against_per_60": 27.5, "saves": 140, "goals_against": 10,
+                       "games": Double(games), "wins": Double(games) - 1]
+            delta = ["sv_pct": 0.018 - seed / 25, "gaa": -0.4 + seed / 2, "gsax": 2.1 - seed,
+                     "gsax_per_60": 0.22 - seed / 6, "hd_sv_pct": 0.02 - seed / 30,
+                     "shots_against_per_60": 1.1]
+        } else {
+            metrics = ["points_per_60": 3.8 - seed, "goals_per_60": 1.6 - seed / 2, "ixg_per_60": 1.3 - seed / 4,
+                       "gax": 1.4 - seed, "shooting_pct": 17 - seed * 6, "shots_per_60": 12.8,
+                       "hd_shots_per_60": 4.1, "blocks_per_60": 1.0, "hits_per_60": 3.2,
+                       "goals": 5, "assists": 6, "points": 11, "shots_on_goal": 28,
+                       "ixg": 3.9 - seed, "games": Double(games)]
+            delta = ["points_per_60": 1.4 - seed, "goals_per_60": 0.7 - seed / 3, "ixg_per_60": 0.3 - seed / 8,
+                     "gax": 0.9 - seed / 2, "shooting_pct": 4.2 - seed * 3, "shots_per_60": 1.1,
+                     "hd_shots_per_60": 0.6, "blocks_per_60": 0.1, "hits_per_60": 0.2]
         }
+        let priorMetrics = metrics.merging(delta) { now, change in now - change }
         return RecentForm(
             fixturePlayerId: player.playerId,
             season: season,
@@ -399,12 +394,12 @@ extension ScreenshotFixtureAPI {
             playerType: type,
             windowWeeks: windowWeeks,
             asOf: asOf,
-            startWeek: max(1, 3 - windowWeeks),
-            endWeek: 2,
+            startWeek: 1,
+            endWeek: 3,
             team: player.team,
-            games: min(windowWeeks, 2),
-            plays: max(plays(for: type) * min(windowWeeks, 2), 1),
-            touches: touches(for: type) * min(windowWeeks, 2),
+            games: games,
+            plays: plays(for: type) * games,
+            touches: touches(for: type) * games,
             metrics: metrics,
             priorMetrics: priorMetrics,
             delta: delta

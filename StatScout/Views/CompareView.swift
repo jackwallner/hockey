@@ -110,7 +110,7 @@ struct CompareView: View {
     /// explanation - the fix (change one side's season) isn't guessable.
     private var teamWarning: String? {
         guard isSameTeamContext, let teamA else { return nil }
-        return "Both sides are \(teamFullName(teamA)) in \(SeasonLabel.text(activeTeamSeasonA)) \(teamPhaseA.label.lowercased()). Change one side's season or season type to compare."
+        return "Both sides are \(teamFullName(teamA)) in \(SeasonLabel.display(activeTeamSeasonA)) \(teamPhaseA.label.lowercased()). Change one side's season or season type to compare."
     }
 
     private func players(forSeason season: Int, phase: SeasonPhase) -> [Player] {
@@ -148,13 +148,13 @@ struct CompareView: View {
             return "Loading past seasons…"
         }
         if let playerA, resolvedA == nil {
-            return "No \(SeasonLabel.text(activeSeasonA)) \(phaseA.label.lowercased()) data for \(playerA.name)."
+            return "No \(SeasonLabel.display(activeSeasonA)) \(phaseA.label.lowercased()) data for \(playerA.name)."
         }
         if let playerB, resolvedB == nil {
-            return "No \(SeasonLabel.text(activeSeasonB)) \(phaseB.label.lowercased()) data for \(playerB.name)."
+            return "No \(SeasonLabel.display(activeSeasonB)) \(phaseB.label.lowercased()) data for \(playerB.name)."
         }
         if let a = resolvedA, let b = resolvedB, !a.canCompareHeadToHead(with: b) {
-            return "Choose two offensive players or two defensive players."
+            return "Choose two skaters or two goalies."
         }
         return nil
     }
@@ -639,7 +639,7 @@ struct CompareView: View {
                         onSelect: { yearPhase = $0 }
                     ) {
                         RinkInlinePill(
-                            systemImage: "football.fill",
+                            systemImage: "hockey.puck.fill",
                             title: yearPhase.label
                         )
                     }
@@ -782,7 +782,7 @@ struct CompareView: View {
             ) {
                 RinkInlinePill(
                     systemImage: nil,
-                    title: "\(SeasonLabel.text(season)) · \(phase.label)",
+                    title: "\(SeasonLabel.display(season)) · \(phase.label)",
                     compressible: true
                 )
                 .frame(maxWidth: .infinity)
@@ -853,7 +853,7 @@ struct CompareView: View {
             ) {
                 RinkInlinePill(
                     systemImage: nil,
-                    title: "\(SeasonLabel.text(season)) · \(phase.label)",
+                    title: "\(SeasonLabel.display(season)) · \(phase.label)",
                     compressible: true
                 )
                 .frame(maxWidth: .infinity)
@@ -1115,7 +1115,7 @@ struct ComparePlayerPicker: View {
                         } else if !searchText.isEmpty {
                             Text("Nobody matches “\(searchText)”.")
                         } else if let season {
-                            Text("No player data for the " + SeasonLabel.text(season) + " season.")
+                            Text("No player data for the " + SeasonLabel.display(season) + " season.")
                         }
                     }
                 }
@@ -1208,10 +1208,11 @@ struct TeamComparisonView: View {
         let bValue: Double?
     }
 
-    /// Roster aggregates that are context rather than a verdict. Both are shares
-    /// of a team's own passing volume, so summing them across a roster measures
-    /// how much of the offence we track, not how good it is.
-    private static let descriptiveOnlyLabels: Set<String> = ["Target Share", "WOPR"]
+    /// Roster aggregates that are context rather than a verdict. None today:
+    /// every hockey metric pools into a number where more (or less, per the
+    /// registry) is better. Kept so a future share metric can opt out of the
+    /// trophy.
+    private static let descriptiveOnlyLabels: Set<String> = []
 
     private var rosterA: [Player] {
         playersA.filter {
@@ -1263,16 +1264,13 @@ struct TeamComparisonView: View {
                     player.metrics.first { $0.label == label && $0.category == category }?.value
                 }
             )
-            // Lower-is-better metrics (Sack%, INT%, Fumble%) must not hand the
+            // Lower-is-better metrics (GAA, xGA/60, Giveaways) must not hand the
             // trophy to the bigger number. Flipping the sign of both sides is
             // enough: the comparison is only ever "is mine greater than theirs".
             let higherIsBetter = HockeyMetricRegistry
                 .definition(for: label, category: category)?.higherIsBetter ?? true
             let sign: Double = higherIsBetter ? 1 : -1
-            // Some aggregates describe a roster without ranking it. A team's
-            // summed Target Share is mostly a count of how many of its receivers
-            // cleared the qualification bar, so awarding a trophy for the bigger
-            // number would be scoring roster shape as if it were quality. Nil
+            // Some aggregates would describe a roster without ranking it. Nil
             // values keep the row (it is genuinely interesting context) and
             // suppress the marker.
             let comparable = !Self.descriptiveOnlyLabels.contains(label)
@@ -1321,37 +1319,19 @@ struct TeamComparisonView: View {
     }
 
     private func standardRows(for category: MetricCategory) -> [StatRow] {
+        let labels: [(label: String, higherIsBetter: Bool)]
         switch category {
-        case .passing:
-            return [
-                pairedRow(label: "Cmp/Att", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Pass Yds", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Pass TD", rosterA: rosterA, rosterB: rosterB),
-                totalRow(
-                    label: "INT",
-                    rosterA: rosterA,
-                    rosterB: rosterB,
-                    higherIsBetter: false
-                ),
-            ]
-        case .rushing:
-            return [
-                totalRow(label: "Car", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Rush Yds", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Rush TD", rosterA: rosterA, rosterB: rosterB),
-            ]
-        case .receiving:
-            return [
-                pairedRow(label: "Rec/Tgt", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Rec Yds", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Rec TD", rosterA: rosterA, rosterB: rosterB),
-            ]
-        case .defense:
-            return [
-                totalRow(label: "Tackles", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Sacks", rosterA: rosterA, rosterB: rosterB),
-                totalRow(label: "Def INT", rosterA: rosterA, rosterB: rosterB),
-            ]
+        case .scoring:
+            labels = [("P", true), ("G", true), ("A", true), ("PPP", true), ("PIM", false)]
+        case .shotQuality:
+            labels = [("SOG", true)]
+        case .playDriving:
+            labels = [("+/-", true), ("Hits", true), ("Blk", true)]
+        case .goaltending:
+            labels = [("W", true), ("L", false), ("OT", false), ("SO", true), ("SV", true), ("SA", true)]
+        }
+        return labels.map {
+            totalRow(label: $0.label, rosterA: rosterA, rosterB: rosterB, higherIsBetter: $0.higherIsBetter)
         }
     }
 
@@ -1439,7 +1419,7 @@ struct TeamComparisonView: View {
             Text(
                 String(rosterCount)
                     + " tracked · "
-                    + SeasonLabel.text(season)
+                    + SeasonLabel.display(season)
                     + " "
                     + phase.label
             )
@@ -1503,9 +1483,9 @@ struct TeamComparisonView: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// `higherIsBetter: false` flips which side gets the trophy. Interceptions
-    /// thrown was the row that needed it: as a plain total it handed the marker
-    /// to whichever offence turned the ball over *more*, which is backwards, and
+    /// `higherIsBetter: false` flips which side gets the trophy. Penalty
+    /// minutes was the row that needed it: as a plain total it handed the
+    /// marker to whichever club took *more* penalties, which is backwards, and
     /// on the one screen whose whole job is saying which team is better.
     private func totalRow(
         label: String,
@@ -1526,21 +1506,6 @@ struct TeamComparisonView: View {
         )
     }
 
-    private func pairedRow(
-        label: String,
-        rosterA: [Player],
-        rosterB: [Player]
-    ) -> StatRow {
-        StatRow(
-            id: label,
-            label: label,
-            aText: pairedTotal(label: label, roster: rosterA),
-            bText: pairedTotal(label: label, roster: rosterB),
-            aValue: nil,
-            bValue: nil
-        )
-    }
-
     private func total(label: String, roster: [Player]) -> Double? {
         let values = roster.compactMap { player in
             player.standardStats?
@@ -1551,29 +1516,8 @@ struct TeamComparisonView: View {
         return values.reduce(0, +)
     }
 
-    private func pairedTotal(label: String, roster: [Player]) -> String {
-        let pairs = roster.compactMap { player -> (Double, Double)? in
-            guard let raw = player.standardStats?.first(where: {
-                $0.label == label
-            })?.value else { return nil }
-            let components = raw.split(separator: "/", maxSplits: 1)
-            guard components.count == 2,
-                  let first = DashboardViewModel.rawNumeric(String(components[0])),
-                  let second = DashboardViewModel.rawNumeric(String(components[1]))
-            else { return nil }
-            return (first, second)
-        }
-        guard !pairs.isEmpty else { return "-" }
-        let first = pairs.reduce(0) { $0 + $1.0 }
-        let second = pairs.reduce(0) { $0 + $1.1 }
-        return format(first, label: label) + "/" + format(second, label: label)
-    }
-
     private func format(_ value: Double?, label: String) -> String {
         guard let value else { return "-" }
-        if label == "Sacks", value.rounded() != value {
-            return String(format: "%.1f", value)
-        }
         return Int(value.rounded()).formatted(.number.grouping(.automatic))
     }
 }

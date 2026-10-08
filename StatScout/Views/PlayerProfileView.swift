@@ -42,7 +42,7 @@ struct PlayerProfileView: View {
     // yearly trial directly. PaywallView stays for the deliberate upsell card.
     @State private var trialPitchTrigger: PaywallTrigger?
     @State private var formDisplayMode: FormDisplayMode = .season
-    @State private var recentWindowGames: Int = 4
+    @State private var recentWindowWeeks: Int = 4
     @State private var recentLogs: [PlayerGameLog] = []
     /// "<playerId>-<season>" the loaded logs belong to, so two cards asking for
     /// the same season share one fetch.
@@ -52,7 +52,7 @@ struct PlayerProfileView: View {
     @State private var recentLoadError: String?
     @State private var recentCurves: LeaguePercentileCurves?
     @State private var standardMode: FormDisplayMode = .season
-    @State private var standardWindow: RecentWindow = .five
+    @State private var standardWindow: RecentWindow = .four
     @State private var favorites = FavoritesStore.shared
 
     private let profileOpenCountKey = "profileOpenCount"
@@ -113,22 +113,18 @@ struct PlayerProfileView: View {
     /// Season *and* phase.
     ///
     /// The profile is scoped to whichever phase you arrived from, and the two
-    /// sets of numbers are wildly different - a quarterback's CPOE can be +3.2
-    /// across a season and -7.9 over one playoff game, and "G" drops from
-    /// seventeen to one. Every header here said only "2025", so nothing on the
-    /// page told you which of the two you were reading, and the one-and-done
+    /// sets of numbers are wildly different - a goalie's GSAx can be +12.4
+    /// across a season and -2.9 over one playoff series, and "GP" drops from
+    /// sixty to four. Every header here said only "2025-26", so nothing on the
+    /// page told you which of the two you were reading, and the one-round
     /// playoff line looked like a catastrophic season.
     private var seasonLabel: String {
         guard let season = activeSeason else { return "-" }
-        return SeasonLabel.text(season, phase: player.seasonPhase)
-    }
-
-    private var profileMetricKind: MetricKind {
-        displayedPlayer.positionGroup == .defense ? .traditional : .advanced
+        return SeasonLabel.display(season, phase: player.seasonPhase)
     }
 
     private var groupedMetrics: [(family: MetricFamily, metrics: [Metric])] {
-        let eligible = displayedPlayer.metrics(kind: profileMetricKind)
+        let eligible = displayedPlayer.metrics(kind: .advanced)
         let grouped = Dictionary(grouping: eligible) { metric in
             HockeyMetricRegistry.definition(for: metric.label, category: metric.category)?.family ?? .production
         }
@@ -162,8 +158,7 @@ struct PlayerProfileView: View {
                 // than the one from whichever season you opened the page in.
                 PlayerIdentityStrip(
                     player: displayedPlayer,
-                    profile: liveProfile,
-                    injury: freshnessViewModel?.injuryReport(for: displayedPlayer)
+                    profile: liveProfile
                 )
 
                 if let freshnessViewModel {
@@ -370,48 +365,34 @@ struct PlayerProfileView: View {
         .buttonStyle(.plain)
     }
 
-    /// Bio, contract and snaps, for the live season's page only: a 2026
-    /// contract says nothing about what a player cost in 2019.
+    /// Bio and ice time, for the live season's page only: a 2026 bio line says
+    /// nothing about where a player played in 2019.
     private var liveProfile: PlayerProfile? {
         freshnessViewModel?.profile(for: displayedPlayer)
     }
 
-    @ViewBuilder
-    private var contractValueCard: some View {
-        if let profile = liveProfile, profile.contractLabel != nil, let freshnessViewModel {
-            ContractValueCard(
-                player: displayedPlayer,
-                profile: profile,
-                value: freshnessViewModel.contractValue(for: displayedPlayer),
-                coverage: freshnessViewModel.dataCoverage?.week.map { "through Week \($0)" }
-            )
-        }
-    }
-
-    /// Defensive pages on the live season, while PFR's advanced table is out.
-    private var defensivePendingNote: String? {
-        guard displayedPlayer.positionGroup == .defense,
-              let freshnessViewModel,
+    /// The live season while MoneyPuck's files or the NHL summary are behind.
+    private var pendingNote: String? {
+        guard let freshnessViewModel,
               displayedPlayer.season == freshnessViewModel.freeSeason,
               displayedPlayer.seasonPhase == .regular else { return nil }
         return MetricCoverage.pendingNote(
-            category: .defense,
-            advancedDefenseStatus: freshnessViewModel.dataFreshness?.advancedDefenseStatus,
-            nextGenStatus: nil
+            shotsStatus: freshnessViewModel.dataFreshness?.shotsStatus,
+            summaryStatus: freshnessViewModel.dataFreshness?.summaryStatus
         )
     }
 
     private var advancedContent: some View {
         VStack(spacing: 12) {
             // No headline card. It printed the player's top advanced metric
-            // (EPA/Play for a quarterback) above a card whose first row is that
+            // (ixG for a forward) above a card whose first row is that
             // same metric, with the same value and the same colour - two
             // identical numbers a centimetre apart, and the top one had no bar
             // to read it against. Its season picker was a duplicate too: the
             // percentile card's own section bar carries one.
             percentileRankingsCard
 
-            if let note = defensivePendingNote {
+            if let note = pendingNote {
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: "info.circle")
                         .font(.system(size: 10, weight: .semibold))
@@ -423,8 +404,6 @@ struct PlayerProfileView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
             }
-
-            contractValueCard
 
             if !store.isPro {
                 RecentFormCard(
@@ -678,7 +657,7 @@ struct PlayerProfileView: View {
                             }
                         } label: {
                             HStack {
-                                Text(SeasonLabel.text(season))
+                                Text(SeasonLabel.display(season))
                                 if isLocked {
                                     Image(systemName: "crown.fill")
                                         .font(.system(size: 10))
@@ -737,7 +716,7 @@ struct PlayerProfileView: View {
     private var percentileRankingsCard: some View {
         VStack(spacing: 0) {
             RinkSectionBar(
-                title: displayedPlayer.positionGroup == .defense ? "PRODUCTION PERCENTILES" : "ADVANCED PERCENTILES",
+                title: "ADVANCED PERCENTILES",
                 trailing: AnyView(
                     HStack(spacing: 4) {
                         seasonMenu
@@ -813,7 +792,7 @@ struct PlayerProfileView: View {
             RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
                 .stroke(RinkPalette.hairline, lineWidth: 0.5)
         )
-        .task(id: "\(formDisplayMode)-\(recentWindowGames)-\(player.playerId)-\(activeSeason ?? 0)-\(store.isPro)-\(freshnessViewModel?.freshnessRevision ?? "none")") {
+        .task(id: "\(formDisplayMode)-\(recentWindowWeeks)-\(player.playerId)-\(activeSeason ?? 0)-\(store.isPro)-\(freshnessViewModel?.freshnessRevision ?? "none")") {
             guard store.isPro, effectiveFormDisplayMode != .season else { return }
             rebuildRecentCurves()
             await loadRecentLogs()
@@ -822,8 +801,6 @@ struct PlayerProfileView: View {
         .onChange(of: allPlayers.count) { _, _ in rebuildRecentCurves() }
         .onChange(of: activeSeason) { _, _ in rebuildRecentCurves() }
     }
-
-    private var category: MetricCategory { displayedPlayer.primaryCategory }
 
     /// Recent-form is anchored to the current season's game logs, so it's only
     /// meaningful while viewing the current season. Historical seasons render
@@ -852,7 +829,7 @@ struct PlayerProfileView: View {
         case .offline, .failed:
             return "Recent game data is unavailable right now"
         default:
-            return "No games in the last \(recentWindowGames) weeks"
+            return "No games in the last \(recentWindowWeeks) weeks"
         }
     }
 
@@ -864,136 +841,26 @@ struct PlayerProfileView: View {
     }
 
     private var recentWindow: RecentFormWindow? {
-        let windowLogs = Array(recentLogs.sorted { $0.gameDate > $1.gameDate }.prefix(recentWindowGames))
+        let windowLogs = RecentFormWindow.logs(recentLogs, weeks: recentWindowWeeks)
         guard !windowLogs.isEmpty else { return nil }
-        return RecentFormWindow.build(label: "Last \(recentWindowGames)", span: recentWindowGames, logs: windowLogs)
+        return RecentFormWindow.build(label: "Last \(recentWindowWeeks) weeks", span: recentWindowWeeks, logs: windowLogs)
     }
 
     private var recentWindowPicker: some View {
         RinkSegmented(
             segments: RecentWindow.allCases.map { .init(value: $0, label: $0.segmentLabel) },
             selection: Binding(
-                get: { RecentWindow(rawValue: recentWindowGames) ?? .four },
-                set: { recentWindowGames = $0.rawValue }
+                get: { RecentWindow(rawValue: recentWindowWeeks) ?? .four },
+                set: { recentWindowWeeks = $0.rawValue }
             )
         )
     }
 
+    /// Recent mode shows every season bar: metrics with window data render the
+    /// recent value, the rest fall back to the season bar (handled in
+    /// `percentileMetricRow`).
     private func displayedMetrics(in metrics: [Metric]) -> [Metric] {
-        guard effectiveFormDisplayMode == .recent, store.isPro else { return metrics }
-        // Recent mode: show every season bar - metrics with window data render the
-        // recent value, the rest fall back to the season bar (handled in
-        // `percentileMetricRow`). Additionally inject a stub for any game-log spec
-        // the season snapshot omits (Rink sometimes drops e.g. Hard-Hit%) so its
-        // recent bar still appears even with no season row to hang it on.
-        let targetCategory: MetricCategory = category
-        guard metrics.first?.category == targetCategory else { return metrics }
-        let existing = Set(metrics.map { $0.label })
-        let stubs: [Metric] = recentSpecs.compactMap { spec in
-            guard !existing.contains(spec.label) else { return nil }
-            let stub = Metric(
-                id: "recent-stub-\(spec.label)",
-                label: spec.label,
-                value: "",
-                percentile: 0,
-                category: targetCategory
-            )
-            return recentMetric(for: stub) != nil ? stub : nil
-        }
-        return metrics + stubs
-    }
-
-    /// One metric the last-N-games window can reconstruct, and how.
-    ///
-    /// `value` takes the summed game-log metrics for the window. Rates are
-    /// recomputed from their own summed numerator and denominator rather than
-    /// averaged across games: a quarterback who went 1-for-4 in a blowout and
-    /// 30-for-40 the week after has a two-game completion rate of 31/44, not the
-    /// mean of 25% and 75%. That is the same rule the backend rollup follows,
-    /// and it is why the game log stores counts instead of pre-divided rates.
-    private struct RecentSpec {
-        let label: String
-        let format: String
-        let value: ([String: Double]) -> Double?
-    }
-
-    private static func total(_ key: String, _ label: String, _ format: String = "%.0f") -> RecentSpec {
-        RecentSpec(label: label, format: format) { $0[key] }
-    }
-
-    /// A rate, from sums. Nil when the denominator is absent or zero, so an
-    /// inactive stretch reads as "no data" instead of as a divide-by-zero 0.0.
-    private static func rate(
-        _ label: String,
-        _ format: String,
-        numerator: String,
-        over denominators: [String],
-        scale: Double = 1
-    ) -> RecentSpec {
-        RecentSpec(label: label, format: format) { m in
-            let den = denominators.reduce(0.0) { $0 + (m[$1] ?? 0) }
-            guard den > 0, let num = m[numerator] else { return nil }
-            return num / den * scale
-        }
-    }
-
-    /// Deliberately partial.
-    ///
-    /// Only metrics the per-game log can rebuild *exactly* are listed. The ones
-    /// left out - Aggressiveness, Intended Air Yds, CPOE, Time to Throw,
-    /// Separation, YAC+, Explosive%, Target Share, WOPR - are either Next Gen
-    /// Stats season aggregates published with no per-game denominator, or need a
-    /// team total the player's own rows do not carry. Averaging their per-game
-    /// figures would produce an average of averages and quietly present it as a
-    /// window rate, so they get no recent bar and the Both view says so out loud
-    /// rather than silently showing one line where two belong.
-    private var recentSpecs: [RecentSpec] {
-        switch category {
-        case .passing:
-            return [
-                Self.total("passing_yards", "Pass Yds"),
-                Self.total("passing_tds", "Pass TD"),
-                Self.rate("Cmp%", "%.1f%%", numerator: "completions", over: ["attempts"], scale: 100),
-                Self.rate("Y/A", "%.1f", numerator: "passing_yards", over: ["attempts"]),
-                Self.rate("INT%", "%.1f%%", numerator: "interceptions", over: ["attempts"], scale: 100),
-                // EPA/Play is per dropback: attempts plus sacks, matching the
-                // registry's own definition of the season metric.
-                Self.rate("EPA/Play", "%.2f", numerator: "passing_epa", over: ["attempts", "sacks_suffered"]),
-                Self.rate("Sack%", "%.1f%%", numerator: "sacks_suffered", over: ["attempts", "sacks_suffered"], scale: 100),
-            ]
-        case .rushing:
-            return [
-                Self.total("rushing_yards", "Rush Yds"),
-                Self.total("rushing_tds", "Rush TD"),
-                Self.total("rushing_first_downs", "Rush 1D"),
-                Self.total("rushing_epa", "Rush EPA", "%.1f"),
-                Self.total("rush_yoe", "RYOE", "%.1f"),
-                Self.rate("Y/C", "%.1f", numerator: "rushing_yards", over: ["carries"]),
-                Self.rate("EPA/Rush", "%.2f", numerator: "rushing_epa", over: ["carries"]),
-                Self.rate("Fumble%", "%.1f%%", numerator: "rushing_fumbles", over: ["carries"], scale: 100),
-            ]
-        case .receiving:
-            return [
-                Self.total("receiving_yards", "Rec Yds"),
-                Self.total("receptions", "Rec"),
-                Self.total("receiving_tds", "Rec TD"),
-                Self.total("receiving_yac", "YAC"),
-                Self.total("receiving_epa", "Rec EPA", "%.1f"),
-                Self.rate("Catch%", "%.1f%%", numerator: "receptions", over: ["targets"], scale: 100),
-                Self.rate("EPA/Tgt", "%.2f", numerator: "receiving_epa", over: ["targets"]),
-                Self.rate("RACR", "%.2f", numerator: "receiving_yards", over: ["receiving_air_yards"]),
-            ]
-        case .defense:
-            return [
-                Self.total("tackles", "Tackles"),
-                Self.total("def_sacks", "Sacks", "%.1f"),
-                Self.total("def_interceptions", "INT"),
-                Self.total("def_pass_defended", "PD"),
-                Self.total("def_tackles_for_loss", "TFL"),
-                Self.total("def_qb_hits", "QB Hits"),
-                Self.total("def_fumbles_forced", "FF"),
-            ]
-        }
+        metrics
     }
 
     @ViewBuilder
@@ -1044,7 +911,7 @@ struct PlayerProfileView: View {
                 DualMetricBar(
                     season: metric,
                     recent: recentMetric,
-                    recentCaption: "Last \(recentWindowGames)"
+                    recentCaption: "Last \(recentWindowWeeks)W"
                 )
                 .padding(.horizontal, RinkGeo.padCard)
                 .padding(.vertical, 12)
@@ -1058,25 +925,29 @@ struct PlayerProfileView: View {
         }
     }
 
+    /// The window's rate for a season metric, rebuilt from his own game logs.
+    /// Only the rates in `RecentFormWindow.recentLabels` have one: a few
+    /// weeks of a counting stat would be read against a full-season ruler, and
+    /// the on-ice shares (xGF%, CF%) have no per-game feed.
     private func recentMetric(for seasonMetric: Metric) -> Metric? {
         guard let w = recentWindow,
-              let spec = recentSpecs.first(where: { $0.label == seasonMetric.label }),
-              let v = spec.value(w.metrics),
-              let pct = recentCurves?.curve(for: spec.label)?.percentile(for: v) else { return nil }
+              let v = w.value(forSeasonLabel: seasonMetric.label),
+              let pct = recentCurves?.curve(for: seasonMetric.label)?.percentile(for: v) else { return nil }
         return Metric(
-            id: "recent-\(spec.label)",
+            id: "recent-\(seasonMetric.label)",
             label: seasonMetric.label,
-            value: String(format: spec.format, v),
+            value: RecentMetricKey.format(v, label: seasonMetric.label),
             percentile: pct,
             category: seasonMetric.category
         )
     }
 
     private func rebuildRecentCurves() {
+        let goalie = displayedPlayer.isGoalie
         recentCurves = LeaguePercentileCurves(
-            players: cohortPlayers,
-            categories: [category],
-            labels: category.metricPriorityOrder
+            players: cohortPlayers.filter { $0.positionGroup == displayedPlayer.positionGroup },
+            categories: goalie ? [.goaltending] : [.scoring, .shotQuality],
+            labels: RecentFormWindow.recentLabels(goalie: goalie)
         )
     }
 
@@ -1089,7 +960,7 @@ struct PlayerProfileView: View {
         // The phase belongs in the key. Without it, opening a player's regular
         // season and then his playoffs reused the first fetch's games under the
         // second heading - the cache said "same player, same season, already have
-        // it" about two different sets of football.
+        // it" about two different sets of games.
         let key = "\(player.playerId)-\(season)-\(activePhase.rawValue)-\(freshnessViewModel?.freshnessRevision ?? "none")"
         if recentLogsKey == key, !recentLogs.isEmpty { return }
         // Both cards ask at once; share one request per key. A different key
@@ -1108,7 +979,7 @@ struct PlayerProfileView: View {
         } catch {
             guard recentLoadingKey == key else { return }
             // Distinguish "no games" from "fetch failed" - otherwise a network
-            // error renders as an honest-looking "No games in the last N days".
+            // error renders as an honest-looking "No games in the last N weeks".
             if !isTaskCancellation(error), recentLogs.isEmpty || recentLogsKey != key {
                 recentLogs = []
                 recentLogsKey = nil
@@ -1131,43 +1002,12 @@ struct PlayerProfileView: View {
         }
     }
 
-    /// Which of the four boards a traditional stat belongs to, so tapping a row
-    /// opens the leaderboard that actually lists it. Without this a running
-    /// back's Rec Yds row pushed the Passing board, which has no Rec Yds column.
-    private static func standardCategory(for label: String, fallback: StandardStatCategory) -> StandardStatCategory {
-        switch label.uppercased() {
-        case "PASS YDS", "PASS TD", "INT", "CMP/ATT": return .passing
-        case "CAR", "RUSH YDS", "RUSH TD":            return .rushing
-        case "REC/TGT", "REC YDS", "REC TD":          return .receiving
-        case "TACKLES", "SACKS", "DEF INT":           return .defense
-        default:                                      return fallback
-        }
-    }
-
-    private var standardFallbackCategory: StandardStatCategory {
-        switch displayedPlayer.playerType?.lowercased() {
-        case "qb":  return .passing
-        case "rb":  return .rushing
-        case "wr", "te": return .receiving
-        default:    return .defense
-        }
-    }
-
     /// Counting stats. Ranking these is honest but playing-time driven, a
-    /// backup's 2 rushing touchdowns isn't a talent signal, so they're grouped
+    /// fourth liner's 2 goals isn't a talent signal, so they're grouped
     /// separately from the rate stats and captioned as volume.
-    ///
-    /// Football's traditional line is almost entirely counting stats, unlike
-    /// baseball's, so in practice the RATE group is usually empty and the
-    /// sub-section bars are only drawn when both groups have something in them.
-    ///
-    /// "Tgt Allowed" belongs here with the other counts: the pipeline emits it
-    /// as the volume behind a defender's coverage rates, and leaving it out put
-    /// a raw target count under the RATE heading.
     private static let countingStats: Set<String> = [
-        "G", "PASS YDS", "PASS TD", "INT", "CAR", "RUSH YDS", "RUSH TD",
-        "REC", "REC YDS", "REC TD", "TACKLES", "SACKS", "DEF INT",
-        "TGT ALLOWED",
+        "GP", "G", "A", "P", "+/-", "PIM", "PPG", "PPP", "SHG", "GWG", "SOG",
+        "HITS", "BLK", "GS", "W", "L", "OT", "SO", "SA", "SV",
     ]
 
     /// Percentile rank for a traditional stat against the league.
@@ -1207,21 +1047,17 @@ struct PlayerProfileView: View {
     /// The data's own spelling of a stat, given the uppercased one this card
     /// displays.
     ///
-    /// These rows are shown in caps ("PASS YDS") but the stored labels are
-    /// title-case ("Pass Yds"), and the leaderboard a row pushes to filters on
-    /// an exact match. Routing with the display label therefore sent every
-    /// single traditional stat, for every position, to a board that matched
-    /// nothing and rendered "No QB players have PASS YDS data for this season"
-    /// - a stat the very same board lists correctly when reached from the View
-    /// menu. Case was the whole of it.
+    /// These rows are shown in caps ("SH%") but the stored labels are mixed
+    /// case ("Sh%"), and the leaderboard a row pushes to filters on an exact
+    /// match. Routing with the display label would send "BLK" to a board that
+    /// matched nothing. Case was the whole of it.
     private func standardStatKey(for displayLabel: String) -> String {
         (displayedPlayer.standardStats ?? [])
             .first { $0.label.uppercased() == displayLabel }?.label ?? displayLabel
     }
 
     /// Standard stats rendered as the same `Metric` the percentile card uses, so
-    /// both tabs read on one ruler. Composite values such as Cmp/Att and Rec/Tgt
-    /// rank by their rate rather than by the leading count.
+    /// both tabs read on one ruler. `TOI/GP` ranks by its minutes.
     private func standardMetrics(counting: Bool) -> [Metric] {
         (displayedPlayer.standardStats ?? [])
             .filter { Self.countingStats.contains($0.label.uppercased()) == counting }
@@ -1232,10 +1068,10 @@ struct PlayerProfileView: View {
                     label: stat.label.uppercased(),
                     value: stat.value,
                     percentile: pct,
-                    category: Self.standardCategory(for: stat.label, fallback: standardFallbackCategory).metricCategory,
+                    category: displayedPlayer.primaryCategory,
                     // A zero count has no honest rank, same rule as the feed's
                     // metrics (`Metric.isUnranked`), except where fewer is
-                    // better: a passer's 0 INT ranks at the top.
+                    // better: a skater's 0 PIM ranks at the top.
                     rankable: counting
                         && StandardStatSemantics.higherIsBetter(label: stat.label)
                         && metricNumericValue(stat.value) == 0 ? false : nil
@@ -1243,34 +1079,29 @@ struct PlayerProfileView: View {
             }
     }
 
-    /// Traditional stat label to its per-game log key. Games played and the
-    /// composite Cmp/Att and Rec/Tgt lines have no single-number window
-    /// counterpart, so they keep their season row alone.
+    /// Traditional stat label to its per-game log key. Rates and the games
+    /// played have no single summed counterpart, so they keep their season row
+    /// alone (GP is the window's own game count, handled where it is read).
     ///
-    /// These are `player_game_logs` keys, not `player_recent_form` ones, and the
-    /// difference is the point. The rollup this card used to read is keyed by
-    /// *league weeks*: picking "5 games" served the last five weeks of the
-    /// season, so a player who was inactive for two of them got a five-game
-    /// label over a three-game total, and a player on bye got a window that
-    /// quietly skipped a week. The percentile card on the next tab was already
-    /// summing this player's own last N game logs; the two cards disagreed
-    /// about what "last 5" meant. Now they don't.
+    /// These are `player_game_logs` keys, not `player_recent_form` ones: the
+    /// card sums this player's own games in the trailing weeks, the same logs
+    /// the percentile card reads, so both tabs answer "last 4 weeks" with the
+    /// same games.
     private static let standardRecentKeys: [String: String] = [
-        "PASS YDS": "passing_yards", "PASS TD": "passing_tds", "INT": "interceptions",
-        "CAR": "carries", "RUSH YDS": "rushing_yards", "RUSH TD": "rushing_tds",
-        "REC": "receptions", "REC YDS": "receiving_yards", "REC TD": "receiving_tds",
-        "TACKLES": "tackles", "SACKS": "def_sacks", "DEF INT": "def_interceptions",
+        "G": "goals", "A": "assists", "P": "points", "+/-": "plus_minus",
+        "PIM": "pim", "PPG": "pp_goals", "SOG": "shots_on_goal",
+        "HITS": "hits", "BLK": "blocks",
+        "SA": "shots_against", "SV": "saves", "W": "decision_win",
+        "SO": "shutout", "GS": "started",
     ]
 
-    /// This player's own last N games, summed. Same `recentLogs` the percentile
-    /// card reads, so both tabs answer "last 5 games" with the same five games.
+    /// This player's own games in the trailing weeks, summed. Same `recentLogs`
+    /// the percentile card reads.
     private var standardRecentWindow: RecentFormWindow? {
         let span = standardWindow.rawValue
-        let windowLogs = Array(
-            recentLogs.sorted { $0.gameDate > $1.gameDate }.prefix(span)
-        )
+        let windowLogs = RecentFormWindow.logs(recentLogs, weeks: span)
         guard !windowLogs.isEmpty else { return nil }
-        return RecentFormWindow.build(label: "Last \(span)", span: span, logs: windowLogs)
+        return RecentFormWindow.build(label: "Last \(span) weeks", span: span, logs: windowLogs)
     }
 
     /// What the recent column is actually made of. See
@@ -1283,24 +1114,47 @@ struct PlayerProfileView: View {
     }
 
     /// The recent-window version of one traditional stat, or nil when the window
-    /// has no figure for it. Percentile comes from the same league season
-    /// distribution the season row uses, so both sit on one ruler.
+    /// has no figure for it. A few weeks of a count would sit at the bottom of a
+    /// full-season ruler, so the percentile compares per-game pace: his window
+    /// total against each peer's season line scaled to the same number of games.
     private func recentStandardMetric(for seasonMetric: Metric) -> Metric? {
-        guard let key = Self.standardRecentKeys[seasonMetric.label],
-              let value = standardRecentWindow?.metrics[key] else { return nil }
-        let text = seasonMetric.label == "SACKS"
-            ? String(format: "%.1f", value)
-            : Int(value.rounded()).formatted(.number.grouping(.automatic))
+        guard let window = standardRecentWindow else { return nil }
+        let value: Double
+        if seasonMetric.label == "GP" {
+            value = Double(window.games)
+        } else if let key = Self.standardRecentKeys[seasonMetric.label],
+                  let total = window.metrics[key] {
+            value = total
+        } else {
+            return nil
+        }
+        let text = Int(value.rounded()).formatted(.number.grouping(.automatic))
         return Metric(
             id: "std-recent-\(seasonMetric.label)",
             label: seasonMetric.label,
             value: text,
-            percentile: standardStatPercentile(
+            percentile: StandardStatSemantics.percentile(
                 label: seasonMetric.label,
-                value: text
+                value: text,
+                peerValues: pacedPeerValues(forStat: seasonMetric.label, games: window.games)
             ),
             category: seasonMetric.category
         )
+    }
+
+    /// Peers' season values for a stat, scaled to `games` games each.
+    private func pacedPeerValues(forStat label: String, games: Int) -> [String] {
+        let key = label.uppercased()
+        let group = displayedPlayer.positionGroup
+        return cohortPlayers.compactMap { other in
+            guard other.positionGroup == group,
+                  let stat = other.standardStats?.first(where: { $0.label.uppercased() == key }),
+                  let total = metricNumericValue(stat.value),
+                  let played = other.standardStats?.first(where: { $0.label == "GP" })
+                      .flatMap({ metricNumericValue($0.value) }),
+                  played > 0 else { return nil }
+            return String(Int((total / played * Double(games)).rounded()))
+        }
     }
 
     private var standardStatsGridCard: some View {
@@ -1332,8 +1186,7 @@ struct PlayerProfileView: View {
                 let rates = standardMetrics(counting: false)
                 let counts = standardMetrics(counting: true)
                 // Only worth labelling the two groups when there are two of
-                // them. A football line is usually all volume, and a lone
-                // "VOLUME" bar above every row says nothing.
+                // them; a lone "VOLUME" bar above every row says nothing.
                 let labelled = !rates.isEmpty && !counts.isEmpty
 
                 if !rates.isEmpty {
@@ -1354,7 +1207,7 @@ struct PlayerProfileView: View {
         )
         // Standard Stats is its own tab, so the percentile card's loader never
         // runs while you are looking at this one. Without this the Recent /
-        // Both modes rendered season numbers under a "5 games" caption until
+        // Both modes rendered season numbers under a "4 wks" caption until
         // you happened to visit the other tab first.
         .task(id: "std-\(standardMode)-\(standardWindow.rawValue)-\(player.playerId)-\(activeSeason ?? 0)-\(store.isPro)-\(freshnessViewModel?.freshnessRevision ?? "none")") {
             guard store.isPro, effectiveStandardMode != .season else { return }
@@ -1397,7 +1250,7 @@ struct PlayerProfileView: View {
 
             NavigationLink(value: StandardStatRoute(
                 stat: standardStatKey(for: metric.label),
-                category: Self.standardCategory(for: metric.label, fallback: standardFallbackCategory),
+                position: displayedPlayer.positionGroup,
                 season: activeSeason,
                 phase: activePhase
             )) {

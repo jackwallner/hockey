@@ -62,7 +62,7 @@ struct AboutView: View {
         VStack(spacing: 0) {
             RinkSectionBar(title: "STATSCOUT")
             HStack(spacing: 12) {
-                Image(systemName: "football.fill")
+                Image(systemName: "hockey.puck.fill")
                     .font(.title2)
                     .foregroundStyle(RinkPalette.turf)
                 VStack(alignment: .leading, spacing: 4) {
@@ -105,7 +105,7 @@ struct AboutView: View {
                         // going looking for the offer.
                         Text(store.isPro
                              ? "All StatScout+ features are active."
-                             : "Unlock Trends, recent form, head-to-head and every season back to 2000.")
+                             : "Unlock Trends, recent form, head-to-head and every season back to 2008-09.")
                             .font(RinkType.small)
                             .foregroundStyle(RinkPalette.inkSecondary)
                     }
@@ -157,19 +157,16 @@ struct AboutView: View {
 
     /// Which games are in, phrased the way the boards phrase it.
     ///
-    /// The row "Last Refreshed" needs standing next to it. The nightly job runs
-    /// every night against a source that publishes weekly, so on most days it
-    /// rewrites every row and closes out no new game: the write stamp says
-    /// today while the newest game is Sunday's. Reporting only the write stamp
-    /// made the app contradict the Trends header, which correctly says "Through
-    /// Week 12". Weeks lead because that is the unit the sport and the rest of
-    /// the app count in; the date follows for anyone who wants it.
+    /// The row "Last Refreshed" needs standing next to it. The nightly job can
+    /// rewrite every row on a night with no new final, so the write stamp says
+    /// today while the newest game is yesterday's. Reporting only the write
+    /// stamp made the app contradict the Trends header, which correctly says
+    /// "Through Oct 7". The date of the last game is the unit the whole app
+    /// counts in.
     private var gamesThroughText: String {
         guard let coverage = freshness?.coverage ?? dataCoverage else { return "-" }
         let stamp = coverage.asOf.formatted(DataCoverage.gameDayStyle)
-        guard let week = coverage.week else { return stamp }
-        let phase = coverage.phase == .playoffs ? " (playoffs)" : ""
-        return "Week \(week)\(phase) · \(stamp)"
+        return coverage.phase == .playoffs ? "\(stamp) (playoffs)" : stamp
     }
 
     private var checkedText: String {
@@ -186,7 +183,7 @@ struct AboutView: View {
             row(
                 icon: "arrow.triangle.2.circlepath",
                 title: "Data Updates",
-                subtitle: "Checks for new NFL player data throughout the season."
+                subtitle: "Checks for new NHL numbers after every night's games."
             )
             Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline)
             row(
@@ -251,7 +248,7 @@ struct AboutView: View {
 
             Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline)
 
-            if let supportURL = URL(string: "https://jackwallner.github.io/football/support.html") {
+            if let supportURL = URL(string: "https://jackwallner.github.io/hockey/support.html") {
                 Link(destination: supportURL) {
                     row(
                         icon: "envelope.fill",
@@ -264,7 +261,7 @@ struct AboutView: View {
             
             Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline)
             
-            if let privacyURL = URL(string: "https://jackwallner.github.io/football/privacy-policy.html") {
+            if let privacyURL = URL(string: "https://jackwallner.github.io/hockey/privacy-policy.html") {
                 Link(destination: privacyURL) {
                     row(
                         icon: "shield.lefthalf.filled",
@@ -308,7 +305,7 @@ struct AboutView: View {
     private var disclaimerCard: some View {
         VStack(spacing: 0) {
             RinkSectionBar(title: "DISCLAIMER")
-            Text("Not affiliated with, endorsed by, or sponsored by the National Football League, its teams, or the NFLPA. Team names and abbreviations are used for identification only. All trademarks are property of their respective owners.")
+            Text("Not affiliated with, endorsed by, or sponsored by the National Hockey League, its teams, the NHLPA or MoneyPuck. Expected goals and shot data from MoneyPuck.com. Team names and abbreviations are used for identification only.")
                 .font(RinkType.small)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -354,17 +351,13 @@ struct StatGlossaryView: View {
     @State private var searchText = ""
 
     private let supplemental: [GlossaryEntry] = [
-        .init(id: "general-games", label: "G", category: "General", description: "Games in which the player recorded a tracked statistic."),
-        .init(id: "general-value", label: "Contract Value", category: "General", description: "Production percentile minus pay percentile, both ranked among this season's qualified players at the position who have an active contract. Pay is the deal's yearly average as a share of the salary cap when it was signed. +20 means producing like a player paid far more. Offense only until advanced defensive stats publish. Contracts: OverTheCap via nflverse."),
-        .init(id: "general-power", label: "Power Rating", category: "General", description: "Points per game better or worse than an average team on a neutral field, from EPA per dropback, EPA per run and points, for minus against, adjusted for schedule. Early in the season last year's rating counts as five games of evidence. Two ratings read like a point spread, with about two points for home field. Modeled on Hawk Blogger's HB Power Rankings."),
-        .init(id: "general-small-sample", label: "Small sample", category: "General", description: "Below the playing-time minimum for that stat, prorated by how much of the season the typical team has played. Defenders need a quarter of their team's defensive snaps."),
+        .init(id: "general-gp", label: "GP", category: "General", description: "Games played."),
+        .init(id: "general-toi", label: "TOI/GP", category: "General", description: "Average ice time per game played, in minutes and seconds."),
+        .init(id: "general-plus-minus", label: "+/-", category: "General", description: "Even-strength goals for minus goals against while the player was on the ice."),
+        .init(id: "general-ppp", label: "PPP", category: "General", description: "Power-play points: goals and assists scored with the team a man up. PPG is the goals alone."),
+        .init(id: "general-power", label: "Power Rating", category: "General", description: "Goals per game better or worse than an average team on neutral ice, from expected goals and actual goals for, minus against, adjusted for schedule. Early in the season last year's rating counts as extra games of evidence. Two ratings read like a puck line, with about 0.2 goals for home ice."),
+        .init(id: "general-small-sample", label: "Small sample", category: "General", description: "Below the playing-time minimum for that stat, prorated by how much of the season the typical team has played. Skaters need 200 minutes over a full season, goalies 600."),
         .init(id: "general-not-ranked", label: "Not ranked", category: "General", description: "A counting stat at zero. When most of the league has none of something, a tie at zero has no honest percentile, so the value shows and the bar does not."),
-        .init(id: "passing-cmp-att", label: "Cmp/Att", category: "Passing", description: "Pass completions and attempts."),
-        .init(id: "passing-cmp", label: "Cmp", category: "Passing", description: "Completed forward passes."),
-        .init(id: "passing-att", label: "Att", category: "Passing", description: "Forward pass attempts."),
-        .init(id: "rushing-car", label: "Car", category: "Rushing", description: "Rushing attempts, also called carries."),
-        .init(id: "receiving-rec-tgt", label: "Rec/Tgt", category: "Receiving", description: "Receptions and targets."),
-        .init(id: "receiving-tgt", label: "Tgt", category: "Receiving", description: "Pass attempts directed at the receiver."),
         .init(id: "percentile", label: "Percentile", category: "General", description: "A 1–100 rank among players in the same season, season type, and stat category. Higher is always better after lower-is-better stats are inverted."),
     ]
 
@@ -389,7 +382,7 @@ struct StatGlossaryView: View {
     }
 
     private var categories: [String] {
-        let order = ["General", "Passing", "Rushing", "Receiving", "Defense"]
+        let order = ["General"] + MetricCategory.allCases.map(\.rawValue)
         return order.filter { category in entries.contains { $0.category == category } }
     }
 
@@ -411,7 +404,7 @@ struct StatGlossaryView: View {
             VStack(spacing: 12) {
                 SearchField(text: $searchText, prompt: "Search stats")
 
-                Text("Values come from nflverse player statistics and NFL Next Gen Stats. Percentiles are calculated separately for each season and season type. The current season ranks everyone who has played; past seasons rank qualifying players.")
+                Text("Expected goals and shot data come from MoneyPuck. Schedules, box scores and bios come from the NHL. Percentiles are calculated separately for each season and season type. The current season ranks everyone who has played; past seasons rank qualifying players.")
                     .font(RinkType.small)
                     .foregroundStyle(RinkPalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -422,7 +415,7 @@ struct StatGlossaryView: View {
                     ContentUnavailableView {
                         Label("No stats found", systemImage: "magnifyingglass")
                     } description: {
-                        Text("Nothing matches \"\(searchText)\". Try a stat's abbreviation, like YAC or EPA.")
+                        Text("Nothing matches \"\(searchText)\". Try a stat's abbreviation, like ixG or GSAx.")
                     }
                     .padding(.vertical, 40)
                 } else {
@@ -481,12 +474,12 @@ struct StatGlossaryView: View {
         VStack(spacing: 0) {
             RinkSectionBar(title: "SOURCES")
             sourceRow(
-                "NFL Next Gen Stats Glossary",
-                url: URL(string: "https://nextgenstats.nfl.com/glossary")!
+                "MoneyPuck: expected goals and shot data",
+                url: URL(string: "https://moneypuck.com/about.htm")!
             )
             sourceRow(
-                "nflreadpy Player Stats",
-                url: URL(string: "https://nflreadpy.nflverse.com/api/load_functions/#nflreadpy.load_player_stats")!,
+                "NHL: schedules, box scores and stats",
+                url: URL(string: "https://www.nhl.com/stats/")!,
                 isLast: true
             )
         }
@@ -526,7 +519,7 @@ struct StatGlossaryView: View {
     NavigationStack {
         AboutView(
             lastUpdated: Date(),
-            dataCoverage: DataCoverage(asOf: .now, week: 12, phase: .regular)
+            dataCoverage: DataCoverage(asOf: .now, week: 3, phase: .regular)
         )
             .environmentObject(StoreService.shared)
     }

@@ -95,9 +95,9 @@ struct StatcastAPI: StatcastProviding {
     ///
     /// The phase filter is not cosmetic. Playoff games are the newest rows a
     /// season has, so without it a date-descending "last five games" for a club
-    /// that reached January was mostly playoff football no matter which phase the
-    /// user had selected - and a Playoffs board, which has at most four games to
-    /// work with, quietly topped itself up with December.
+    /// that reached June was mostly playoff hockey no matter which phase the
+    /// user had selected - and a Playoffs board quietly topped itself up with
+    /// April.
     func fetchGameLogs(
         playerId: Int,
         season: Int,
@@ -311,15 +311,25 @@ struct StatcastAPI: StatcastProviding {
         return try JSONDecoder.statScout.decode([DataFreshness].self, from: data).first
     }
 
-    /// The whole season's schedule in one request, about 285 rows.
+    /// The whole season's schedule, about 1,400 rows, paged because the
+    /// server caps a response at 1,000.
     func fetchGames(season: Int) async throws -> [Game] {
-        let data = try await get("games", [
-            URLQueryItem(name: "select", value: "*"),
-            URLQueryItem(name: "season", value: "eq.\(season)"),
-            URLQueryItem(name: "order", value: "kickoff_at.asc,game_id.asc"),
-            URLQueryItem(name: "limit", value: "400"),
-        ])
-        return try JSONDecoder.statScout.decode([Lenient<Game>].self, from: data).compactMap(\.value)
+        var all: [Game] = []
+        let pageSize = 1000
+        var offset = 0
+        while true {
+            let data = try await get("games", [
+                URLQueryItem(name: "select", value: "*"),
+                URLQueryItem(name: "season", value: "eq.\(season)"),
+                URLQueryItem(name: "order", value: "kickoff_at.asc,game_id.asc"),
+                URLQueryItem(name: "limit", value: String(pageSize)),
+                URLQueryItem(name: "offset", value: String(offset)),
+            ])
+            let rows = try JSONDecoder.statScout.decode([Lenient<Game>].self, from: data)
+            all.append(contentsOf: rows.compactMap(\.value))
+            if rows.count < pageSize { return all }
+            offset += pageSize
+        }
     }
 
     /// Every player's line from one game, for its box score.
@@ -327,22 +337,33 @@ struct StatcastAPI: StatcastProviding {
         let data = try await get("player_game_logs", [
             URLQueryItem(name: "select", value: "*"),
             URLQueryItem(name: "game_id", value: "eq.\(gameId)"),
-            URLQueryItem(name: "limit", value: "200"),
+            URLQueryItem(name: "limit", value: "100"),
         ])
         return try JSONDecoder.statScout.decode([Lenient<PlayerGameLog>].self, from: data).compactMap(\.value)
     }
 
-    /// Which games have player stats published. Every game has a passer, so
-    /// quarterback rows alone answer it at a fraction of the payload.
+    /// Which games have player stats published. Every game has a goalie, so
+    /// goalie rows alone answer it at a fraction of the payload. A season is
+    /// about 1,400 games and the server caps a page at 1,000 rows, so this pages.
     func fetchGameIdsWithStats(season: Int) async throws -> Set<String> {
         struct Row: Decodable { let game_id: String? }
-        let data = try await get("player_game_logs", [
-            URLQueryItem(name: "select", value: "game_id"),
-            URLQueryItem(name: "season", value: "eq.\(season)"),
-            URLQueryItem(name: "player_type", value: "eq.qb"),
-            URLQueryItem(name: "limit", value: "2000"),
-        ])
-        return Set(try JSONDecoder().decode([Row].self, from: data).compactMap(\.game_id))
+        var ids = Set<String>()
+        let pageSize = 1000
+        var offset = 0
+        while true {
+            let data = try await get("player_game_logs", [
+                URLQueryItem(name: "select", value: "game_id"),
+                URLQueryItem(name: "season", value: "eq.\(season)"),
+                URLQueryItem(name: "player_type", value: "eq.g"),
+                URLQueryItem(name: "order", value: "game_id.asc,player_id.asc"),
+                URLQueryItem(name: "limit", value: String(pageSize)),
+                URLQueryItem(name: "offset", value: String(offset)),
+            ])
+            let rows = try JSONDecoder().decode([Row].self, from: data)
+            ids.formUnion(rows.compactMap(\.game_id))
+            if rows.count < pageSize { return ids }
+            offset += pageSize
+        }
     }
 
     /// The play-by-play breakdown for one game, or nil before it is built.
@@ -355,8 +376,8 @@ struct StatcastAPI: StatcastProviding {
         return try JSONDecoder.statScout.decode([GameDetail].self, from: data).first
     }
 
-    /// Bio, contract, snaps and injury for every player the live season ships,
-    /// about 1,100 rows. Optional context: a missing table (a build newer than
+    /// Bio and ice time for every player the live season ships,
+    /// about 1,000 rows. Optional context: a missing table (a build newer than
     /// the backend) reads as no profiles, never as a player-data error.
     func fetchPlayerProfiles(season: Int) async throws -> [PlayerProfile] {
         var all: [PlayerProfile] = []

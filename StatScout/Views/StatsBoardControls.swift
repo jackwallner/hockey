@@ -5,39 +5,37 @@ enum StatsBoard: String, Hashable {
     case advanced
     case standard
     case bestWorst
-    case contractValue
 }
 
-/// Traditional production stats offered for each NFL position group.
+/// Traditional production stats offered for each position group. The labels
+/// are the `standard_stats` labels in the hockey contract.
 enum StandardStatCatalog {
     static func stats(for position: PlayerPositionGroup) -> [String] {
         switch position {
-        case .qb:
-            return ["Pass Yds", "Pass TD", "INT", "Rush Yds", "Rush TD", "Car", "G"]
-        case .rb:
-            return ["Rush Yds", "Rush TD", "Car", "Rec Yds", "Rec TD", "G"]
-        case .wr, .te:
-            return ["Rec Yds", "Rec TD", "Rush Yds", "Rush TD", "Car", "G"]
-        case .defense:
-            return ["Tackles", "Sacks", "Def INT", "G"]
+        case .forward, .defense:
+            return ["P", "G", "A", "+/-", "PIM", "PPG", "PPP", "SHG", "GWG", "SOG", "Sh%", "TOI/GP", "Hits", "Blk", "FO%", "GP"]
+        case .goalie:
+            return ["SV%", "GAA", "W", "L", "OT", "SO", "SV", "SA", "GS", "GP"]
         }
     }
 
+    /// Stats where a lower number is the better one.
+    private static let lowerIsBetter: Set<String> = ["GAA", "PIM", "L", "OT"]
+
     static func defaultDescending(for stat: String, position: PlayerPositionGroup) -> Bool {
-        if stat == "INT", position == .qb { return false }
-        return true
+        !lowerIsBetter.contains(stat)
     }
 
     static func defaultStat(for position: PlayerPositionGroup) -> String {
-        stats(for: position).first ?? "G"
+        stats(for: position).first ?? "GP"
     }
 
     /// The stat to show after the position tab changes.
     ///
     /// A stat the user picked on purpose follows them to any position that
     /// offers it. The previous position's own default does not: it is not a
-    /// choice, and carrying it over ranked receivers by Rush Yds after a
-    /// QB, RB, WR walk through the tabs.
+    /// choice, and carrying it over would rank goalies by points after a walk
+    /// through the tabs.
     static func stat(
         keeping current: String,
         from old: PlayerPositionGroup,
@@ -80,7 +78,7 @@ struct StatPickerMenu: View {
             RinkInlinePill(systemImage: "chart.bar.fill", title: activeLabel)
         }
         .menuOrder(.fixed)
-        .gridironMenuAppearance()
+        .rinkMenuAppearance()
         .accessibilityLabel("Stat")
         .accessibilityValue(activeLabel)
     }
@@ -146,8 +144,6 @@ struct StatsBoardStatPicker: View {
             return bindings.standardStat
         case .bestWorst:
             return "Best & Worst"
-        case .contractValue:
-            return "Contract Value"
         }
     }
 
@@ -197,7 +193,6 @@ struct StatsViewMenu: View {
         viewModel.qualifierLevel != .all
             || viewModel.selectedConference != .all
             || board == .bestWorst
-            || board == .contractValue
     }
 
     var body: some View {
@@ -255,10 +250,10 @@ struct StatsViewMenu: View {
     private var boardSection: some View {
         Section("Show") {
             Button {
-                if board == .bestWorst || board == .contractValue { board = .advanced }
+                if board == .bestWorst { board = .advanced }
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
-                if board != .bestWorst && board != .contractValue {
+                if board != .bestWorst {
                     Label("Leaderboard", systemImage: "checkmark")
                 } else {
                     Text("Leaderboard")
@@ -275,19 +270,6 @@ struct StatsViewMenu: View {
                     Text("Best & Worst")
                 } else {
                     Label("Best & Worst (StatScout+)", systemImage: "crown.fill")
-                }
-            }
-
-            Button {
-                board = .contractValue
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            } label: {
-                if board == .contractValue {
-                    Label("Contract Value", systemImage: "checkmark")
-                } else if store.isPro {
-                    Text("Contract Value")
-                } else {
-                    Label("Contract Value (StatScout+)", systemImage: "crown.fill")
                 }
             }
         }

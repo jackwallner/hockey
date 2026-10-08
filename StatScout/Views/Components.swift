@@ -99,7 +99,7 @@ func displayTeamAbbr(_ abbr: String) -> String {
     return abbr
 }
 
-// MARK: - Module 2: Percentile Bar Row (MetricBar) - football analytics Style
+// MARK: - Module 2: Percentile Bar Row (MetricBar) - hockey analytics Style
 
 struct MetricBar: View {
     let metric: Metric
@@ -231,11 +231,10 @@ struct DualMetricBar: View {
                     // The row used to just vanish, which made "Both" look
                     // identical to "Season" and read as a broken toggle rather
                     // than as a metric with no window figure. Say which it is.
-                    // Nothing here is derivable for the Next Gen Stats season
-                    // aggregates (Separation, CPOE, Time to Throw) or the
-                    // team-relative shares (Target Share, WOPR): the per-game
-                    // feed carries no denominator for them, and averaging their
-                    // per-game averages would be a different number wearing this
+                    // Nothing here is derivable for the on-ice shares (xGF%,
+                    // CF%, Rel xGF%): the per-game feed carries no shift-level
+                    // denominator for them, and averaging their per-game
+                    // averages would be a different number wearing this
                     // one's label.
                     Text("Not available per game")
                         .font(RinkType.micro)
@@ -300,7 +299,7 @@ struct CategoryFilter: View {
     var body: some View {
         let categoryTabs = MetricCategory.allCases.map { $0.rawValue }
         let tabs = showAllOption ? ["All"] + categoryTabs : categoryTabs
-        let selectedTab = selectedCategory?.rawValue ?? (showAllOption ? "All" : MetricCategory.passing.rawValue)
+        let selectedTab = selectedCategory?.rawValue ?? (showAllOption ? "All" : MetricCategory.scoring.rawValue)
 
         RinkTabs(
             tabs: tabs,
@@ -456,17 +455,17 @@ struct TrendGlyph: View {
 /// not a garnish on the season leaderboard.
 struct TrendArrow: View {
     let delta: Double
-    /// Yardage and counting stats move in whole numbers, percentages in tenths,
-    /// EPA per play in hundredths.
+    /// Counting stats move in whole numbers, percentages and expected goals in
+    /// tenths, per-60 rates in hundredths.
     var decimals: Int = 1
-    /// For metrics where down is the good direction, INT%, Sack%, Fumble%. The
+    /// For metrics where down is the good direction, GAA, goals against. The
     /// arrow still points the way the number actually moved; only the colour
     /// flips, so green always means "better".
     var lowerIsBetter: Bool = false
 
     /// Below half of the last displayed digit a delta is noise, and an arrow
     /// would imply a signal: 0.5 for whole numbers, 0.05 for a percent reported
-    /// to a tenth, 0.005 for EPA per play.
+    /// to a tenth, 0.005 for a save percentage.
     private var isFlat: Bool { abs(delta) < 5 * pow(10, -Double(decimals + 1)) }
 
     private var tint: Color {
@@ -629,9 +628,9 @@ struct LeaderboardTableRow: View {
     /// wrong ruler for five games' worth of numbers, and there is no window
     /// curve to colour it against.
     var valueOverride: String? = nil
-    /// The volume behind the ranked number, "16 att" or "142 snaps", printed
+    /// The volume behind the ranked number, "412 min" or "612 SA", printed
     /// after the position. A rate with no denominator beside it gave a
-    /// 16-attempt backup the same authority as a 60-attempt starter.
+    /// fourth liner the same authority as a top-pair defenseman.
     var volume: String? = nil
     /// Under the playing-time bar for the ranked metric: value and bar dimmed.
     var isSmallSample: Bool = false
@@ -809,8 +808,8 @@ struct BlurGateUnlock: View {
 ///
 /// The glossary already held a definition for every metric in the app and there
 /// was exactly one way in: Settings, behind the gear, two taps from anywhere.
-/// So the one moment a reader wants it - looking at a CPOE bar and wondering
-/// what CPOE is - was the moment it was furthest away, and nothing on the screen
+/// So the one moment a reader wants it - looking at a GSAx bar and wondering
+/// what GSAx is - was the moment it was furthest away, and nothing on the screen
 /// suggested it existed at all.
 ///
 /// A footer rather than a badge on every row: the question is "what is all this",

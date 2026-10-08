@@ -1,34 +1,19 @@
 import SwiftUI
 
-/// Division standings from posted finals, with each club's power rating beside
-/// its record.
+/// Division standings from posted finals, East then West.
 struct StandingsView: View {
     @Bindable var viewModel: DashboardViewModel
-    let divisions: [(name: String, teams: [String])]
 
     var body: some View {
         let table = viewModel.standings
         VStack(spacing: 12) {
-            ForEach(divisions, id: \.name) { division in
-                let rows = StandingsRow.ordered(division.teams.compactMap { table[$0] })
-                VStack(spacing: 0) {
-                    header(division.name)
-                    ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
-                        NavigationLink(value: TeamDestination(abbr: row.team)) {
-                            line(row)
-                                .background(index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt)
-                        }
-                        .buttonStyle(.plain)
-                    }
+            ForEach([LeagueConference.east, .west]) { conference in
+                conferenceTitle(conference)
+                ForEach(LeagueDivision.allCases.filter { $0.conference == conference }) { division in
+                    divisionCard(division, table: table)
                 }
-                .background(RinkPalette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
-                .overlay(
-                    RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
-                        .stroke(RinkPalette.hairline, lineWidth: 0.5)
-                )
             }
-            Text("Ordered by win percentage, then point differential, not the NFL's full tiebreakers. PWR is the StatScout Power Rating: points better or worse than an average team on a neutral field.")
+            Text("Ordered by points, then points percentage and goal differential, not the NHL's full tiebreakers. PTS are standings points: two for a win, one for an overtime or shootout loss.")
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -38,17 +23,51 @@ struct StandingsView: View {
         .padding(.horizontal, 12)
     }
 
+    private func conferenceTitle(_ conference: LeagueConference) -> some View {
+        Text(conference.rawValue.uppercased() + "ERN CONFERENCE")
+            .font(RinkType.micro)
+            .foregroundStyle(RinkPalette.inkSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
+    }
+
+    private func divisionCard(_ division: LeagueDivision, table: [String: StandingsRow]) -> some View {
+        let rows = StandingsRow.ordered(division.teams.compactMap { table[$0] })
+        return VStack(spacing: 0) {
+            header(division.rawValue)
+            ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                NavigationLink(value: TeamDestination(abbr: row.team)) {
+                    line(row)
+                        .background(index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .background(RinkPalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: RinkGeo.radiusCard)
+                .stroke(RinkPalette.hairline, lineWidth: 0.5)
+        )
+    }
+
     private func header(_ title: String) -> some View {
         HStack(spacing: 0) {
             Text(title.uppercased())
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Text("W-L").frame(width: 44, alignment: .trailing)
-            Text("DIFF").frame(width: 44, alignment: .trailing)
-            Text("STRK").frame(width: 40, alignment: .trailing)
-            Text("PWR").frame(width: 48, alignment: .trailing)
+            Text("W-L-OTL").frame(width: 56, alignment: .trailing)
+            Text("PTS").frame(width: 30, alignment: .trailing)
+            Text("P%").frame(width: 38, alignment: .trailing)
+            Text("GF").frame(width: 30, alignment: .trailing)
+            Text("GA").frame(width: 30, alignment: .trailing)
+            Text("DIFF").frame(width: 36, alignment: .trailing)
+            Text("STRK").frame(width: 34, alignment: .trailing)
         }
         .font(RinkType.micro)
         .foregroundStyle(RinkPalette.inkTertiary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
         .frame(height: RinkGeo.rowHeightHeader)
         .padding(.horizontal, RinkGeo.padInline)
         .background(RinkPalette.surfaceAlt)
@@ -56,37 +75,21 @@ struct StandingsView: View {
     }
 
     private func line(_ row: StandingsRow) -> some View {
-        let rating = viewModel.teamRating(row.team)
-        return HStack(spacing: 0) {
+        HStack(spacing: 0) {
             HStack(spacing: 8) {
                 TeamColorDot(abbr: row.team, size: 10)
                 Text(displayTeamAbbr(row.team))
                     .font(RinkType.bodyBold)
                     .foregroundStyle(RinkPalette.ink)
-                    .frame(width: 40, alignment: .leading)
-                Text(teamNickname(row.team))
-                    .font(RinkType.small)
-                    .foregroundStyle(RinkPalette.inkTertiary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(row.record)
-                .font(RinkType.statSmall)
-                .foregroundStyle(RinkPalette.ink)
-                .frame(width: 44, alignment: .trailing)
-            Text(row.games == 0 ? "-" : (row.differential > 0 ? "+\(row.differential)" : "\(row.differential)"))
-                .font(RinkType.statSmall)
-                .foregroundStyle(row.differential > 0 ? RinkPalette.performanceHigh : (row.differential < 0 ? RinkPalette.performanceLow : RinkPalette.inkSecondary))
-                .frame(width: 44, alignment: .trailing)
-            Text(row.streak ?? "-")
-                .font(RinkType.statSmall)
-                .foregroundStyle(RinkPalette.inkSecondary)
-                .frame(width: 40, alignment: .trailing)
-            Text(rating.map { TeamRating.signed($0.rating) } ?? "-")
-                .font(RinkType.statSmall)
-                .foregroundStyle(RinkPalette.ink)
-                .frame(width: 48, alignment: .trailing)
+            cell(row.record, width: 56, color: RinkPalette.ink)
+            cell(row.games == 0 ? "-" : "\(row.points)", width: 30, color: RinkPalette.ink, bold: true)
+            cell(row.games == 0 ? "-" : pointsPercentage(row), width: 38, color: RinkPalette.inkSecondary)
+            cell(row.games == 0 ? "-" : "\(row.goalsFor)", width: 30, color: RinkPalette.inkSecondary)
+            cell(row.games == 0 ? "-" : "\(row.goalsAgainst)", width: 30, color: RinkPalette.inkSecondary)
+            cell(row.games == 0 ? "-" : differential(row), width: 36, color: differentialColor(row))
+            cell(row.streak ?? "-", width: 34, color: RinkPalette.inkSecondary)
         }
         .monospacedDigit()
         .frame(height: 44)
@@ -95,14 +98,36 @@ struct StandingsView: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(teamFullName(row.team)), \(row.record), point differential \(row.differential)"
-                + (rating.map { ", power rating \(TeamRating.signed($0.rating))" } ?? "")
+            "\(teamFullName(row.team)), \(row.record), \(row.points) points, goal differential \(row.differential)"
         )
+    }
+
+    private func cell(_ text: String, width: CGFloat, color: Color, bold: Bool = false) -> some View {
+        Text(text)
+            .font(bold ? RinkType.statMed : RinkType.statSmall)
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(width: width, alignment: .trailing)
+    }
+
+    /// ".625", the way points percentage is written in hockey.
+    private func pointsPercentage(_ row: StandingsRow) -> String {
+        RecentMetricKey.savePercentage(row.winPercentage)
+    }
+
+    private func differential(_ row: StandingsRow) -> String {
+        row.differential > 0 ? "+\(row.differential)" : "\(row.differential)"
+    }
+
+    private func differentialColor(_ row: StandingsRow) -> Color {
+        if row.differential > 0 { return RinkPalette.performanceHigh }
+        return row.differential < 0 ? RinkPalette.performanceLow : RinkPalette.inkSecondary
     }
 }
 
-/// The league ranked by power rating, after Hawk Blogger's HB Power Rankings:
-/// what a club does minus what it allows, adjusted for who it played.
+/// The league ranked by power rating: what a club does minus what it allows,
+/// in goals per game, adjusted for who it played.
 struct PowerRankingsView: View {
     @Bindable var viewModel: DashboardViewModel
 
@@ -151,8 +176,12 @@ struct PowerRankingsView: View {
     }
 
     private var footnote: String {
-        let through = ratings.first.map { $0.throughWeek > 0 ? "Through Week \($0.throughWeek). " : "Preseason: last season's ratings, regressed. " } ?? ""
-        return through + "Points per game better or worse than an average team on a neutral field: EPA per dropback and per run plus points, for minus against, adjusted for schedule. Early in the season last year counts as five games of evidence. Read two ratings like a spread, with about two points for home field. Modeled on Hawk Blogger's HB Power Rankings."
+        let through = ratings.first.map { rating -> String in
+            guard rating.throughWeek > 0 else { return "Early season: last season's ratings, regressed. " }
+            guard let asOf = viewModel.dataCoverage?.asOf else { return "" }
+            return "Through \(asOf.formatted(DataCoverage.gameDayStyle)). "
+        } ?? ""
+        return through + "Goals per game better or worse than an average team on neutral ice: expected goals and actual goals for, minus against, adjusted for schedule. Early in the season last year counts as extra games of evidence. Read two ratings like a puck line, with about 0.2 goals for home ice."
     }
 
     private var header: some View {
@@ -223,9 +252,4 @@ struct PowerRankingsView: View {
         if value <= -1 { return RinkPalette.performanceLow }
         return RinkPalette.inkSecondary
     }
-}
-
-/// "Seahawks" from "Seattle Seahawks".
-func teamNickname(_ abbr: String) -> String {
-    teamFullName(abbr).split(separator: " ").last.map(String.init) ?? abbr
 }

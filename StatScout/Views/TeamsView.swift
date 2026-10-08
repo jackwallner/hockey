@@ -43,27 +43,18 @@ struct TeamsView: View {
 
     private static let allTeams: [String] = leagueTeamAbbreviations
 
-    /// Eight divisions of four, in standings order. Grouping this way is what
-    /// lets all thirty-two clubs fit one screen without scrolling, and it's how
-    /// people already hold the league in their heads, so it reads faster than an
-    /// alphabetical wall even before the space saving. Four across also sits
-    /// more comfortably than baseball's five.
-    static let divisions: [(name: String, teams: [String])] = [
-        ("AFC East",    ["BUF", "MIA", "NE", "NYJ"]),
-        ("AFC North",   ["BAL", "CIN", "CLE", "PIT"]),
-        ("AFC South",   ["HOU", "IND", "JAX", "TEN"]),
-        ("AFC West",    ["DEN", "KC", "LV", "LAC"]),
-        ("NFC East",    ["DAL", "NYG", "PHI", "WAS"]),
-        ("NFC North",   ["CHI", "DET", "GB", "MIN"]),
-        ("NFC South",   ["ATL", "CAR", "NO", "TB"]),
-        ("NFC West",    ["ARI", "LA", "SF", "SEA"]),
-    ]
+    /// Four divisions of eight, East then West. Grouping this way is how people
+    /// already hold the league in their heads, so it reads faster than an
+    /// alphabetical wall. Each division draws as two rows of four.
+    static let divisions: [(name: String, teams: [String])] = LeagueDivision.allCases.map {
+        ($0.rawValue, $0.teams)
+    }
 
     private var filteredTeams: [String] {
         // The division grid always draws all 32 clubs, so search and the count
         // cover them too. Filtering to teams with published rows meant that in
-        // Week 1, with four teams played, "Chiefs" found nothing and the header
-        // read "4 teams" above a grid of 32.
+        // opening night, with four teams played, "Oilers" found nothing and the
+        // header read "4 teams" above a grid of 32.
         guard !viewModel.teamsWithData.isEmpty else { return [] }
         let teams = searchText.isEmpty ? Self.allTeams : Self.allTeams.filter {
             teamFullName($0).localizedCaseInsensitiveContains(searchText) ||
@@ -121,7 +112,7 @@ struct TeamsView: View {
                     case .clubs:
                         allTeamsSection
                     case .standings:
-                        StandingsView(viewModel: viewModel, divisions: Self.divisions)
+                        StandingsView(viewModel: viewModel)
                     case .power:
                         PowerRankingsView(viewModel: viewModel)
                     }
@@ -140,7 +131,7 @@ struct TeamsView: View {
             SeasonPhaseNavBar(
                 title: "Teams",
                 // No All Time here: a career row carries the player's last team,
-                // so a franchise's "all time" list would credit it with yards
+                // so a franchise's "all time" list would credit it with goals
                 // earned elsewhere. See `seasonsExcludingAllTime`.
                 seasons: viewModel.seasonsExcludingAllTime,
                 selectedSeason: viewModel.selectedSeason,
@@ -182,7 +173,7 @@ struct TeamsView: View {
     /// The season is chosen once and shared across tabs, so picking All Time on
     /// Stats and then opening Teams lands here. Rather than silently reinterpret
     /// the selection (a franchise list built from career rows would credit each
-    /// team with yards its players earned elsewhere) or silently change it back,
+    /// team with goals its players scored elsewhere) or silently change it back,
     /// this says what it can't do and offers the one tap that fixes it.
     private var allTimeUnavailableState: some View {
         VStack(spacing: 12) {
@@ -192,7 +183,7 @@ struct TeamsView: View {
             Text("Teams needs a single season")
                 .font(RinkType.cardTitle)
                 .foregroundStyle(RinkPalette.ink)
-            Text("Career totals follow the player, not the club: a career line carries whichever team he finished with, so an all-time roster would credit a franchise with yards earned somewhere else. Pick a season to see its teams.")
+            Text("Career totals follow the player, not the club: a career line carries whichever team he finished with, so an all-time roster would credit a franchise with goals scored somewhere else. Pick a season to see its teams.")
                 .font(RinkType.small)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
@@ -201,7 +192,7 @@ struct TeamsView: View {
                 viewModel.selectedSeason = latestUnlockedSeason
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
-                Text("Show " + SeasonLabel.text(latestUnlockedSeason))
+                Text("Show " + SeasonLabel.display(latestUnlockedSeason))
                     .font(RinkType.smallBold)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 18)
@@ -321,7 +312,7 @@ struct TeamsView: View {
                          // tab (it is "Stats"), and the fix has not lived on
                          // another screen since the season moved into the nav
                          // bar - it is the pill at the top of this one.
-                         ? "No teams have player data for the \(SeasonLabel.text(viewModel.selectedSeason)) season. Pick another season from the pill at the top of the screen."
+                         ? "No teams have player data for the \(SeasonLabel.display(viewModel.selectedSeason)) season. Pick another season from the pill at the top of the screen."
                          : "Try a different search term.")
                 }
                 .padding(.vertical, 48)
@@ -341,8 +332,7 @@ struct TeamsView: View {
         }
     }
 
-    /// Eight labelled rows of four. Sized so the whole league sits on one
-    /// screen.
+    /// Four labelled divisions, two rows of four each.
     private var divisionGrid: some View {
         VStack(spacing: 10) {
             ForEach(Self.divisions, id: \.name) { division in
@@ -353,7 +343,7 @@ struct TeamsView: View {
                             .foregroundStyle(RinkPalette.inkTertiary)
                         Spacer()
                     }
-                    HStack(spacing: 8) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                         ForEach(division.teams, id: \.self) { abbr in
                             teamDot(abbr)
                         }
@@ -373,7 +363,7 @@ struct TeamsView: View {
         NavigationLink(value: TeamDestination(abbr: abbr)) {
             // The disk already carries the abbreviation, so no caption beneath,
             // it printed the same letters twice and ate the vertical room the
-            // eight division rows need.
+            // four division blocks need.
             VStack(spacing: 3) {
                 ZStack(alignment: .topTrailing) {
                     TeamAbbrDisk(abbr: abbr)
@@ -386,7 +376,7 @@ struct TeamsView: View {
                             .offset(x: 3, y: -3)
                     }
                 }
-                if let status = weekStatus(abbr) {
+                if let status = recordStatus(abbr) {
                     Text(status.text)
                         .font(RinkType.micro)
                         .foregroundStyle(status.color)
@@ -411,13 +401,11 @@ struct TeamsView: View {
                       systemImage: teamsViewModel.isFavorite(abbr) ? "star.slash" : "star.fill")
             }
         }
-        .accessibilityLabel([teamFullName(abbr), weekStatus(abbr)?.spoken].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityLabel([teamFullName(abbr), recordStatus(abbr)?.spoken].compactMap { $0 }.joined(separator: ", "))
     }
 
-    /// The club's record under each disk, or "Live" while it is playing. It
-    /// used to be this week's kickoff day, which from Tuesday to Saturday put
-    /// "Sun" under 28 of the 32 clubs and said nothing about any of them.
-    private func weekStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
+    /// The club's record under each disk, or "Live" while it is playing.
+    private func recordStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
         guard viewModel.selectedSeason == viewModel.freeSeason,
               viewModel.selectedPhase == .regular else { return nil }
         if let game = viewModel.currentGame(forTeam: abbr),
@@ -427,17 +415,17 @@ struct TeamsView: View {
         if let record = viewModel.record(forTeam: abbr) {
             return (record, "record \(record)", RinkPalette.inkSecondary)
         }
-        return legacyWeekStatus(abbr)
+        return firstGameStatus(abbr)
     }
 
     /// Before a club's first final: its first puck drop.
-    private func legacyWeekStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
+    private func firstGameStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
         guard viewModel.currentGameDay != nil else { return nil }
         guard let game = viewModel.currentGame(forTeam: abbr) else { return nil }
         switch game.status() {
         case .final:
             let line = game.resultLine(for: abbr) ?? "Final"
-            let color = game.result(for: abbr) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh
+            let color = game.result(for: abbr) == "W" ? RinkPalette.performanceHigh : RinkPalette.performanceLow
             return (line, "\(line) \(game.matchupLabel(for: abbr))", color)
         case .inProgress, .awaitingScore:
             return ("Live", "playing \(game.matchupLabel(for: abbr))", RinkPalette.performanceLow)

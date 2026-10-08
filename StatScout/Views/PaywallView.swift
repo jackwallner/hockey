@@ -29,8 +29,6 @@ enum PaywallTrigger: Identifiable, Hashable {
     case bestWorst
     /// Player-level advanced tables on a game's box score.
     case advancedBoxScore
-    /// The Contract Value board: production against pay, league-wide.
-    case contractValue
 
     var icon: String {
         switch self {
@@ -48,14 +46,13 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .recentForm:        return "flame.fill"
         case .bestWorst:         return "arrow.up.arrow.down"
         case .advancedBoxScore:  return "sportscourt.fill"
-        case .contractValue:     return "dollarsign.circle.fill"
         }
     }
 
     var title: String {
         switch self {
         case .pastSeason:        return "Unlock Past Seasons"
-        case .lockedSeason(let year): return "Unlock \(year)"
+        case .lockedSeason(let year): return year == SeasonLabel.allTime ? "Unlock All Time" : "Unlock \(SeasonLabel.display(year))"
         case .yearCompare:       return "Year-over-Year Comparison"
         case .playerComparison:  return "Player Comparison"
         case .onboarding:        return "Scout Like a GM"
@@ -68,26 +65,25 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .recentForm:        return "Recent Form"
         case .bestWorst:         return "Best & Worst"
         case .advancedBoxScore:  return "Advanced Box Scores"
-        case .contractValue:     return "Contract Value"
         }
     }
 
     var subtitle: String {
         switch self {
         case .pastSeason:
-            return "Track how every player ranked since 2000, plus the year-over-year trends behind today's leaders."
+            return "Track how every player ranked since 2008-09, plus the year-over-year trends behind today's leaders."
         case .lockedSeason(let year):
-            return "See every player's \(year) percentile rankings, and how they stack up against any other season."
+            return "See every player's \(SeasonLabel.display(year)) percentile rankings, and how they stack up against any other season."
         case .yearCompare:
             return "Compare any player's percentile rankings across any two seasons. See what changed, what held, and where they're headed."
         case .playerComparison:
-            return "Stack any two players head-to-head across every NFL metric: EPA, CPOE, YAC, RYOE, and more."
+            return "Stack any two players head-to-head across every NHL metric: ixG, GAx, xGF%, GSAx and more."
         case .onboarding:
-            return "The Trends board, recent form, head-to-head matchups, and every season back to 2000. The full NFL picture on every player."
+            return "The Trends board, recent form, head-to-head matchups, and every season back to 2008-09. The full NHL picture on every player."
         case .activation:
-            return "The Trends board, recent form, head-to-head matchups, and every season back to 2000. The full NFL picture on every player."
+            return "The Trends board, recent form, head-to-head matchups, and every season back to 2008-09. The full NHL picture on every player."
         case .upgrade:
-            return "The Trends board, recent form, head-to-head matchups, and every season back to 2000. The full NFL picture on every player."
+            return "The Trends board, recent form, head-to-head matchups, and every season back to 2008-09. The full NHL picture on every player."
         case .pastSeasonsLoad:
             return "Load historical data to explore past seasons, year-over-year trends, and more."
         case .teamView:
@@ -95,15 +91,13 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .winback:
             return "Your StatScout+ access has lapsed. Pick it back up to get the Trends board, recent form, head-to-head matchups, and every past season."
         case .playerScouting:
-            return "Last 3 / 5 / 8 game form, head-to-head matchups, every roster. The full picture, not just season totals."
+            return "Last 2 / 4 / 8 week form, head-to-head matchups, every roster. The full picture, not just season totals."
         case .recentForm:
-            return "Every player's last 3 / 5 / 8 game form. Catch hot streaks and slumps before the season totals catch up."
+            return "Every player's last 2 / 4 / 8 week form. Catch hot streaks and slumps before the season totals catch up."
         case .bestWorst:
-            return "The league leader and the league trailer on every NFL metric, side by side, in one board."
+            return "The league leader and the league trailer on every NHL metric, side by side, in one board."
         case .advancedBoxScore:
-            return "Every player in every game: EPA, success rate, CPOE and depth of target, beside the box score."
-        case .contractValue:
-            return "Every qualified player's production ranked against his pay. The bargains and the overpays at every position, updated every week."
+            return "Every player in every game: expected goals, high-danger chances and the xG race, beside the box score."
         }
     }
 
@@ -124,7 +118,6 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .recentForm:        return "statscout_paywall_recent_form"
         case .bestWorst:         return "statscout_paywall_best_worst"
         case .advancedBoxScore:  return "statscout_paywall_advanced_box_score"
-        case .contractValue:     return "statscout_paywall_contract_value"
         }
     }
 
@@ -134,12 +127,11 @@ enum PaywallTrigger: Identifiable, Hashable {
     /// than the product does.
     private static let proFeatures: [(icon: String, title: String)] = [
         ("flame.fill", "The Trends board: who's heating up and cooling off, league-wide"),
-        ("chart.bar.fill", "Last 3 / 5 / 8 game form on any player, team or leaderboard"),
+        ("chart.bar.fill", "Last 2 / 4 / 8 week form on any player, team or leaderboard"),
         ("person.2.fill", "Head-to-head: any two players, every metric"),
         ("shield.lefthalf.filled", "Team scouting: advanced and standard, season or recent"),
-        ("sportscourt.fill", "Advanced box scores: EPA, success rate and CPOE for every player, every game"),
-        ("dollarsign.circle.fill", "Contract Value: the bargains and overpays at every position"),
-        ("calendar.badge.clock", "Every season back to 2000 + year-over-year trends")
+        ("sportscourt.fill", "Advanced box scores: expected goals, high-danger chances and the xG race for every game"),
+        ("calendar.badge.clock", "Every season back to 2008-09 + year-over-year trends")
     ]
 
     var features: [(icon: String, title: String)] {
@@ -324,15 +316,15 @@ struct PaywallView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // Reassurance + real credibility, public NFL Next Gen Stats are the source of truth
-    // for these percentiles, which is the actual moat. No fabricated ratings
+    // Reassurance + real credibility, MoneyPuck's expected goals model is the source
+    // of truth for these percentiles, which is the actual moat. No fabricated ratings
     // or user counts.
     private var trustRow: some View {
         HStack(spacing: 14) {
             HStack(spacing: 5) {
                 Image(systemName: "bolt.fill")
                     .font(.system(size: 11, weight: .semibold))
-                Text("Next Gen-grade data")
+                Text("MoneyPuck expected goals")
                     .font(RinkType.smallBold)
             }
             Text("·")

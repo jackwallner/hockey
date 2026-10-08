@@ -18,16 +18,16 @@ enum RinkControl {
 /// 1. **Page-level switch** (Percentiles / Roster, Percentiles / Standard Stats
 ///    / Year Compare): the large filled rounded-rect row. "Which screen is
 ///    this."
-/// 2. **Metric category** (Passing / Rushing / Receiving / Defense):
+/// 2. **Metric category** (Scoring / Shot Quality / Play Driving / Goaltending):
 ///    `RinkTabs`, underlined text.
-/// 3. **Inline options** (Season / Recent / Both, the Last 3 / 5 / 8 game
+/// 3. **Inline options** (Season / Recent / Both, the Last 2 / 4 / 8 week
 ///    windows, Heating / Cooling): this control. One height, one shape,
 ///    everywhere. Past four options it hands over to a plain `Menu`, which is
 ///    what the season and Trends metric pickers use.
 /// 4. **Standalone controls** (the sort chip, search, Filters, the pickers that
 ///    open a popover): `RinkChip`, same height and type as a segment.
 ///
-/// The wording is shared too: a rolling window is always "Last 5 games",
+/// The wording is shared too: a rolling window is always "Last 4 weeks",
 /// never "5G" on one screen and "Last 5" on the next.
 ///
 /// Segments can be individually locked, which draws a crown and routes the tap

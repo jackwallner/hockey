@@ -36,25 +36,13 @@ struct TrialPitchSheet: View {
             return [
                 Benefit(icon: "sportscourt.fill",
                         title: "Advanced box scores",
-                        detail: "EPA, success rate and CPOE for every player, every game."),
+                        detail: "Expected goals, high-danger chances and the xG race for every game."),
                 Benefit(icon: "flame.fill",
                         title: "The Trends board",
                         detail: "The whole league ranked by who's moving, right now."),
                 Benefit(icon: "chart.bar.fill",
                         title: "Recent form everywhere",
-                        detail: "Last 3 / 5 / 8 games on any player, team or board.")
-            ]
-        case .contractValue:
-            return [
-                Benefit(icon: "dollarsign.circle.fill",
-                        title: "Contract Value",
-                        detail: "Production against pay for every qualified player."),
-                Benefit(icon: "flame.fill",
-                        title: "The Trends board",
-                        detail: "The whole league ranked by who's moving, right now."),
-                Benefit(icon: "person.2.fill",
-                        title: "Head-to-head matchups",
-                        detail: "Stack any two players across every percentile.")
+                        detail: "Last 2 / 4 / 8 weeks on any player, team or board.")
             ]
         case .playerScouting, .recentForm, .upgrade, .onboarding, .activation, .bestWorst:
             return [
@@ -63,7 +51,7 @@ struct TrialPitchSheet: View {
                         detail: "The whole league ranked by who's moving, right now."),
                 Benefit(icon: "chart.bar.fill",
                         title: "Recent form everywhere",
-                        detail: "Last 3 / 5 / 8 games on any player, team or board."),
+                        detail: "Last 2 / 4 / 8 weeks on any player, team or board."),
                 Benefit(icon: "person.2.fill",
                         title: "Head-to-head matchups",
                         detail: "Stack any two players across every percentile.")
@@ -71,11 +59,11 @@ struct TrialPitchSheet: View {
         case .lockedSeason(let year):
             return [
                 Benefit(icon: "calendar.badge.clock",
-                        title: "The \(year) season",
-                        detail: "Every percentile ranking, plus every year back to 2000."),
+                        title: year == SeasonLabel.allTime ? "All-time career stats" : "The \(SeasonLabel.display(year)) season",
+                        detail: "Every percentile ranking, plus every year back to 2008-09."),
                 Benefit(icon: "arrow.left.arrow.right.circle.fill",
                         title: "Year-over-year trends",
-                        detail: "Put \(year) beside any other season and see what moved."),
+                        detail: "Put \(SeasonLabel.display(year)) beside any other season and see what moved."),
                 Benefit(icon: "flame.fill",
                         title: "The Trends board",
                         detail: "The whole league ranked by who's moving, right now.")
@@ -84,7 +72,7 @@ struct TrialPitchSheet: View {
             return [
                 Benefit(icon: "calendar.badge.clock",
                         title: "Every past season",
-                        detail: "Back to 2000, with full percentile history."),
+                        detail: "Back to 2008-09, with full percentile history."),
                 Benefit(icon: "arrow.left.arrow.right.circle.fill",
                         title: "Year-over-year trends",
                         detail: "Compare any two seasons side by side."),

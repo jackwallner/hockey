@@ -53,7 +53,7 @@ struct MetricRankingView: View {
                     trailing: AnyView(
                         HStack(spacing: 12) {
                             if let season {
-                                Text(SeasonLabel.text(season))
+                                Text(SeasonLabel.display(season))
                                     .font(RinkType.micro)
                                     .foregroundStyle(RinkPalette.inkSecondary)
                             }
@@ -125,7 +125,7 @@ struct MetricRankingView: View {
 #if DEBUG
 #Preview {
     NavigationStack {
-        MetricRankingView(metricLabel: "Pass Yds", metricCategory: .passing, players: SampleData.players, season: 2025)
+        MetricRankingView(metricLabel: "ixG", metricCategory: .shotQuality, players: SampleData.players, season: 2026)
     }
 }
 #endif

@@ -1,30 +1,5 @@
 import SwiftUI
 
-enum StandardStatCategory: String, CaseIterable {
-    case passing = "Passing"
-    case rushing = "Rushing"
-    case receiving = "Receiving"
-    case defense = "Defense"
-
-    var metricCategory: MetricCategory {
-        switch self {
-        case .passing: return .passing
-        case .rushing: return .rushing
-        case .receiving: return .receiving
-        case .defense: return .defense
-        }
-    }
-
-    var defaultPosition: PlayerPositionGroup {
-        switch self {
-        case .passing: return .qb
-        case .rushing: return .rb
-        case .receiving: return .wr
-        case .defense: return .defense
-        }
-    }
-}
-
 /// Traditional leaderboard with the same position tabs and control vocabulary
 /// as the Advanced board.
 struct StandardStatsLeadersView: View {
@@ -119,21 +94,8 @@ struct StandardStatsLeadersView: View {
     }
 
     private var positionSelector: some View {
-        RinkTabs(
-            tabs: PlayerPositionGroup.allCases.map(\.rawValue),
-            selected: Binding(
-                get: { selectedPosition.rawValue },
-                set: { rawValue in
-                    guard let position = PlayerPositionGroup.allCases.first(where: {
-                        $0.rawValue == rawValue
-                    }) else { return }
-                    selectedPosition = position
-                }
-            )
-        )
-        .padding(.top, 8)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Position")
+        PositionTabs(selection: $selectedPosition)
+            .padding(.top, 8)
     }
 
     private var controlRow: some View {
@@ -224,7 +186,7 @@ struct StandardStatsLeadersView: View {
                         .frame(width: 42, alignment: .leading)
                     // Says who is on the list where the list is read. The rule
                     // otherwise lives only in the View menu, and "leaders" with
-                    // no minimum in Week 1 reads like a ranking of the best.
+                    // no minimum on opening night reads like a ranking of the best.
                     Text(sampleLabel)
                         .font(RinkType.micro)
                         .foregroundStyle(RinkPalette.inkTertiary)
@@ -266,7 +228,7 @@ struct StandardStatsLeadersView: View {
                 ContentUnavailableView {
                     Label("No data available", systemImage: "chart.bar")
                 } description: {
-                    Text("No \(selectedPosition.rawValue) players have \(selectedStat) data for this season.")
+                    Text("No \(selectedPosition.displayName.lowercased()) have \(selectedStat) data for this season.")
                 }
                 .padding(.vertical, 48)
                 .background(RinkPalette.surface)
@@ -334,7 +296,7 @@ struct StandardStatsLeadersView: View {
 
                 let pct = percentile(for: player, peerValues: peerValues)
                 // A zero count has no honest rank; see `Metric.isUnranked`.
-                // Not for a lower-is-better count: a passer's 0 INT is the
+                // Not for a lower-is-better count: a skater's 0 PIM is the
                 // best line on the board, not an absence.
                 let isZero = numericStat(for: player) == 0
                     && StandardStatSemantics.higherIsBetter(label: selectedStat)
@@ -396,47 +358,36 @@ struct StandardStatsLeadersView: View {
         return viewModel.qualifierLevel == .qualified ? "QUALIFIED PLAYERS" : "ALL PLAYERS"
     }
 
-    /// Defense on the live season, while PFR's advanced table is still out:
-    /// this board is the whole defensive picture, and it should say why.
+    /// The live season while the NHL summary or MoneyPuck's files are still
+    /// catching up: this board is made of the summary's counting stats, and it
+    /// should say why a number looks short.
     private var pendingNote: String? {
         guard let viewModel,
               viewModel.selectedSeason == viewModel.freeSeason,
               viewModel.selectedPhase == .regular else { return nil }
         return MetricCoverage.pendingNote(
-            category: selectedPosition.primaryCategory,
-            advancedDefenseStatus: viewModel.dataFreshness?.advancedDefenseStatus,
-            nextGenStatus: nil
+            shotsStatus: viewModel.dataFreshness?.shotsStatus,
+            summaryStatus: viewModel.dataFreshness?.summaryStatus
         )
     }
 
-    /// The volume behind the headline number: attempts for a passing stat,
-    /// carries for rushing, targets for receiving, games otherwise. One game of
-    /// 9 yards a carry means little on three carries.
+    /// The volume behind the headline number: games played, and for a rate
+    /// stat the ice time or shots behind it. A .940 save percentage means
+    /// little over a single start.
     private func volumeText(for player: Player) -> String? {
         let stats = player.standardStats ?? []
         func value(_ label: String) -> String? {
             stats.first { $0.label.caseInsensitiveCompare(label) == .orderedSame }?.value
         }
-        func denominator(_ pair: String?) -> String? {
-            pair?.split(separator: "/").last.map(String.init)
-        }
         let stat = selectedStat.uppercased()
-        if stat.hasPrefix("PASS") || stat == "INT" || stat == "CMP/ATT" || stat == "RATING" || stat == "Y/A" {
-            return denominator(value("Cmp/Att")).map { "\($0) att" }
+        if ["SV%", "GAA"].contains(stat), let shots = value("SA") {
+            return "\(shots) SA"
         }
-        if stat.hasPrefix("RUSH") || stat == "Y/C" {
-            return value("Car").map { "\($0) car" }
+        if stat == "SH%", let shots = value("SOG") {
+            return "\(shots) SOG"
         }
-        if stat.hasPrefix("REC") {
-            return denominator(value("Rec/Tgt")).map { "\($0) tgt" }
-        }
-        if selectedPosition == .defense, let viewModel,
-           let caption = viewModel.volumeCaption(for: player, category: .defense),
-           caption.hasSuffix("snaps") {
-            return caption
-        }
-        guard stat != "G", let games = value("G") else { return nil }
-        return games == "1" ? "1 game" : "\(games) games"
+        guard stat != "GP", let games = value("GP") else { return nil }
+        return games == "1" ? "1 game" : "\(games) GP"
     }
 
     private func numericStat(for player: Player) -> Double? {
@@ -468,7 +419,7 @@ struct StandardStatsLeadersView: View {
 
     private func games(for player: Player) -> Double {
         guard let value = player.standardStats?.first(where: {
-            $0.label == "G"
+            $0.label == "GP"
         })?.value else { return 0 }
         return DashboardViewModel.rawNumeric(value) ?? 0
     }
@@ -484,8 +435,8 @@ struct StandardStatsLeaderboardScreen: View {
 
     init(
         players: [Player],
-        initialStat: String = "Pass Yds",
-        initialPosition: PlayerPositionGroup = .qb,
+        initialStat: String = "P",
+        initialPosition: PlayerPositionGroup = .forward,
         season: Int? = nil
     ) {
         self.players = players
@@ -497,20 +448,6 @@ struct StandardStatsLeaderboardScreen: View {
                 for: initialStat,
                 position: initialPosition
             )
-        )
-    }
-
-    init(
-        players: [Player],
-        initialStat: String,
-        initialCategory: StandardStatCategory,
-        season: Int? = nil
-    ) {
-        self.init(
-            players: players,
-            initialStat: initialStat,
-            initialPosition: initialCategory.defaultPosition,
-            season: season
         )
     }
 

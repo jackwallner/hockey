@@ -100,7 +100,7 @@ struct ReviewPromptSheet: View {
                 Circle()
                     .fill(RinkPalette.turf)
                     .frame(width: 64, height: 64)
-                Image(systemName: "football.fill")
+                Image(systemName: "hockey.puck.fill")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.white)
             }
@@ -142,7 +142,7 @@ struct ReviewPromptSheet: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 8)
 
-            Text("An honest App Store review takes seconds and helps more fans find a clean NFL advanced-stats scout.")
+            Text("An honest App Store review takes seconds and helps more fans find a clean NHL advanced-stats scout.")
                 .font(RinkType.small)
                 .foregroundStyle(RinkPalette.inkTertiary)
                 .multilineTextAlignment(.center)

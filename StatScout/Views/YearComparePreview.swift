@@ -45,11 +45,11 @@ struct YearComparePreview: View {
 
     private var mockYearPicker: some View {
         HStack(spacing: 12) {
-            mockYearButton(label: "2026", subtitle: "Recent")
+            mockYearButton(label: SeasonLabel.display(2026), subtitle: "Recent")
             Image(systemName: "arrow.right")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(RinkPalette.inkTertiary)
-            mockYearButton(label: "2025", subtitle: "Prior")
+            mockYearButton(label: SeasonLabel.display(2025), subtitle: "Prior")
         }
         .padding(16)
         .background(RinkPalette.surface)
@@ -80,10 +80,10 @@ struct YearComparePreview: View {
             RinkSubSectionBar(title: "SEASON TOTALS")
             mockHeader
 
-            mockRow(label: "Cmp/Att", priorVal: "348/530", recentVal: "385/566")
-            mockRow(label: "Pass Yds", priorVal: "3,650", recentVal: "4,180")
-            mockRow(label: "Pass TD", priorVal: "24", recentVal: "34")
-            mockRow(label: "Rush Yds", priorVal: "285", recentVal: "412")
+            mockRow(label: "G", priorVal: "31", recentVal: "38")
+            mockRow(label: "ixG", priorVal: "21.4", recentVal: "27.8")
+            mockRow(label: "P", priorVal: "58", recentVal: "74")
+            mockRow(label: "SOG", priorVal: "212", recentVal: "268")
         }
         .background(RinkPalette.surface)
         .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
@@ -99,11 +99,11 @@ struct YearComparePreview: View {
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Text("2025")
+            Text(SeasonLabel.display(2025))
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 72)
-            Text("2026")
+            Text(SeasonLabel.display(2026))
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .frame(width: 72)

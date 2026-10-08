@@ -3,8 +3,8 @@ import SwiftUI
 /// League-wide recent form, ranked by change rather than by level.
 ///
 /// The same THEN / NOW / delta framing the baseball app's rolling leaderboard
-/// uses, because the delta is the story. A 9.1 Y/A is interesting; a 9.1 that
-/// was 6.2 three weeks ago is a quarterback you want to know about right now,
+/// uses, because the delta is the story. A 3.4 P/60 is interesting; a 3.4 that
+/// was 1.9 two weeks ago is a winger you want to know about right now,
 /// and that is the thing season totals cannot tell you.
 ///
 /// Colour is the app's own performance gradient. The flame / snowflake accent
@@ -23,8 +23,8 @@ struct HotColdView: View {
     let isActive: Bool
     @State private var favorites = FavoritesStore.shared
     @State private var showingCold = false
-    @State private var side: TrendSide = .qb
-    @State private var metric: TrendMetric = TrendMetric.qbAdvanced[0]
+    @State private var side: TrendSide = .forward
+    @State private var metric: TrendMetric = TrendMetric.skaterAdvanced[0]
     @State private var selectedSeason: Int
     @State private var selectedPhase: SeasonPhase
     @State private var paywallTrigger: PaywallTrigger?
@@ -54,8 +54,8 @@ struct HotColdView: View {
     }
 
     /// How much better this player got. Falling numbers are the improvement for
-    /// an interception rate or a sack rate, so the board ranks on this rather
-    /// than on the raw delta.
+    /// goals against average, so the board ranks on this rather than on the
+    /// raw delta.
     private func improvement(_ form: RecentForm) -> Double? {
         guard let delta = form.delta[metric.key] else { return nil }
         return metric.lowerIsBetter ? -delta : delta
@@ -63,19 +63,16 @@ struct HotColdView: View {
 
     /// True when nobody on this board has a prior window for the metric yet.
     ///
-    /// Movement compares a window with the same span before it, so a three-week
-    /// window has nothing to compare until Week 4, five weeks until Week 6. Until
+    /// Movement compares a window with the same span before it, so a two-week
+    /// window has nothing to compare until the season is four weeks old. Until
     /// then the board ranks the current window by level instead of showing an
     /// empty "no movement" screen in the weeks new fans arrive.
     private var isEarlySeason: Bool {
         !forms.isEmpty && !forms.contains { $0.priorMetrics[metric.key] != nil }
     }
 
-    /// The first week a comparison exists for the selected window.
-    private var movementStartWeek: Int { viewModel.recentWindow.rawValue + 1 }
-
     /// Early-season board: the current window ranked by the metric itself.
-    /// A volume floor still applies, so one long catch can't top Y/R.
+    /// A volume floor still applies, so one hot night can't top P/60.
     private var earlyRanked: [RecentForm] {
         forms
             .filter { $0.metrics[metric.key] != nil && !$0.isSmallSample(minimumGames: 1) }
@@ -92,7 +89,7 @@ struct HotColdView: View {
     }
 
     /// Ranked by improvement, hot first or cold first. Small samples are
-    /// excluded outright: four carries in a mop-up week produce enormous deltas
+    /// excluded outright: two shifts in a blowout produce enormous deltas
     /// that would crowd out every real riser.
     private var ranked: [RecentForm] {
         forms
@@ -236,8 +233,8 @@ struct HotColdView: View {
                 )
 
                 Text(isEarlySeason
-                     ? "Too early for movement: a \(viewModel.recentWindow.rawValue)-week comparison starts in Week \(movementStartWeek). Until then, the best of the season so far."
-                     : "League weeks, compared with the same span before them. Players inactive for the current span are excluded.")
+                     ? "Too early for movement: a \(viewModel.recentWindow.rawValue)-week comparison needs \(viewModel.recentWindow.rawValue * 2) weeks of games. Until then, the best of the season so far."
+                     : "Weeks of games, compared with the same span before them. Players inactive for the current span are excluded.")
                     .font(RinkType.micro)
                     .foregroundStyle(RinkPalette.inkTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -253,24 +250,14 @@ struct HotColdView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// Weeks read better than dates in a sport that plays once a week, but the
-    /// rollup only started storing them recently, so the date is the fallback.
+    /// The last game date the loaded window covers.
     private var throughLabel: String? {
-        if let week = viewModel.recentFormThroughWeek(
+        guard let asOf = viewModel.recentFormAsOf(
             window: viewModel.recentWindow,
             season: selectedSeason,
             phase: selectedPhase
-        ) {
-            return "Through Week \(week)"
-        }
-        if let asOf = viewModel.recentFormAsOf(
-            window: viewModel.recentWindow,
-            season: selectedSeason,
-            phase: selectedPhase
-        ) {
-            return "Through \(asOf.formatted(DataCoverage.gameDayStyle))"
-        }
-        return nil
+        ) else { return nil }
+        return "Through \(asOf.formatted(DataCoverage.gameDayStyle))"
     }
 
     /// Two seasons are offered, and the older one is Pro: the free tier is
@@ -288,12 +275,12 @@ struct HotColdView: View {
     /// Matches the persistent underlined position row at the top of Stats.
     private var positionSelector: some View {
         RinkTabs(
-            tabs: TrendSide.allCases.map(\.shortLabel),
+            tabs: TrendSide.allCases.map(\.label),
             selected: Binding(
-                get: { side.shortLabel },
-                set: { rawValue in
+                get: { side.label },
+                set: { label in
                     guard let next = TrendSide.allCases.first(where: {
-                        $0.shortLabel == rawValue
+                        $0.label == label
                     }) else { return }
                     side = next
                 }
@@ -403,7 +390,7 @@ struct HotColdView: View {
                         // Early on there is no movement yet, and the screen
                         // says so above; sell what is actually behind the blur.
                         headline: isEarlySeason
-                            ? "See the full board: every player's last \(viewModel.recentWindow.rawValue) weeks at every position, with movement from Week \(movementStartWeek)"
+                            ? "See the full board: every player's last \(viewModel.recentWindow.rawValue) weeks at every position, with movement once two windows of games exist"
                             : "See the full board: every position ranked by how far they've moved",
                         trigger: .recentForm
                     )
@@ -455,7 +442,7 @@ struct HotColdView: View {
 
     /// Names the group as well as the direction. Baseball's board covers one of
     /// two sides, so "in the league" is unambiguous there; here it's one of
-    /// five position groups and the group is the more useful half of the title.
+    /// three cohorts and the group is the more useful half of the title.
     private var boardTitle: String {
         let direction = showingCold ? "COOLING OFF" : "HEATING UP"
         return "\(side.label.uppercased()) · \(direction)"
@@ -530,10 +517,8 @@ struct HotColdView: View {
 
     private func volumeText(_ form: RecentForm) -> String {
         let games = form.games == 1 ? "1 game" : "\(form.games) games"
-        switch form.playerType {
-        case "qb", "rb", "wr", "te": return "\(games) · \(form.plays) plays"
-        default: return games
-        }
+        if form.playerType == "g" { return "\(games) · \(form.touches) SA" }
+        return "\(games) · \(form.plays) min"
     }
 
     private func section(title: String, forms: [RecentForm], ranked: Bool) -> some View {
@@ -590,13 +575,12 @@ struct HotColdView: View {
                             .foregroundStyle(Color.yellow)
                     }
                 }
-                // THEN to NOW, plus the weeks it covers. Weeks rather than a
-                // game count because in a weekly sport "Weeks 15-17" says both
-                // how many games and when they were.
+                // THEN to NOW, plus the dates it covers: "Sep 24 - Oct 7" says
+                // both how long and when.
                 if let then, let now {
                     Text([
                         "\(metric.format(then)) → \(metric.format(now))",
-                        form.weekRangeLabel ?? "\(form.games)G",
+                        form.weekRangeLabel ?? "\(form.games) GP",
                     ].joined(separator: " · "))
                         .font(RinkType.micro)
                         .foregroundStyle(RinkPalette.inkTertiary)
@@ -654,7 +638,7 @@ struct HotColdView: View {
                 Text(teaser.name)
                     .font(RinkType.bodyBold)
                     .foregroundStyle(RinkPalette.ink)
-                Text("\(metric.format(teaser.then)) → \(metric.format(teaser.now)) · Weeks \(teaser.startWeek)-\(teaser.endWeek)")
+                Text("\(metric.format(teaser.then)) → \(metric.format(teaser.now)) · Last \(viewModel.recentWindow.rawValue) weeks")
                     .font(RinkType.micro)
                     .foregroundStyle(RinkPalette.inkTertiary)
             }
@@ -677,8 +661,6 @@ struct HotColdView: View {
         let initials: String
         let then: Double
         let now: Double
-        let startWeek: Int
-        let endWeek: Int
     }
 
     /// Enough plausible rows to overflow the tallest phone behind the gate; the
@@ -696,9 +678,9 @@ struct HotColdView: View {
     /// The seed goes at the *front* of the hashed string, not the end, and that
     /// is load-bearing. `stableSeed` is a rolling `h*31 + c` hash, so a
     /// character appended last contributes a value of 0-127 to a number spread
-    /// across 100,003: switching the window from 3 to 5 games moved every
+    /// across 100,003: switching the window from 2 to 4 weeks moved every
     /// player's seed by the same +2 and the sort came out in exactly the same
-    /// order. Only the week labels changed, under a first row that had visibly
+    /// order. Only the window labels changed, under a first row that had visibly
     /// re-ranked. Put the seed first and each of its characters is multiplied
     /// by 31 once per following character, so one digit reshuffles everything.
     private var teaserRows: [TeaserRow] {
@@ -716,15 +698,15 @@ struct HotColdView: View {
         } else {
             // Pre-load, or a season with no roster yet.
             let placeholders = [
-                ("Player One", "KC", "PO"), ("Player Two", "BUF", "PT"),
-                ("Player Three", "PHI", "PT"), ("Player Four", "SF", "PF"),
-                ("Player Five", "DAL", "PF"), ("Player Six", "BAL", "PS"),
-                ("Player Seven", "DET", "PS"), ("Player Eight", "GB", "PE"),
-                ("Player Nine", "MIA", "PN"), ("Player Ten", "SEA", "PT"),
-                ("Player Eleven", "CIN", "PE"), ("Player Twelve", "MIN", "PT"),
-                ("Player Thirteen", "LAC", "PT"), ("Player Fourteen", "HOU", "PF"),
-                ("Player Fifteen", "TB", "PF"), ("Player Sixteen", "PIT", "PS"),
-                ("Player Seventeen", "DEN", "PS"), ("Player Eighteen", "NYJ", "PE"),
+                ("Player One", "SEA", "PO"), ("Player Two", "BOS", "PT"),
+                ("Player Three", "TOR", "PT"), ("Player Four", "EDM", "PF"),
+                ("Player Five", "COL", "PF"), ("Player Six", "NYR", "PS"),
+                ("Player Seven", "DET", "PS"), ("Player Eight", "VGK", "PE"),
+                ("Player Nine", "FLA", "PN"), ("Player Ten", "DAL", "PT"),
+                ("Player Eleven", "CAR", "PE"), ("Player Twelve", "MIN", "PT"),
+                ("Player Thirteen", "WPG", "PT"), ("Player Fourteen", "TBL", "PF"),
+                ("Player Fifteen", "VAN", "PF"), ("Player Sixteen", "PIT", "PS"),
+                ("Player Seventeen", "NJD", "PS"), ("Player Eighteen", "LAK", "PE"),
             ]
             names = placeholders
                 .map { ($0, Self.stableSeed("\(seed)-\($0.0)")) }
@@ -732,14 +714,16 @@ struct HotColdView: View {
                 .map { $0.0 }
         }
         // Centre and spread the invented values on the metric's own scale, so a
-        // percentage reads 58%→66% and a yardage total reads 240→380.
+        // percentage reads 9%→15%, a rate 2.4→3.6 and a save percentage
+        // .901→.926.
         let scale: Double
         let spread: Double
         switch metric.decimals {
-        case 0:  scale = 280;  spread = 130
-        case 2:  scale = 0.12; spread = 0.22
-        default: scale = metric.unit == "%" ? 58 : 7.2
-                 spread = metric.unit == "%" ? 12 : 2.4
+        case 0:  scale = 14;    spread = 8
+        case 2:  scale = 2.4;   spread = 1.2
+        case 3:  scale = 0.905; spread = 0.03
+        default: scale = metric.unit == "%" ? 10 : 1.8
+                 spread = metric.unit == "%" ? 5 : 1.2
         }
         // The column has to move with the controls as well as the cast. A
         // reshuffled set of faces over an identical ladder of numbers (the same
@@ -750,11 +734,9 @@ struct HotColdView: View {
         let base = scale * (0.9 + 0.2 * drift)
         let swing = spread * (0.85 + 0.3 * drift)
         // Cooling off inverts the movement, and a lower-is-better metric
-        // inverts it again: heating up on INT% means the number falls.
+        // inverts it again: heating up on GAA means the number falls.
         let improving = !showingCold
         let sign: Double = (improving != metric.lowerIsBetter) ? 1 : -1
-        let window = viewModel.recentWindow.rawValue
-
         return names.enumerated().map { index, who in
             // Per-row wobble, bounded well inside the 0.045 decay step so the
             // board still reads as ranked: rank one always moved furthest.
@@ -762,15 +744,12 @@ struct HotColdView: View {
             let decay = max(0.15, 1.0 - Double(index) * 0.045 + wobble)
             let move = swing * decay
             let then = base - sign * move / 2
-            let endWeek = 18 - (index + Self.stableSeed(seed)) % 3
             return TeaserRow(
                 name: who.0,
                 team: who.1,
                 initials: who.2,
                 then: then,
-                now: then + sign * move,
-                startWeek: max(1, endWeek - window + 1),
-                endWeek: endWeek
+                now: then + sign * move
             )
         }
     }

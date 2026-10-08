@@ -3,9 +3,9 @@ import os
 @preconcurrency import RevenueCat
 
 enum StatScoutProduct {
-    static let lifetime = "com.jackwallner.football.pro"
-    static let yearly = "com.jackwallner.football.pro.yearly"
-    static let monthly = "com.jackwallner.football.pro.monthly"
+    static let lifetime = "com.jackwallner.hockey.pro"
+    static let yearly = "com.jackwallner.hockey.pro.yearly"
+    static let monthly = "com.jackwallner.hockey.pro.monthly"
     static let all: [String] = [yearly, monthly, lifetime]
 
     static func packageType(for identifier: String) -> PackageType? {
@@ -28,11 +28,12 @@ enum StatScoutProduct {
 }
 
 enum RevenueCatConfig {
-    // RevenueCat "Football" project (proj9c303632), App Store app app039a312379.
+    // RevenueCat key still points at the football project until the hockey
+    // RevenueCat project exists; swap it with the hockey public SDK key.
     // Public SDK key (appl_...) - used only in device Release / TestFlight / App
     // Store builds; simulator runs skip Purchases.configure (see configureIfNeeded).
     static let apiKey = "appl_dasBLRrgkhHOPdqYKQMmsLLzEJI"
-    static let proEntitlement = "Football Pro"
+    static let proEntitlement = "pro"
     static let fallbackEntitlement = "pro"
 }
 
@@ -97,60 +98,35 @@ enum StatScoutSeason {
 
     /// Start date for a rolling game-log window on `season`.
     ///
-    /// The team cards slice the last 3 / 5 / 8 games out of a wide pull of game
+    /// The team cards slice the last 2 / 4 / 8 weeks out of a wide pull of game
     /// logs, and they used to ask for "the last 120 days" measured from *today*.
-    /// That only works while the season is being played. An NFL season ends in
-    /// February and the next does not kick off until September, so from roughly
-    /// March onward the window reached back into an empty stretch of calendar,
+    /// That only works while the season is being played. An NHL season ends in
+    /// June and the next does not open until October, so from roughly
+    /// July onward the window reached back into an empty stretch of calendar,
     /// the fetch returned nothing, and every Recent control on a team page
-    /// answered "No offense data in the last 5 games" - for the season the app
+    /// answered "No skater data in the last 4 weeks" - for the season the app
     /// was otherwise happily showing season totals for. The same held for any
     /// past season all year round.
     ///
     /// So the window is anchored to the end of the season rather than to now:
-    /// whichever of the two is earlier. A season named `N` runs from September
-    /// `N` to mid-February `N + 1`, so the anchor is capped at 1 March `N + 1`,
+    /// whichever of the two is earlier. A season named `N` runs from October
+    /// `N` to mid-June `N + 1`, so the anchor is capped at 1 July `N + 1`,
     /// safely past the last possible game and cheap to compute without asking
     /// the database when the season actually finished. `days` stays the payload
     /// budget it always was - about a season's worth of weeks, enough to slice
     /// the longest window from.
     static func gameLogWindowStart(season: Int, days: Int = 120, now: Date = .now) -> Date {
         let calendar = Calendar.current
-        let seasonEnd = calendar.date(from: DateComponents(year: season + 1, month: 3, day: 1)) ?? now
+        let seasonEnd = calendar.date(from: DateComponents(year: season + 1, month: 7, day: 1)) ?? now
         let anchor = min(now, seasonEnd)
         return calendar.date(byAdding: .day, value: -days, to: anchor) ?? anchor
-    }
-}
-
-/// How a season reads in the UI. One place, because the sentinel has to render
-/// as "All Time" in the menu, the nav pill, page titles and share text alike -
-/// and `String(0)` leaking into any one of them is an obvious bug.
-enum SeasonLabel {
-    /// "All since 2000" rather than "All Time".
-    ///
-    /// The rollup covers `earliest` onward, and nflverse only publishes player
-    /// stats back to 1999 - so "All Time" claimed a century of football the
-    /// data does not have, and put Jim Brown's absence down to a bug rather
-    /// than to a start date. Naming the start date is both honest and more
-    /// useful: it tells you what you are about to compare against.
-    static func text(_ season: Int) -> String {
-        StatScoutSeason.isAllTime(season)
-            ? "All since \(StatScoutSeason.earliest)"
-            : String(season)
-    }
-
-    /// Longer form for prose and subtitles ("2024 Regular Season").
-    static func text(_ season: Int, phase: SeasonPhase) -> String {
-        StatScoutSeason.isAllTime(season)
-            ? text(season) + " · " + phase.label
-            : String(season) + " " + phase.label
     }
 }
 
 enum StatScoutLegal {
     /// Apple's standard EULA - required on the paywall unless a custom one is hosted.
     static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    static let privacyURL = URL(string: "https://jackwallner.github.io/football/privacy-policy.html")!
+    static let privacyURL = URL(string: "https://jackwallner.github.io/hockey/privacy-policy.html")!
 }
 
 /// Session-scoped cap so the same contextual paywall can't be re-presented
@@ -702,7 +678,7 @@ final class StoreService: NSObject, ObservableObject {
         isLapsed ? .winback : .upgrade
     }
 
-    private let logger = Logger(subsystem: "com.jackwallner.football", category: "Store")
+    private let logger = Logger(subsystem: "com.jackwallner.hockey", category: "Store")
     private var isConfigured = false
 
     private override init() {}
@@ -1001,7 +977,7 @@ enum RevenueCatProbe {
     static let testStoreKey = "test_FtMVMMBAPeuKgtivRHTXSamfcEA"
 
     static var appUserID: String {
-        ProcessInfo.processInfo.environment["RC_PROBE_USER"] ?? "funnel-probe-football"
+        ProcessInfo.processInfo.environment["RC_PROBE_USER"] ?? "funnel-probe-hockey"
     }
 
     /// Also run a purchase against the Test Store, so the `converted_*` half of

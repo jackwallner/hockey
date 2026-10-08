@@ -360,18 +360,17 @@ final class DashboardViewModel {
     ///
     /// Two screens are excluded, for different reasons.
     ///
-    /// **Trends** ranks the last 3/5/8 *weeks* against the span before them,
+    /// **Trends** ranks the last 2/4/8 *weeks* against the span before them,
     /// which is a question about one season in progress. There is no such thing
-    /// as the last five weeks of all time, and the rolling-window table has no
+    /// as the last four weeks of all time, and the rolling-window table has no
     /// rows under the sentinel, so offering it there would only ever produce an
     /// empty board.
     ///
     /// **Teams** is the subtler one. A career row carries whichever team the
     /// player *last* played for, because that is what a career aggregate can
-    /// know - the rollup has no per-franchise split. So "Kansas City, All Time"
+    /// know - the rollup has no per-franchise split. So "Edmonton, All Time"
     /// would list players who happened to finish there, crediting them with
-    /// production earned elsewhere, and would file Joe Montana under the Chiefs
-    /// rather than the 49ers. That is not franchise all-time leaders; it just
+    /// production earned elsewhere. That is not franchise all-time leaders; it just
     /// looks enough like it to be believed. Until the pipeline stores a
     /// per-team career split, not offering it is the honest answer.
     var seasonsExcludingAllTime: [Int] {
@@ -405,12 +404,10 @@ final class DashboardViewModel {
 
     // MARK: - Enrichment
 
-    /// Bio, contract, snaps and injury for the live season, keyed by player.
+    /// Bio and ice time for the live season, keyed by player.
     /// Optional context: empty until `player_profiles` answers, and every
     /// screen that reads it leaves the line out rather than waiting.
-    private(set) var profiles: [Int: PlayerProfile] = [:] {
-        didSet { contractValueCache = nil }
-    }
+    private(set) var profiles: [Int: PlayerProfile] = [:]
     /// Power ratings for the live season, keyed by normalized team.
     private(set) var teamRatings: [String: TeamRating] = [:]
     /// Projected margins for unplayed games, keyed by game id.
@@ -438,69 +435,6 @@ final class DashboardViewModel {
     /// Division and league standings from posted finals, every club present.
     var standings: [String: StandingsRow] {
         StandingsRow.build(from: games, teams: leagueTeamAbbreviations)
-    }
-
-    /// The first regular-season week a club has not finished yet, which is the
-    /// week its injury report is about.
-    func upcomingWeek(forTeam team: String) -> Int? {
-        games.filter { $0.seasonPhase == .regular && !$0.isFinal && $0.involves(team) }
-            .map(\.week)
-            .min()
-    }
-
-    /// The player's game status for his club's next game, or nil when he is
-    /// not on the report or the report is about a game already played.
-    func injuryReport(for player: Player) -> InjuryReport? {
-        guard player.season == freeSeason, player.seasonPhase == .regular else { return nil }
-        return InjuryReport.current(
-            from: profile(for: player),
-            upcomingWeek: upcomingWeek(forTeam: player.team)
-        )
-    }
-
-    // MARK: - Contract value
-
-    @ObservationIgnored private var contractValueCache: (key: String, values: [Int: ContractValue])?
-
-    /// Production against pay for the selected season's offensive players.
-    /// Only the live season has contracts: a deal signed in 2026 says nothing
-    /// about what a player cost in 2019.
-    var contractValues: [Int: ContractValue] {
-        guard selectedSeason == freeSeason, selectedPhase == .regular, !profiles.isEmpty else { return [:] }
-        let key = "\(selectedSeason)-\(displayedDataRevision ?? "none")-\(seasonPlayers.count)"
-        if let cache = contractValueCache, cache.key == key { return cache.values }
-        let values = ContractValue.compute(
-            players: seasonPlayers,
-            profiles: profiles,
-            isQualified: { [unowned self] player in
-                self.isPlayerQualified(player, in: player.positionGroup.primaryCategory)
-            }
-        )
-        contractValueCache = (key, values)
-        return values
-    }
-
-    func contractValue(for player: Player) -> ContractValue? {
-        guard player.season == freeSeason, player.seasonPhase == .regular else { return nil }
-        if player.season == selectedSeason, selectedPhase == .regular {
-            return contractValues[player.playerId]
-        }
-        return nil
-    }
-
-    /// Players on the Value board: the selected position, qualified, with a
-    /// contract, best value first (or worst, with the direction flipped).
-    func contractValueBoard(descending: Bool) -> [(player: Player, value: ContractValue)] {
-        let values = contractValues
-        return seasonPlayers
-            .filter { $0.positionGroup == selectedPosition && matchesSelectedConference($0) }
-            .compactMap { player in values[player.playerId].map { (player, $0) } }
-            .sorted {
-                if $0.value.score != $1.value.score {
-                    return descending ? $0.value.score > $1.value.score : $0.value.score < $1.value.score
-                }
-                return $0.player.name < $1.player.name
-            }
     }
 
     /// Loads the schedule, at most once a minute unless forced. Failures keep
@@ -573,8 +507,8 @@ final class DashboardViewModel {
         return mine.first { !$0.isFinal } ?? mine.last
     }
 
-    /// Regular-season record from posted finals, "2-1" or "2-1-1". When
-    /// `through` is given, only games kicked off up to and including it count.
+    /// Regular-season record from posted finals, "W-L-OTL". When `through`
+    /// is given, only games started up to and including it count.
     func record(forTeam team: String, through game: Game? = nil) -> String? {
         let cutoff = game?.kickoff ?? .distantFuture
         let finals = games.filter {
@@ -585,8 +519,8 @@ final class DashboardViewModel {
         let results = finals.compactMap { $0.result(for: team) }
         let wins = results.filter { $0 == "W" }.count
         let losses = results.filter { $0 == "L" }.count
-        let ties = results.filter { $0 == "T" }.count
-        return ties > 0 ? "\(wins)-\(losses)-\(ties)" : "\(wins)-\(losses)"
+        let otLosses = results.filter { $0 == "OTL" }.count
+        return "\(wins)-\(losses)-\(otLosses)"
     }
 
     /// Every game on a club's schedule this season, in kickoff order.
@@ -675,19 +609,6 @@ final class DashboardViewModel {
         recentFormRowsByWindow[window.rawValue]?
             .filter { $0.season == season && $0.seasonPhase == phase }
             .compactMap(\.asOf)
-            .max()
-    }
-
-    /// The latest week any loaded row reaches, so a board can say "through
-    /// Week 18" without every row carrying its own caption.
-    func recentFormThroughWeek(
-        window: TrendWindow,
-        season: Int,
-        phase: SeasonPhase
-    ) -> Int? {
-        recentFormRowsByWindow[window.rawValue]?
-            .filter { $0.season == season && $0.seasonPhase == phase }
-            .compactMap(\.endWeek)
             .max()
     }
 
@@ -826,7 +747,7 @@ final class DashboardViewModel {
     /// Clubs whose name or abbreviation matches the current search.
     ///
     /// Searching used to only ever narrow the list of players. Someone typing
-    /// "chiefs" is usually after Kansas City, so the club itself is now a
+    /// "oilers" is usually after Edmonton, so the club itself is now a
     /// result: one tap to the team page, with the roster still filtered
     /// underneath if that's what they wanted.
     var searchedTeams: [String] {
@@ -912,33 +833,16 @@ final class DashboardViewModel {
         }
     }
 
-    /// Whether a player clears the bar, whatever the filter says. Defenders
-    /// with snap counts qualify on snap share; everyone else on the feed's own
-    /// prorated flag.
+    /// Whether a player clears the bar, whatever the filter says: the feed's
+    /// own prorated flag.
     func isPlayerQualified(_ player: Player, in category: MetricCategory?) -> Bool {
-        if let snapQualified = defensiveSnapQualification(player) { return snapQualified }
-        return Self.hasQualifyingMetric(player, in: category)
+        Self.hasQualifyingMetric(player, in: category)
     }
 
-    /// Per metric: a receiver over the target bar for Catch% is not thereby
-    /// qualified for a Separation board he has no Next Gen sample on.
+    /// Per metric: a skater over the shot bar for Sh% is not thereby qualified
+    /// for a play-driving board he has no 5-on-5 sample on.
     func isQualified(_ player: Player, metric: Metric) -> Bool {
-        if let snapQualified = defensiveSnapQualification(player) { return snapQualified }
-        return metric.qualified != false
-    }
-
-    /// A defender has to play a quarter of his club's defensive snaps.
-    ///
-    /// The feed's defensive bar is games played, which admits every
-    /// special-teamer who stepped on the field. Nil when there is no snap line
-    /// (a past season, or before the first snap-count publish), which falls
-    /// back to the feed's flag.
-    static let defensiveSnapShareMinimum = 0.25
-
-    private func defensiveSnapQualification(_ player: Player) -> Bool? {
-        guard player.isDefensivePlayer,
-              let share = profile(for: player)?.defenseSnapShare else { return nil }
-        return share >= Self.defensiveSnapShareMinimum
+        metric.qualified != false
     }
 
     /// The board's gate: qualified for the metric it is ranked by, or for any
@@ -990,14 +894,9 @@ final class DashboardViewModel {
         return sorted.filter { !isSmall($0) } + sorted.filter(isSmall)
     }
 
-    /// Board subtitle volume: "16 att", "23 tgt", "142 snaps".
+    /// Board subtitle volume: "412 min", "41 SOG", "612 SA".
     func volumeCaption(for player: Player, category: MetricCategory?) -> String? {
-        let category = category ?? player.primaryCategory
-        if category == .defense,
-           let snaps = profile(for: player)?.defenseSnaps, snaps > 0 {
-            return "\(snaps) snaps"
-        }
-        return player.volumeCaption(for: category)
+        player.volumeCaption(for: category ?? player.primaryCategory)
     }
 
     /// Rank by the backend's direction-correct percentile, then use the raw

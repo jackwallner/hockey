@@ -145,14 +145,13 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
 /// formatter for a window value.
 ///
 /// The leaderboard, the team roster and the team cards all need to ask "what is
-/// this player's Y/A over the last five games"; each had grown its own private
+/// this player's P/60 over the last four weeks"; each had grown its own private
 /// copy of the mapping, which is how a metric ends up trending on one screen
 /// and blank on the next.
 ///
 /// Returns nil for the season metrics the rollup has no column for. Those come
-/// from Next Gen Stats aggregates with no per-game denominator (Aggressiveness,
-/// Intended Air Yds, Target Share, WOPR) or from play-by-play the weekly feed
-/// doesn't carry (Explosive%). A metric with no rollup key simply gets no
+/// from on-ice shares with no per-game denominator (xGF%, CF%, Rel xGF%)
+/// that need a shift-level feed the nightly job doesn't carry. A metric with no rollup key simply gets no
 /// recent bar, which is the same rule baseball uses for the metrics Savant
 /// publishes no season percentile for.
 enum RecentMetricKey {

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Last 7 / 15 / 30 day rolling form for a single player. Pro-gated: free
+/// Last 2 / 4 / 8 week rolling form for a single player. Pro-gated: free
 /// users see a blurred static teaser and an upgrade CTA - no game-log fetch.
 /// Pro users load game logs once, then compute window aggregates client-side
 /// so we don't pay a round-trip when the user switches windows.
@@ -23,29 +23,28 @@ struct RecentFormCard: View {
     @State private var logs: [PlayerGameLog] = []
     @State private var loading = false
     @State private var loadError: String?
-    @State private var windowGames: Int = 4
+    @State private var windowWeeks: Int = 4
     @State private var curves: LeaguePercentileCurves?
 
     /// The phase the card's games come from - the profile is scoped to
     /// whichever phase the user arrived on, and the player row carries it.
     private var seasonPhase: SeasonPhase { player.seasonPhase }
 
-    private var category: MetricCategory { player.primaryCategory }
-    private var isDefense: Bool { category == .defense }
+    private var isGoalie: Bool { player.isGoalie }
 
-    /// Smallest play count we'll consider trustworthy. Anything below shows the
-    /// numbers but tags them as "small sample".
-    private var smallSamplePlaysThreshold: Int { 10 }
+    /// Smallest ice time (minutes) we'll consider trustworthy. Anything below
+    /// shows the numbers but tags them as "small sample".
+    private var smallSamplePlaysThreshold: Int { isGoalie ? 100 : 60 }
 
     private var windowLogs: [PlayerGameLog] {
-        Array(logs.sorted { $0.gameDate > $1.gameDate }.prefix(windowGames))
+        RecentFormWindow.logs(logs, weeks: windowWeeks)
     }
 
     private var window: RecentFormWindow? {
         guard !windowLogs.isEmpty else { return nil }
         return RecentFormWindow.build(
-            label: "Last \(windowGames)",
-            span: windowGames,
+            label: "Last \(windowWeeks) weeks",
+            span: windowWeeks,
             logs: windowLogs
         )
     }
@@ -71,9 +70,9 @@ struct RecentFormCard: View {
     private func rebuildCurves() {
         guard store.isPro else { return }
         curves = LeaguePercentileCurves(
-            players: leaguePlayers,
-            categories: [category],
-            labels: category.metricPriorityOrder
+            players: leaguePlayers.filter { $0.positionGroup == player.positionGroup },
+            categories: isGoalie ? [.goaltending] : [.scoring, .shotQuality],
+            labels: RecentFormWindow.recentLabels(goalie: isGoalie)
         )
     }
 
@@ -120,8 +119,8 @@ struct RecentFormCard: View {
         RinkSegmented(
             segments: RecentWindow.allCases.map { .init(value: $0, label: $0.segmentLabel) },
             selection: Binding(
-                get: { RecentWindow(rawValue: windowGames) ?? .four },
-                set: { windowGames = $0.rawValue }
+                get: { RecentWindow(rawValue: windowWeeks) ?? .four },
+                set: { windowWeeks = $0.rawValue }
             )
         )
     }
@@ -137,7 +136,7 @@ struct RecentFormCard: View {
                     .disabled(true)
                     .allowsHitTesting(false)
                 BlurGateUnlock(
-                    headline: "See last 3 / 5 / 8 game form for any player",
+                    headline: "See last 2 / 4 / 8 week form for any player",
                     trigger: .recentForm
                 )
             }
@@ -148,24 +147,24 @@ struct RecentFormCard: View {
     /// These are illustrative bars in the season percentile format so the blur
     /// reads as "real recent-form bars" without paying the network/battery cost.
     private var teaserBody: some View {
-        let sample: [Metric] = isDefense
+        let sample: [Metric] = isGoalie
             ? [
-                Metric(id: "t_tackles", label: "Tackles", value: "22", percentile: 94, category: .defense),
-                Metric(id: "t_sacks",   label: "Sacks",   value: "3",  percentile: 88, category: .defense),
-                Metric(id: "t_int",     label: "INT",     value: "1",  percentile: 81, category: .defense),
-                Metric(id: "t_pd",      label: "PD",      value: "4",  percentile: 76, category: .defense),
+                Metric(id: "t_sv", label: "SV%", value: ".931", percentile: 94, category: .goaltending),
+                Metric(id: "t_gsax", label: "GSAx/60", value: "0.42", percentile: 88, category: .goaltending),
+                Metric(id: "t_gaa", label: "GAA", value: "2.14", percentile: 81, category: .goaltending),
+                Metric(id: "t_hd", label: "HD SV%", value: ".858", percentile: 76, category: .goaltending),
             ]
             : [
-                Metric(id: "t_yds", label: "Rec Yds", value: "312", percentile: 94, category: category),
-                Metric(id: "t_rec", label: "Rec",     value: "24",  percentile: 88, category: category),
-                Metric(id: "t_td",  label: "Rec TD",  value: "3",   percentile: 81, category: category),
-                Metric(id: "t_yac", label: "YAC",     value: "6.1", percentile: 76, category: category),
+                Metric(id: "t_p60", label: "P/60", value: "3.42", percentile: 94, category: .scoring),
+                Metric(id: "t_ixg", label: "ixG/60", value: "1.08", percentile: 88, category: .shotQuality),
+                Metric(id: "t_sh60", label: "Shots/60", value: "14.2", percentile: 81, category: .shotQuality),
+                Metric(id: "t_shp", label: "Sh%", value: "14.8%", percentile: 76, category: .scoring),
             ]
         return VStack(spacing: 0) {
             HStack(spacing: 12) {
-                summaryStat(label: "G", value: "3")
-                summaryStat(label: "Plays", value: "48")
-                if !isDefense { summaryStat(label: "Touches", value: "31") }
+                summaryStat(label: "GP", value: "7")
+                summaryStat(label: "TOI", value: isGoalie ? "420" : "148")
+                summaryStat(label: isGoalie ? "SA" : "Shot Att", value: isGoalie ? "198" : "52")
                 Spacer(minLength: 0)
             }
             .padding(RinkGeo.padInline)
@@ -212,18 +211,16 @@ struct RecentFormCard: View {
         case .offline, .failed:
             return "Recent game data is unavailable right now"
         default:
-            return "No games in the last \(windowGames) games"
+            return "No games in the last \(windowWeeks) weeks"
         }
     }
 
     private func statsBody(window w: RecentFormWindow) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                summaryStat(label: "G", value: "\(w.games)")
-                summaryStat(label: "Plays", value: "\(w.plays)")
-                if !isDefense {
-                    summaryStat(label: "Touches", value: "\(w.touches)")
-                }
+                summaryStat(label: "GP", value: "\(w.games)")
+                summaryStat(label: "TOI", value: "\(w.plays)")
+                summaryStat(label: isGoalie ? "SA" : "Shot Att", value: "\(w.touches)")
                 Spacer(minLength: 0)
                 if w.plays < smallSamplePlaysThreshold {
                     Text("SMALL SAMPLE")
@@ -272,53 +269,28 @@ struct RecentFormCard: View {
         }
     }
 
-    /// Recent-window metrics mapped to `Metric` so they render with the season
+    /// Recent-window rates mapped to `Metric` so they render with the season
     /// `MetricBar`. The percentile is interpolated from the league season curve
     /// (so the recent bar sits on the same ruler as the season card); the value
-    /// is the recent-window number. Skips metrics with no window data or no
-    /// curve so we never draw a bar we can't place.
-    /// Per-game log keys mapped to the season metric label they overlay.
-    private func recentSpecs(for category: MetricCategory) -> [(key: String, label: String, seasonLabel: String, format: String)] {
-        switch category {
-        case .passing:
-            return [
-                ("passing_yards", "Pass Yds", "Pass Yds", "%.0f"),
-                ("passing_tds",   "Pass TD",  "Pass TD",  "%.0f"),
-            ]
-        case .rushing:
-            return [
-                ("rushing_yards", "Rush Yds", "Rush Yds", "%.0f"),
-                ("rushing_tds",   "Rush TD",  "Rush TD",  "%.0f"),
-            ]
-        case .receiving:
-            return [
-                ("receiving_yards", "Rec Yds", "Rec Yds", "%.0f"),
-                ("receptions",      "Rec",     "Rec",     "%.0f"),
-                ("receiving_tds",   "Rec TD",  "Rec TD",  "%.0f"),
-            ]
-        case .defense:
-            return [
-                ("tackles",           "Tackles", "Tackles", "%.0f"),
-                ("def_sacks",         "Sacks",   "Sacks",   "%.1f"),
-                ("def_interceptions", "INT",     "INT",     "%.0f"),
-            ]
+    /// is rebuilt from the window's summed counts. Skips metrics with no window
+    /// data or no curve so we never draw a bar we can't place.
+    private func recentMetricRows(window w: RecentFormWindow) -> [Metric] {
+        RecentFormWindow.recentLabels(goalie: isGoalie).compactMap { label -> Metric? in
+            guard let v = w.value(forSeasonLabel: label),
+                  let pct = curves?.curve(for: label)?.percentile(for: v) else { return nil }
+            return Metric(
+                id: "recent-\(label)",
+                label: label,
+                value: RecentMetricKey.format(v, label: label),
+                percentile: pct,
+                category: Self.category(of: label, goalie: isGoalie)
+            )
         }
     }
 
-    private func recentMetricRows(window w: RecentFormWindow) -> [Metric] {
-        let specs: [(key: String, label: String, seasonLabel: String, format: String)] = recentSpecs(for: category)
-
-        return specs.compactMap { spec -> Metric? in
-            guard let v = w.metrics[spec.key],
-                  let pct = curves?.curve(for: spec.seasonLabel)?.percentile(for: v) else { return nil }
-            return Metric(
-                id: spec.key,
-                label: spec.label,
-                value: String(format: spec.format, v),
-                percentile: pct,
-                category: category
-            )
-        }
+    private static func category(of label: String, goalie: Bool) -> MetricCategory {
+        if goalie { return .goaltending }
+        return ["ixG/60", "Shots/60"].contains(label) ? .shotQuality : .scoring
     }
 
     private func load() async {

@@ -116,8 +116,8 @@ struct Player: Identifiable, Codable, Hashable, Sendable {
     var overallPercentile: Int {
         let metrics = rankedMetrics
         guard !metrics.isEmpty else { return 0 }
-        // Players who span more than one category (e.g. a rushing QB with both
-        // Passing and Rushing metrics) shouldn't have their headline number
+        // Players who span more than one category (e.g. a forward with Scoring,
+        // Shot Quality and Play Driving metrics) shouldn't have their headline number
         // diluted by averaging across unrelated skills - take the best category.
         let categories = Set(metrics.map(\.category))
         if categories.count > 1 {
@@ -236,10 +236,10 @@ struct Metric: Identifiable, Codable, Hashable, Sendable {
         "\(category.rawValue.lowercased().replacingOccurrences(of: " ", with: "-"))-\(label)"
     }
 
-    /// A traditional counting stat at zero: 0 INT, 0 sacks, 0 rushing TD.
+    /// A traditional counting stat at zero: 0 G, 0 SHG, 0 SO.
     ///
-    /// The feed ranks these with the midpoint of the tie, so at Week 3 the 674
-    /// defenders without an interception were all painted 47th percentile. A
+    /// The feed ranks these with the midpoint of the tie, so a week in, the 300
+    /// skaters without a goal were all painted 47th percentile. A
     /// player who has done none of a thing is not a 47th-percentile player at
     /// it, and when most of the league is tied at zero there is no honest rank
     /// at all. The value still shows; the bar, the number and the player's
@@ -266,9 +266,8 @@ struct StandardStat: Identifiable, Codable, Hashable, Sendable {
 
 /// Shared meaning for the compact values in `standard_stats`.
 ///
-/// The feed stores completions/attempts and receptions/targets as display-ready
-/// pairs. Treating the leading component as the numeric value made `8/11` rank
-/// as eight instead of a 72.7% catch rate in both profile and comparison UI.
+/// Most values are plain numbers. `TOI/GP` is a clock ("19:42") and ranks by
+/// its minutes; for a few stats the smaller number is the better one.
 enum StandardStatSemantics {
     enum Winner: Equatable {
         case left
@@ -277,20 +276,17 @@ enum StandardStatSemantics {
 
     static func numericValue(label: String, value: String) -> Double? {
         switch label.uppercased() {
-        case "CMP/ATT", "REC/TGT":
-            let parts = value.split(separator: "/", maxSplits: 1)
-            guard parts.count == 2,
-                  let numerator = metricNumericValue(String(parts[0])),
-                  let denominator = metricNumericValue(String(parts[1])),
-                  denominator > 0 else { return nil }
-            return numerator / denominator * 100
+        case "TOI/GP":
+            return MetricWeight.clockMinutes(value)
         default:
             return metricNumericValue(value)
         }
     }
 
+    /// Stats where fewer is better: goals against average, penalty minutes,
+    /// and a goalie's losses and overtime losses.
     static func higherIsBetter(label: String) -> Bool {
-        label.uppercased() != "INT"
+        !["GAA", "PIM", "L", "OT"].contains(label.uppercased())
     }
 
     /// Midpoint rank against every peer carrying the same stat. A single

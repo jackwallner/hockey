@@ -13,7 +13,7 @@ struct LeaguePercentileCurve {
     private let points: [(value: Double, pct: Double)]
 
     /// Two points are enough to interpolate between, and two is what an
-    /// opening week provides. The old floor of five drew no recent bar at all
+    /// opening night provides. The old floor of five drew no recent bar at all
     /// for a metric only a handful of players had yet, which read as a broken
     /// card rather than as a thin league sample.
     init?(points raw: [(Double, Double)]) {

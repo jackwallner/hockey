@@ -7,7 +7,7 @@ struct TeamScheduleRoute: Hashable {
 /// A team's game tonight, on its team page: the latest result or the next
 /// puck drop. It sits above the roster cards so the first thing a team page
 /// says is what happened on the ice. Under it: follow the club, open its schedule.
-struct TeamWeekGameCard: View {
+struct TeamGameCard: View {
     @Bindable var viewModel: DashboardViewModel
     let team: String
     @State private var favorites = FavoritesStore.shared
@@ -68,7 +68,7 @@ struct TeamWeekGameCard: View {
             if let line = game.resultLine(for: team) {
                 Text(line)
                     .font(RinkType.statMed)
-                    .foregroundStyle(game.result(for: team) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh)
+                    .foregroundStyle(game.result(for: team) == "W" ? RinkPalette.performanceHigh : RinkPalette.performanceLow)
             }
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
@@ -210,7 +210,7 @@ struct TeamScheduleView: View {
             if let line = game.resultLine(for: team) {
                 Text(line)
                     .font(RinkType.statMed)
-                    .foregroundStyle(game.result(for: team) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh)
+                    .foregroundStyle(game.result(for: team) == "W" ? RinkPalette.performanceHigh : RinkPalette.performanceLow)
             } else {
                 Text(game.status() == .upcoming ? (game.kickoff?.formatted(date: .omitted, time: .shortened) ?? "TBD") : "In progress")
                     .font(RinkType.small)
@@ -298,7 +298,7 @@ struct PlayerLastGameCard: View {
                 if let result = game?.resultLine(for: team) {
                     Text(result)
                         .font(RinkType.statSmall)
-                        .foregroundStyle(game?.result(for: team) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh)
+                        .foregroundStyle(game?.result(for: team) == "W" ? RinkPalette.performanceHigh : RinkPalette.performanceLow)
                 }
                 Spacer(minLength: 0)
             }
@@ -341,8 +341,8 @@ struct PlayerLastGameCard: View {
     }
 }
 
-/// Every game this season, newest first: week, opponent, result, and the
-/// player's line. The week-by-week view a 17-game sport is read in, free, and
+/// Every game this season, newest first: date, opponent, result, and the
+/// player's line. The night-by-night view an 82-game sport is read in, free, and
 /// the natural companion to the Pro rolling windows.
 struct PlayerGameLogCard: View {
     @Bindable var viewModel: DashboardViewModel
@@ -404,8 +404,8 @@ struct PlayerGameLogCard: View {
         }
     }
 
-    /// One entry per game; a player with two roles in a game (a rushing QB is
-    /// one row, a two-way player two) reads as one line.
+    /// One entry per game; a player with two rows in a game (a skater who
+    /// also appears as a goalie, say) reads as one line.
     static func entries(from logs: [PlayerGameLog], fallbackTeam: String) -> [Entry] {
         let grouped = Dictionary(grouping: logs) { $0.gameId ?? ISO8601DateFormatter().string(from: $0.gameDate) }
         return grouped.map { id, rows in
@@ -443,7 +443,7 @@ struct PlayerGameLogCard: View {
                     if let line = game?.resultLine(for: entry.team) {
                         Text(line)
                             .font(RinkType.statSmall)
-                            .foregroundStyle(game?.result(for: entry.team) == "L" ? RinkPalette.performanceLow : RinkPalette.performanceHigh)
+                            .foregroundStyle(game?.result(for: entry.team) == "W" ? RinkPalette.performanceHigh : RinkPalette.performanceLow)
                     }
                     Spacer(minLength: 0)
                     Text(entry.gameDate.formatted(DataCoverage.gameDayStyle))

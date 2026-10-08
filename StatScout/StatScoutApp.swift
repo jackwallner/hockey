@@ -462,12 +462,12 @@ struct OnboardingCards: View {
 
     private let pages: [OnboardingPage] = [
         OnboardingPage(
-            icon: "football.fill",
+            icon: "hockey.puck.fill",
             title: "Your Pocket\nScout",
-            description: "NFL percentile rankings built for a fast mobile view. Every player, every metric, updated soon after games finish.",
+            description: "NHL percentile rankings built for a fast mobile view. Every skater and goalie, every metric, updated after every night's games.",
             bullets: [
-                BulletItem(text: "Every player ranked from week one", icon: "checkmark.circle.fill", color: RinkPalette.turf),
-                BulletItem(text: "EPA, CPOE, YAC, RYOE, and more", icon: "checkmark.circle.fill", color: RinkPalette.turf),
+                BulletItem(text: "Every player ranked from opening night", icon: "checkmark.circle.fill", color: RinkPalette.turf),
+                BulletItem(text: "ixG, GAx, xGF%, GSAx, and more", icon: "checkmark.circle.fill", color: RinkPalette.turf),
                 BulletItem(text: "Fresh stats soon after every game", icon: "checkmark.circle.fill", color: RinkPalette.turf),
                 BulletItem(text: "No account or sign-up", icon: "checkmark.circle.fill", color: RinkPalette.turf)
             ]
@@ -490,9 +490,9 @@ struct OnboardingCards: View {
             description: "Season numbers tell you who's good. StatScout+ tells you who's good right now, and lets you prove it.",
             bullets: [
                 BulletItem(text: "Trends: the league ranked by form", icon: "flame.fill", color: RinkPalette.turf),
-                BulletItem(text: "Last 3 / 5 / 8 games, any player", icon: "chart.bar.fill", color: RinkPalette.turf),
+                BulletItem(text: "Last 2 / 4 / 8 weeks, any player", icon: "chart.bar.fill", color: RinkPalette.turf),
                 BulletItem(text: "Head-to-head on every percentile", icon: "person.2.fill", color: RinkPalette.turf),
-                BulletItem(text: "Seasons back to 2000, year over year", icon: "calendar.badge.clock", color: RinkPalette.turf)
+                BulletItem(text: "Seasons back to 2008-09, year over year", icon: "calendar.badge.clock", color: RinkPalette.turf)
             ]
         )
     ]
@@ -611,7 +611,7 @@ struct ConfigMissingView: View {
                 .font(RinkType.body)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
-            if let supportURL = URL(string: "https://jackwallner.github.io/football/support.html") {
+            if let supportURL = URL(string: "https://jackwallner.github.io/hockey/support.html") {
                 Link("Contact Support", destination: supportURL)
                     .buttonStyle(.borderedProminent)
                     .tint(RinkPalette.turf)

@@ -23,7 +23,7 @@ struct MetricRoute: Hashable {
 /// Drill-down from a traditional stat row to its league leaderboard.
 struct StandardStatRoute: Hashable {
     let stat: String
-    let category: StandardStatCategory
+    let position: PlayerPositionGroup
     var season: Int? = nil
     /// See `MetricRoute.phase`.
     var phase: SeasonPhase? = nil
@@ -232,7 +232,7 @@ struct RootTabView: View {
                 viewModel: viewModel,
                 isActive: selection == Tab.games.rawValue
             )
-                .navigationTitle("Games · \(String(viewModel.freeSeason))")
+                .navigationTitle("Games · \(SeasonLabel.display(viewModel.freeSeason))")
                 .navigationBarTitleDisplayMode(.inline)
                 .modifier(RinkNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
@@ -557,17 +557,17 @@ private struct StandardDestinations: ViewModifier {
                 StandardStatsLeaderboardScreen(
                     players: viewModel.players(forSeason: season, phase: phase),
                     initialStat: route.stat,
-                    initialCategory: route.category,
+                    initialPosition: route.position,
                     season: season
                 )
                     // The phase only earns title space when it isn't the
-                    // default: an inline title is tight, and "Pass Yds · 2024
-                    // Regular Season" sweeps into a truncation that "Pass Yds ·
-                    // 2024 Playoffs" is worth paying for.
+                    // default: an inline title is tight, and "P · 2024-25
+                    // regular season" sweeps into a truncation that "P ·
+                    // 2024-25 playoffs" is worth paying for.
                     .navigationTitle(
                         route.stat + " · " + (phase == .regular
-                            ? SeasonLabel.text(season)
-                            : SeasonLabel.text(season, phase: phase))
+                            ? SeasonLabel.display(season)
+                            : SeasonLabel.display(season, phase: phase))
                     )
                     .navigationBarTitleDisplayMode(.inline)
                     .modifier(RinkNavBar())

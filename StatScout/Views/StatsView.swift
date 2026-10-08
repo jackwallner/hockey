@@ -7,11 +7,11 @@ struct StatsView: View {
     @EnvironmentObject private var store: StoreService
 
     @AppStorage("stats.board") private var board: StatsBoard = .standard
-    /// Set when DEF, which has no advanced line until PFR publishes, pushed the
-    /// board to Standard, so leaving DEF puts Advanced back.
+    /// Set when a cohort with no advanced line pushed the board to Standard, so
+    /// leaving it puts Advanced back.
     @State private var fellBackFromAdvanced = false
     @State private var showingFollowing = false
-    @State private var standardStat = "Pass Yds"
+    @State private var standardStat = StandardStatCatalog.defaultStat(for: .forward)
     @State private var standardSortDescending = true
     @State private var paywallTrigger: PaywallTrigger?
 
@@ -99,8 +99,6 @@ struct StatsView: View {
             )
         case .bestWorst:
             BestWorstBoard(viewModel: viewModel, bindings: bindings)
-        case .contractValue:
-            ContractValueBoard(viewModel: viewModel, bindings: bindings)
         }
     }
 

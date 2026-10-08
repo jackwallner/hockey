@@ -32,11 +32,11 @@ struct SeasonMenu<Trigger: View>: View {
                     // so it can pitch that specific season rather than being
                     // hidden or inert.
                     if isLocked(season) {
-                        Label(SeasonLabel.text(season), systemImage: "crown.fill")
+                        Label(SeasonLabel.display(season), systemImage: "crown.fill")
                     } else if season == selected {
-                        Label(SeasonLabel.text(season), systemImage: "checkmark")
+                        Label(SeasonLabel.display(season), systemImage: "checkmark")
                     } else {
-                        Text(SeasonLabel.text(season))
+                        Text(SeasonLabel.display(season))
                     }
                 }
             }
@@ -46,9 +46,9 @@ struct SeasonMenu<Trigger: View>: View {
         // Newest season first is the order the array already carries; without
         // this UIKit reverses it for menus that open upward.
         .menuOrder(.fixed)
-        .gridironMenuAppearance()
+        .rinkMenuAppearance()
         .accessibilityLabel("Season")
-        .accessibilityValue(SeasonLabel.text(selected))
+        .accessibilityValue(SeasonLabel.display(selected))
     }
 }
 
@@ -75,7 +75,7 @@ struct SeasonPhaseMenu<Trigger: View>: View {
             label()
         }
         .menuOrder(.fixed)
-        .gridironMenuAppearance()
+        .rinkMenuAppearance()
         .accessibilityLabel("Season type")
         .accessibilityValue(selected.label)
     }
@@ -85,8 +85,8 @@ struct SeasonPhaseMenu<Trigger: View>: View {
 /// draws.
 ///
 /// Season type comes *first*, and that ordering is the whole reason one menu
-/// can hold both. The season list is twenty-seven rows (All Time plus 2000
-/// through the current year), which is far taller than a menu can show, so with
+/// can hold both. The season list is twenty rows (All Time plus 2008-09
+/// through the current season), which is far taller than a menu can show, so with
 /// seasons on top the two phase rows sat below the fold: the control existed,
 /// scrolled to the very bottom of a long list, and to anyone opening the menu
 /// the playoffs simply weren't switchable. Two rows above a scrolling list cost
@@ -131,11 +131,11 @@ struct SeasonPhasePicker<Trigger: View>: View {
                         // A locked year keeps its crown and still routes the tap,
                         // so it can pitch that specific season.
                         if isSeasonLocked(season) {
-                            Label(SeasonLabel.text(season), systemImage: "crown.fill")
+                            Label(SeasonLabel.display(season), systemImage: "crown.fill")
                         } else if season == selectedSeason {
-                            Label(SeasonLabel.text(season), systemImage: "checkmark")
+                            Label(SeasonLabel.display(season), systemImage: "checkmark")
                         } else {
-                            Text(SeasonLabel.text(season))
+                            Text(SeasonLabel.display(season))
                         }
                     }
                 }
@@ -146,9 +146,9 @@ struct SeasonPhasePicker<Trigger: View>: View {
         // Newest season first is the order the array already carries; without
         // this UIKit reverses it for menus that open upward.
         .menuOrder(.fixed)
-        .gridironMenuAppearance()
+        .rinkMenuAppearance()
         .accessibilityLabel("Season and season type")
-        .accessibilityValue(SeasonLabel.text(selectedSeason) + ", " + selectedPhase.label)
+        .accessibilityValue(SeasonLabel.display(selectedSeason) + ", " + selectedPhase.label)
     }
 }
 
@@ -248,7 +248,7 @@ struct SeasonPhaseNavBar: ViewModifier {
             // word "Season" is already unmistakably a date, so the icon was
             // decoration sitting in front of the label it decorated.
             RinkNavPill(
-                title: SeasonLabel.text(selectedSeason) + " · " + selectedPhase.label
+                title: SeasonLabel.display(selectedSeason) + " · " + selectedPhase.label
             )
         }
     }
@@ -264,7 +264,7 @@ extension View {
     /// below it opened white. Same control, two looks, a tap apart. The pill
     /// labels set their own colours explicitly, so forcing light here changes
     /// nothing but the popup.
-    func gridironMenuAppearance() -> some View {
+    func rinkMenuAppearance() -> some View {
         environment(\.colorScheme, .light)
     }
 }

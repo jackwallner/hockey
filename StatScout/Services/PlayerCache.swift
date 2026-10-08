@@ -67,9 +67,8 @@ struct PlistPlayerCache: PlayerCaching {
 /// Proof that the current-season snapshot on disk came from the server, written
 /// beside it whenever this build saves one.
 ///
-/// Builds through 1.2.1 wrote server responses and a bundled four-team opening
-/// week export to the same `players-current.json`, with nothing in the file to
-/// tell them apart - and the opening-week validator accepts both, by design, so
+/// Early builds wrote server responses and a bundled opening-night export to the same `players-current.json`, with nothing in the file to
+/// tell them apart - and the opening-night validator accepts both, by design, so
 /// it can never be the thing that separates them. Without a marker the only
 /// honest reading of that file is "unknown origin".
 struct CurrentSnapshotProvenance: Codable {
@@ -115,13 +114,13 @@ struct TwoTierPlayerCache: PlayerCaching {
     ///
     /// Only server data is ever returned. Builds used to fall back to a bundled
     /// current-season snapshot once this file passed 48 hours, and re-save it as
-    /// fresh, so a fan returning in Week 6 saw the four-team Week 1 export as the
+    /// fresh, so a fan returning in November saw the opening-night export as the
     /// live leaderboard. An old saved snapshot is still the user's newest real
     /// data, and the freshness caption restored beside it says how old it is.
     func loadCurrentPlayers() throws -> [Player] {
         // An unprovenanced file predates the marker, so it is either a real
-        // server snapshot saved by 1.2.x or the bundled four-team opening-week
-        // export that 1.2 wrote to this same path after a failed refresh. It
+        // server snapshot or the bundled opening-night
+        // export that an early build wrote to this same path after a failed refresh. It
         // cannot be both, and nothing in it says which - so it is discarded
         // once, on the first launch after upgrading, rather than kept and
         // presented as the live league. The cost is one refresh; the next save
@@ -232,7 +231,7 @@ struct TwoTierPlayerCache: PlayerCaching {
 
 enum PlayerSnapshotValidator {
     private static let minimumTeamCount = 30
-    private static let requiredTypes: Set<String> = ["qb", "rb", "wr", "te", "def"]
+    private static let requiredTypes: Set<String> = ["f", "d", "g"]
 
     static func isCompleteHistorical(_ players: [Player]) -> Bool {
         let expectedSeasons = Set(StatScoutSeason.earliest..<StatScoutSeason.current)
@@ -260,9 +259,9 @@ enum PlayerSnapshotValidator {
         let teams = Set(current.map { normalizedTeamAbbreviation($0.team) })
         let types = Set(current.compactMap(\.playerType).map { $0.lowercased() })
         let metricLabels = Set(current.flatMap(\.metrics).map(\.label))
-        let requiredMetrics: Set<String> = ["EPA/Play", "EPA/Rush", "EPA/Tgt"]
+        let requiredMetrics: Set<String> = ["ixG", "GSAx"]
         // The first published game has two teams. A 30-team requirement kept
-        // valid opening-week data out of the cache until most of the NFL played.
+        // valid opening-night data out of the cache until most of the league played.
         // The publisher checks game coverage and regression before promotion.
         return teams.count >= 2
             && current.count >= 20

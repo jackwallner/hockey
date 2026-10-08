@@ -120,9 +120,9 @@ struct PlayerComparisonView: View {
             uniqueKeysWithValues: (b.standardStats ?? []).map { ($0.label, $0.value) }
         )
         let preferredOrder = [
-            "G", "Cmp/Att", "Pass Yds", "Pass TD", "INT",
-            "Car", "Rush Yds", "Rush TD", "Rec/Tgt", "Rec Yds", "Rec TD",
-            "Tackles", "Sacks", "Def INT",
+            "GP", "G", "A", "P", "+/-", "PIM", "PPG", "PPP", "SHG", "GWG", "SOG",
+            "Sh%", "TOI/GP", "Hits", "Blk", "FO%",
+            "GS", "W", "L", "OT", "GAA", "SV%", "SO", "SA", "SV",
         ]
         return Set(left.keys).union(right.keys)
             .sorted {
@@ -160,7 +160,7 @@ struct PlayerComparisonView: View {
                             .font(RinkType.cardTitle)
                             .foregroundStyle(RinkPalette.ink)
 
-                        Text("StatScout+ unlocks side-by-side player comparisons across every metric. See who leads in EPA, passing efficiency, separation, and more.")
+                        Text("StatScout+ unlocks side-by-side player comparisons across every metric. See who leads in ixG, xGF%, GSAx, and more.")
                             .font(RinkType.small)
                             .foregroundStyle(RinkPalette.inkSecondary)
                             .multilineTextAlignment(.center)
@@ -466,7 +466,7 @@ struct PlayerComparisonView: View {
                 ) {
                     RinkInlinePill(
                         systemImage: nil,
-                        title: "\(player.season.map(SeasonLabel.text) ?? "-") · \(player.seasonPhase.label)",
+                        title: "\(player.season.map(SeasonLabel.display) ?? "-") · \(player.seasonPhase.label)",
                         compressible: true
                     )
                     .frame(maxWidth: .infinity)
@@ -484,7 +484,7 @@ struct PlayerComparisonView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Change \(target == .a ? "first" : "second") player")
             } else if let season = player.season {
-                Text(SeasonLabel.text(season))
+                Text(SeasonLabel.display(season))
                     .font(RinkType.micro)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)
@@ -520,7 +520,7 @@ struct PlayerComparisonView: View {
         } else {
             note = catalog.isLoadingHistory
                 ? "Loading past seasons…"
-                : "No \(SeasonLabel.text(season)) \(phase.label.lowercased()) data for \(current.name)."
+                : "No \(SeasonLabel.display(season)) \(phase.label.lowercased()) data for \(current.name)."
             Task { await catalog.loadHistory?() }
         }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()

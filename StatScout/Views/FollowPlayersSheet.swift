@@ -15,14 +15,14 @@ struct FollowPlayersSheet: View {
     @Bindable var viewModel: DashboardViewModel
     /// Which position group the Trends board is showing, so the sheet opens
     /// on the list the user was already looking at.
-    var side: TrendSide = .qb
+    var side: TrendSide = .forward
 
     @Environment(\.dismiss) private var dismiss
     @State private var favorites = FavoritesStore.shared
     @State private var searchText = ""
     @State private var listSide: TrendSide
 
-    init(viewModel: DashboardViewModel, side: TrendSide = .qb) {
+    init(viewModel: DashboardViewModel, side: TrendSide = .forward) {
         self.viewModel = viewModel
         self.side = side
         _listSide = State(initialValue: side)

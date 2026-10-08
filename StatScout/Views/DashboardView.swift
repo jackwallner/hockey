@@ -84,11 +84,10 @@ struct DashboardView: View {
         let category = viewModel.selectedPosition.primaryCategory
         let isLive = viewModel.selectedSeason == viewModel.freeSeason && viewModel.selectedPhase == .regular
         let pending = isLive ? MetricCoverage.pendingNote(
-            category: category,
-            advancedDefenseStatus: viewModel.dataFreshness?.advancedDefenseStatus,
-            nextGenStatus: viewModel.dataFreshness?.nextGenStatus
+            shotsStatus: viewModel.dataFreshness?.shotsStatus,
+            summaryStatus: viewModel.dataFreshness?.summaryStatus
         ) : nil
-        let noun = viewModel.selectedPosition == .defense ? "defender" : viewModel.selectedPosition.rawValue
+        let noun = viewModel.selectedPosition.singular.lowercased()
         let cohort = isLive ? "every \(noun) with a line this season" : "every qualified \(noun)"
         let minimum = viewModel.qualifierLevel == .all
             ? "Dimmed rows are under the playing-time minimum."
@@ -160,24 +159,9 @@ struct DashboardView: View {
 
     /// Position group is this app's metric-category control, the same tier as
     /// baseball's Hitting / Pitching / Fielding / Running header, so it uses the
-    /// same underlined tabs. It used to be a row of filled rounded-rects 36pt
-    /// tall, which is the page-level-switch shape at a fifth distinct control
-    /// height, so the one control that decides what the whole screen is about
-    /// looked like nothing else in the app.
+    /// same underlined tabs: Forwards, Defensemen, Goalies.
     private var positionSelector: some View {
-        RinkTabs(
-            tabs: PlayerPositionGroup.allCases.map(\.rawValue),
-            selected: Binding(
-                get: { viewModel.selectedPosition.rawValue },
-                set: { raw in
-                    guard let next = PlayerPositionGroup.allCases.first(where: { $0.rawValue == raw }),
-                          next != viewModel.selectedPosition else { return }
-                    viewModel.selectedPosition = next
-                }
-            )
-        )
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Position")
+        PositionTabs(selection: $viewModel.selectedPosition)
     }
 
     private var activeSortChip: some View {
@@ -368,14 +352,14 @@ struct DashboardView: View {
                 .frame(minHeight: 200)
             } else if viewModel.leaderboard.isEmpty && viewModel.isHistoricalLoading {
                 // Season history is fetched on demand, so the first tap on a past
-                // season (or on All since 2000) arrives before its rows do. This
+                // season (or on All Time) arrives before its rows do. This
                 // used to fall through to "No player data is available", which
                 // reads as a permanent answer to a temporary state - the board
                 // filled in seconds later, by which point the user had believed
                 // the app.
                 VStack(spacing: 12) {
                     ProgressView()
-                    Text("Loading \(SeasonLabel.text(viewModel.selectedSeason))…")
+                    Text("Loading \(SeasonLabel.display(viewModel.selectedSeason))…")
                         .font(RinkType.small)
                         .foregroundStyle(RinkPalette.inkSecondary)
                 }
@@ -384,7 +368,7 @@ struct DashboardView: View {
             } else if viewModel.leaderboard.isEmpty && !viewModel.isLoading {
                 let hasSeasonData = !viewModel.seasonPlayers.isEmpty
                 // The live season ships no bundled rows on purpose: a snapshot
-                // baked into a build is a week stale by the time anyone
+                // baked into a build is days stale by the time anyone
                 // installs it, and there is no honest way to caption it as the
                 // current league. So a first run with no connection genuinely
                 // has nothing here, and says so - "No player data is available
@@ -397,17 +381,17 @@ struct DashboardView: View {
                 ContentUnavailableView {
                     Label(
                         needsFirstConnection
-                            ? "Connect to load \(SeasonLabel.text(viewModel.selectedSeason))"
+                            ? "Connect to load \(SeasonLabel.display(viewModel.selectedSeason))"
                             : (hasSeasonData ? "No matching metrics" : "No players yet"),
-                        systemImage: needsFirstConnection ? "wifi.exclamationmark" : "football"
+                        systemImage: needsFirstConnection ? "wifi.exclamationmark" : "hockey.puck"
                     )
                 } description: {
                     if needsFirstConnection {
                         Text("The current season needs a connection for its first update. Once it has loaded, your saved stats are here offline.")
                     } else {
                         Text(hasSeasonData
-                             ? "No metrics are available for \(viewModel.selectedPosition.rawValue) in \(SeasonLabel.text(viewModel.selectedSeason))."
-                             : "No player data is available for the \(SeasonLabel.text(viewModel.selectedSeason)) season.")
+                             ? "No metrics are available for \(viewModel.selectedPosition.displayName.lowercased()) in \(SeasonLabel.display(viewModel.selectedSeason))."
+                             : "No player data is available for the \(SeasonLabel.display(viewModel.selectedSeason)) season.")
                     }
                 } actions: {
                     if needsFirstConnection {

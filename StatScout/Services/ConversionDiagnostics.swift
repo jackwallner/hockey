@@ -22,7 +22,7 @@ import os
 /// Nothing here may carry health data, free text, or anything the user typed.
 /// Counts, dates, and short surface names only.
 enum ConversionDiagnostics {
-    private static let logger = Logger(subsystem: "com.jackwallner.football", category: "Conversion")
+    private static let logger = Logger(subsystem: "com.jackwallner.hockey", category: "Conversion")
 
 
     /// Impression ids carry an app prefix that says nothing once the attributes

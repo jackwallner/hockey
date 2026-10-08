@@ -15,16 +15,16 @@ struct TeamView: View {
     @State private var selectedTab: TeamTab = .advanced
     @State private var searchText = ""
     @State private var isSearching = false
-    // Default to Passing so the roster always shows a meaningful sort metric.
-    @State private var selectedCategory: MetricCategory? = .passing
+    // Default to Scoring so the roster always shows a meaningful sort metric.
+    @State private var selectedCategory: MetricCategory? = .scoring
     @State private var sortDescending = true
     @State private var lastDefaultedSortKey: String? = nil
     @State private var showingTrial = false
     @State private var trialTrigger: PaywallTrigger?
-    @State private var rosterSide: RosterSide = .offense
+    @State private var rosterSide: PlayerPositionGroup = .forward
     @State private var qualifierLevel: DashboardViewModel.QualifierLevel = .all
     @State private var rosterMode: RosterMode = .season
-    @State private var rosterWindow: RecentWindow = .five
+    @State private var rosterWindow: RecentWindow = .four
     @State private var userSortLabel: String?
 
     enum TeamTab: String, CaseIterable {
@@ -38,27 +38,6 @@ struct TeamView: View {
         case recent = "Recent"
 
         var id: String { rawValue }
-    }
-
-    enum RosterSide: String, CaseIterable, Identifiable {
-        case offense = "Offense"
-        case defense = "Defense"
-
-        var id: String { rawValue }
-
-        var categories: [MetricCategory] {
-            switch self {
-            case .offense: return [.passing, .rushing, .receiving]
-            case .defense: return [.defense]
-            }
-        }
-
-        func matches(_ player: Player) -> Bool {
-            switch player.positionGroup {
-            case .defense: return self == .defense
-            default: return self == .offense
-            }
-        }
     }
 
     /// The roster for the season and phase that are selected *right now*.
@@ -78,7 +57,7 @@ struct TeamView: View {
         viewModel?.selectedSeason
             ?? seedSeason
             ?? seedPlayers.compactMap(\.season).max()
-            ?? Calendar.current.component(.year, from: Date())
+            ?? StatScoutSeason.current
     }
 
     private var leaguePlayers: [Player] {
@@ -121,10 +100,10 @@ struct TeamView: View {
 
     private var rowDisplayMetric: (label: String?, category: MetricCategory?) {
         if let m = sortMetric { return (m.label, m.category) }
-        // "All" is the whole roster at once, offence and defence together, so
+        // "All" is the whole roster at once, skaters and goalies together, so
         // there is no one metric that means the same thing down the column. It
-        // used to force Pass Yds, which printed a zero beside every player who
-        // isn't a quarterback. Each row shows its own overall percentile
+        // used to force one metric, which printed a zero beside every player
+        // it does not apply to. Each row shows its own overall percentile
         // instead.
         return (nil, nil)
     }
@@ -190,7 +169,7 @@ struct TeamView: View {
             $0.name.localizedCaseInsensitiveContains(searchText)
                 || $0.displayPosition.localizedCaseInsensitiveContains(searchText)
         }
-        let bySide = bySearch.filter { rosterSide.matches($0) }
+        let bySide = bySearch.filter { $0.positionGroup == rosterSide }
         let byCategory = bySide.filter { player in
             guard let selectedCategory else { return true }
             return player.metrics.contains { $0.category == selectedCategory }
@@ -236,7 +215,7 @@ struct TeamView: View {
                         .padding(.horizontal, 12)
                         .padding(.top, 10)
                     if displaySeason == viewModel.freeSeason {
-                        TeamWeekGameCard(viewModel: viewModel, team: team)
+                        TeamGameCard(viewModel: viewModel, team: team)
                             .padding(.horizontal, 12)
                             .padding(.top, 10)
                     }
@@ -382,7 +361,7 @@ struct TeamView: View {
     private var rosterContent: some View {
         VStack(spacing: 0) {
             RinkPickerRow {
-                sidePicker.segmentCount(RosterSide.allCases.count)
+                sidePicker.segmentCount(PlayerPositionGroup.allCases.count)
                 rosterModePicker.segmentCount(RosterMode.allCases.count)
             }
                 .padding(.horizontal, 12)
@@ -490,7 +469,7 @@ struct TeamView: View {
 
     private var sidePicker: some View {
         RinkSegmented(
-            segments: RosterSide.allCases.map { .init(value: $0, label: $0.rawValue) },
+            segments: PlayerPositionGroup.allCases.map { .init(value: $0, label: $0.displayName) },
             selection: $rosterSide
         )
         .onChange(of: rosterSide) { _, side in
@@ -599,7 +578,7 @@ struct TeamView: View {
                 emptyStateView(
                     icon: "person.2.slash",
                     title: "No players tracked",
-                    description: "No players are tracked for \(teamFullName(team)) in the \(String(displaySeason)) season."
+                    description: "No players are tracked for \(teamFullName(team)) in \(SeasonLabel.display(displaySeason))."
                 )
             } else if filteredPlayers.isEmpty {
                 let noCategoryMatch = searchText.isEmpty && selectedCategory != nil
@@ -613,7 +592,7 @@ struct TeamView: View {
             } else if isRosterRecent && !hasRecentData {
                 HStack(spacing: 10) {
                     ProgressView().scaleEffect(0.75)
-                    Text("Loading the last \(rosterWindow.rawValue) games…")
+                    Text("Loading the last \(rosterWindow.rawValue) weeks…")
                         .font(RinkType.small)
                         .foregroundStyle(RinkPalette.inkSecondary)
                 }
@@ -627,7 +606,7 @@ struct TeamView: View {
                     LeaderboardTableHeader(
                         sortDescending: sortDescending,
                         sortLabel: isRosterRecent
-                            ? "\(sortLabel) · \(rosterWindow.rawValue)G"
+                            ? "\(sortLabel) · \(rosterWindow.shortLabel)"
                             : sortLabel
                     )
                 }
@@ -731,12 +710,12 @@ struct TeamView: View {
             onSelectPhase: { viewModel.selectedPhase = $0 }
         ) {
             // No glyph and the short year alone: the team name in the principal
-            // slot is long ("Jacksonville Jaguars"), and spelling the phase out
+            // slot is long ("Columbus Blue Jackets"), and spelling the phase out
             // here as well tipped the bar into sweeping the trailing item into a
             // "..." overflow. The pill still says which phase it is, just in the
             // shortest form that reads as a season type.
             RinkNavPill(
-                title: SeasonLabel.text(viewModel.selectedSeason)
+                title: SeasonLabel.display(viewModel.selectedSeason)
                     + (viewModel.selectedPhase == .playoffs ? " · Playoffs" : "")
             )
         }
@@ -744,10 +723,10 @@ struct TeamView: View {
 
     private func priorityMetrics(for category: MetricCategory) -> [String] {
         switch category {
-        case .passing: return ["Pass Yds", "Pass TD", "Rating", "EPA/Play"]
-        case .rushing: return ["Rush Yds", "Rush TD", "Y/C", "Rush EPA"]
-        case .receiving: return ["Rec Yds", "Rec", "Rec TD", "YAC"]
-        case .defense: return ["Tackles", "Sacks", "INT"]
+        case .scoring: return ["P", "G", "A", "P/60"]
+        case .shotQuality: return ["ixG", "GAx", "ixG/60", "Shots/60"]
+        case .playDriving: return ["xGF%", "Rel xGF%", "CF%", "Hits"]
+        case .goaltending: return ["GSAx", "SV%", "GAA"]
         }
     }
 }
@@ -756,9 +735,9 @@ struct TeamView: View {
 #Preview {
     NavigationStack {
         TeamView(
-            team: "KC",
-            seedPlayers: SampleData.players.filter { $0.team == "KC" },
-            seedSeason: 2025
+            team: "SEA",
+            seedPlayers: SampleData.players.filter { $0.team == "SEA" },
+            seedSeason: 2026
         )
     }
 }
