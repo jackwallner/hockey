@@ -4,30 +4,23 @@ struct TeamScheduleRoute: Hashable {
     let team: String
 }
 
-/// A team's game this week, on its team page: the result, the next kickoff, or
-/// the bye. It sits above the roster cards so the first thing a team page says
-/// is what happened on the field. Under it: follow the club, open its schedule.
+/// A team's game tonight, on its team page: the latest result or the next
+/// puck drop. It sits above the roster cards so the first thing a team page
+/// says is what happened on the ice. Under it: follow the club, open its schedule.
 struct TeamWeekGameCard: View {
     @Bindable var viewModel: DashboardViewModel
     let team: String
     @State private var favorites = FavoritesStore.shared
 
     var body: some View {
-        if let week = viewModel.currentGameWeek {
+        if viewModel.currentGameDay != nil {
             VStack(spacing: 8) {
                 if let game = viewModel.currentGame(forTeam: team) {
                     NavigationLink(value: GameRoute(gameId: game.id)) {
-                        content(week: week, game: game)
+                        content(game: game)
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("Opens the game")
-                } else if week.phase == .regular {
-                    shell(week: week) {
-                        Text("Bye week")
-                            .font(RinkType.bodyBold)
-                            .foregroundStyle(RinkPalette.ink)
-                        Spacer(minLength: 0)
-                    }
                 }
                 actions
             }
@@ -58,8 +51,8 @@ struct TeamWeekGameCard: View {
         }
     }
 
-    private func content(week: GameWeek, game: Game) -> some View {
-        shell(week: week) {
+    private func content(game: Game) -> some View {
+        shell(game: game) {
             TeamColorDot(abbr: game.opponent(of: team), size: 10)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(game.matchupLabel(for: team)) · \(teamFullName(game.opponent(of: team)))")
@@ -94,9 +87,21 @@ struct TeamWeekGameCard: View {
         }
     }
 
-    private func shell<Content: View>(week: GameWeek, @ViewBuilder content: () -> Content) -> some View {
+    /// "TONIGHT · 3-1-0", "LAST GAME · 3-1-0" or "NEXT GAME · 3-1-0".
+    private func heading(_ game: Game) -> String {
+        let day = GameDay(date: GameDay.day(of: game), phase: game.seasonPhase)
+        let when: String
+        if Calendar.current.isDateInToday(day.date) {
+            when = game.isFinal ? "Today" : "Tonight"
+        } else {
+            when = game.isFinal ? "Last game" : "Next game"
+        }
+        return ([when] + [viewModel.record(forTeam: team)].compactMap { $0 }).joined(separator: " · ").uppercased()
+    }
+
+    private func shell<Content: View>(game: Game, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(([week.label] + [viewModel.record(forTeam: team)].compactMap { $0 }).joined(separator: " · ").uppercased())
+            Text(heading(game))
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkSecondary)
             HStack(spacing: 10) {
@@ -116,7 +121,7 @@ struct TeamWeekGameCard: View {
     }
 }
 
-/// One club's season: every week, the opponent, the result or the kickoff.
+/// One club's season: every game, the opponent, the result or the puck drop.
 struct TeamScheduleView: View {
     @Bindable var viewModel: DashboardViewModel
     let team: String
@@ -127,7 +132,7 @@ struct TeamScheduleView: View {
             LazyVStack(spacing: 0) {
                 VStack(spacing: 0) {
                     RinkSectionBar(
-                        title: "\(String(viewModel.freeSeason)) schedule",
+                        title: "\(SeasonLabel.display(viewModel.freeSeason)) schedule",
                         trailing: viewModel.record(forTeam: team).map {
                             AnyView(Text($0).font(RinkType.statSmall).foregroundStyle(RinkPalette.inkSecondary))
                         }
@@ -137,11 +142,9 @@ struct TeamScheduleView: View {
                         switch entry {
                         case .game(let game):
                             NavigationLink(value: GameRoute(gameId: game.id)) {
-                                row(game).background(background)
+                                row(game, number: index + 1).background(background)
                             }
                             .buttonStyle(.plain)
-                        case .bye(let week):
-                            byeRow(week).background(background)
                         }
                     }
                     if games.isEmpty {
@@ -170,51 +173,25 @@ struct TeamScheduleView: View {
 
     enum Entry: Identifiable {
         case game(Game)
-        case bye(Int)
 
         var id: String {
             switch self {
             case .game(let game): return game.id
-            case .bye(let week): return "bye-\(week)"
             }
         }
     }
 
-    /// The schedule with the bye week slotted in where the club has no game.
+    /// The regular season in date order, then the playoff rounds.
     private func entries(_ games: [Game]) -> [Entry] {
-        let regularWeeks = Set(viewModel.games.filter { $0.seasonPhase == .regular }.map(\.week))
-        let played = Set(games.filter { $0.seasonPhase == .regular }.map(\.week))
-        var result: [Entry] = []
-        for week in regularWeeks.sorted() {
-            if let game = games.first(where: { $0.seasonPhase == .regular && $0.week == week }) {
-                result.append(.game(game))
-            } else if !played.contains(week) {
-                result.append(.bye(week))
-            }
+        let ordered = games.sorted {
+            ($0.seasonPhase == .regular ? 0 : 1, $0.kickoff ?? $0.gameDate) < ($1.seasonPhase == .regular ? 0 : 1, $1.kickoff ?? $1.gameDate)
         }
-        result += games.filter { $0.seasonPhase != .regular }.map(Entry.game)
-        return result
+        return ordered.map(Entry.game)
     }
 
-    private func byeRow(_ week: Int) -> some View {
+    private func row(_ game: Game, number: Int) -> some View {
         HStack(spacing: 10) {
-            Text("\(week)")
-                .font(RinkType.statSmall)
-                .foregroundStyle(RinkPalette.inkTertiary)
-                .frame(width: 30, alignment: .leading)
-            Text("Bye week")
-                .font(RinkType.body)
-                .foregroundStyle(RinkPalette.inkTertiary)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, RinkGeo.padInline)
-        .frame(minHeight: 44)
-        .overlay(Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline), alignment: .bottom)
-    }
-
-    private func row(_ game: Game) -> some View {
-        HStack(spacing: 10) {
-            Text(game.seasonPhase == .regular ? "\(game.week)" : game.gameType)
+            Text(game.seasonPhase == .regular ? "\(number)" : game.gameType)
                 .font(RinkType.statSmall)
                 .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(width: 30, alignment: .leading)
@@ -453,10 +430,10 @@ struct PlayerGameLogCard: View {
     private func row(_ entry: Entry) -> some View {
         let game = entry.gameId.flatMap { viewModel.game(id: $0) }
         let content = HStack(alignment: .top, spacing: 10) {
-            Text(game.map { $0.seasonPhase == .regular ? "\($0.week)" : $0.gameType } ?? "-")
+            Text(entry.gameDate.formatted(.dateTime.month(.abbreviated).day()))
                 .font(RinkType.statSmall)
                 .foregroundStyle(RinkPalette.inkTertiary)
-                .frame(width: 28, alignment: .leading)
+                .frame(width: 44, alignment: .leading)
                 .monospacedDigit()
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {

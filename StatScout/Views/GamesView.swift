@@ -6,48 +6,36 @@ struct GameRoute: Hashable {
     let gameId: String
 }
 
-/// The week's slate: who played whom, the finals, what is on next.
+/// The night's slate: who played whom, the finals, what is on next.
 ///
-/// This is the football-first front door. Scores, schedule and box scores are
-/// free for everyone; the analysis layers stay where they were.
+/// This is the fan-first front door. Scores, schedule and box scores are free
+/// for everyone; the analysis layers stay where they were.
 struct GamesView: View {
     @Bindable var viewModel: DashboardViewModel
     let isActive: Bool
     @State private var favorites = FavoritesStore.shared
-    @State private var selectedWeekID: String?
+    @State private var selectedDayID: String?
 
-    private var weeks: [GameWeek] { GameWeek.weeks(in: viewModel.games) }
+    private var days: [GameDay] { GameDay.days(in: viewModel.games) }
 
-    private var selectedWeek: GameWeek? {
-        weeks.first { $0.id == selectedWeekID } ?? viewModel.currentGameWeek
+    private var selectedDay: GameDay? {
+        days.first { $0.id == selectedDayID } ?? viewModel.currentGameDay
     }
 
     private var slate: [Game] {
-        guard let selectedWeek else { return [] }
-        return Game.slateOrder(selectedWeek.games(from: viewModel.games))
+        guard let selectedDay else { return [] }
+        return Game.slateOrder(selectedDay.games(from: viewModel.games))
     }
 
-    /// Clubs on this week's schedule, for the bye line.
-    private var byeTeams: [String] {
-        guard selectedWeek?.phase == .regular, !slate.isEmpty else { return [] }
-        let playing = Set(slate.flatMap { [normalizedTeamAbbreviation($0.awayTeam), normalizedTeamAbbreviation($0.homeTeam)] })
-        return leagueTeamAbbreviations.filter { !playing.contains($0) }
-    }
-
-    /// "Week 3 · Sep 24 - 28", so the slate and the Stats caption ("Through
-    /// Week 3") are plainly two different things.
-    private var weekDateRange: String? {
-        guard let selectedWeek else { return nil }
-        let days = slate.compactMap(\.kickoff)
-        guard let first = days.min(), let last = days.max() else { return nil }
-        let style = Date.FormatStyle().month(.abbreviated).day()
-        let calendar = Calendar.current
-        let range = calendar.isDate(first, inSameDayAs: last)
-            ? first.formatted(style)
-            : calendar.isDate(first, equalTo: last, toGranularity: .month)
-                ? "\(first.formatted(style)) - \(last.formatted(.dateTime.day()))"
-                : "\(first.formatted(style)) - \(last.formatted(style))"
-        return "\(selectedWeek.label) · \(range)"
+    /// "Tue, Oct 7 · 8 games · Round 1" in the playoffs, so the slate and the
+    /// Stats caption are plainly two different things.
+    private var dayCaption: String? {
+        guard let selectedDay else { return nil }
+        let count = slate.count == 1 ? "1 game" : "\(slate.count) games"
+        let round = selectedDay.phase == .playoffs
+            ? slate.first.map { " · \($0.roundLabel)" } ?? ""
+            : ""
+        return "\(selectedDay.date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())) · \(count)\(round)"
     }
 
     private var favoriteGame: Game? {
@@ -61,9 +49,9 @@ struct GamesView: View {
                 if viewModel.games.isEmpty {
                     emptyState
                 } else {
-                    weekSelector
+                    daySelector
                         .padding(.top, 10)
-                    if let range = weekDateRange {
+                    if let range = dayCaption {
                         Text(range)
                             .font(RinkType.micro)
                             .foregroundStyle(RinkPalette.inkTertiary)
@@ -106,19 +94,19 @@ struct GamesView: View {
         }
     }
 
-    // MARK: - Week selector
+    // MARK: - Day selector
 
-    private var weekSelector: some View {
+    private var daySelector: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    ForEach(weeks) { week in
-                        let isSelected = week.id == selectedWeek?.id
+                    ForEach(days) { day in
+                        let isSelected = day.id == selectedDay?.id
                         Button {
-                            selectedWeekID = week.id
+                            selectedDayID = day.id
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         } label: {
-                            Text(week.shortLabel)
+                            Text(day.label)
                                 .font(RinkType.smallBold)
                                 .foregroundStyle(isSelected ? .white : RinkPalette.inkSecondary)
                                 .padding(.horizontal, 12)
@@ -128,17 +116,17 @@ struct GamesView: View {
                                 .overlay(Capsule().stroke(isSelected ? Color.clear : RinkPalette.hairline, lineWidth: 0.5))
                         }
                         .buttonStyle(.plain)
-                        .id(week.id)
-                        .accessibilityLabel(week.label)
+                        .id(day.id)
+                        .accessibilityLabel(day.date.formatted(.dateTime.weekday(.wide).month(.wide).day()))
                         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
                     }
                 }
                 .padding(.horizontal, 12)
             }
             .onAppear {
-                if let id = selectedWeek?.id { proxy.scrollTo(id, anchor: .center) }
+                if let id = selectedDay?.id { proxy.scrollTo(id, anchor: .center) }
             }
-            .onChange(of: selectedWeek?.id) { _, id in
+            .onChange(of: selectedDay?.id) { _, id in
                 guard let id else { return }
                 withAnimation { proxy.scrollTo(id, anchor: .center) }
             }
@@ -162,7 +150,7 @@ struct GamesView: View {
         if !upcoming.isEmpty { section(title: "Upcoming", games: upcoming) }
 
         if upcoming.contains(where: { viewModel.projection(for: $0) != nil }) {
-            Text("Projected margins come from StatScout Power Ratings: each club's efficiency and scoring against an average team, adjusted for schedule, plus two points for home field. Details on the Teams tab.")
+            Text("Projected margins come from StatScout Power Ratings: each club's expected goals and scoring against an average team, adjusted for schedule, plus a fraction of a goal for home ice. Details on the Teams tab.")
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -171,18 +159,9 @@ struct GamesView: View {
                 .padding(.top, 12)
         }
 
-        if !byeTeams.isEmpty {
-            Text("Bye: " + byeTeams.map(displayTeamAbbr).joined(separator: ", "))
-                .font(RinkType.micro)
-                .foregroundStyle(RinkPalette.inkTertiary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-        }
-
         Text(favorites.team == nil
-             ? "Scores post when each game goes final, stats usually within a few hours. Follow a team from its page to pin its game here."
-             : "Scores post when each game goes final. Player stats usually follow within a few hours.")
+             ? "Scores post when each game goes final, expected goals usually by the next morning. Follow a team from its page to pin its game here."
+             : "Scores post when each game goes final. Expected goals and player stats usually follow by the next morning.")
             .font(RinkType.micro)
             .foregroundStyle(RinkPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -232,7 +211,7 @@ struct GamesView: View {
                     systemImage: viewModel.gamesError == nil ? "calendar" : "wifi.slash"
                 )
             } description: {
-                Text(viewModel.gamesError ?? "The \(String(viewModel.freeSeason)) schedule isn't published yet.")
+                Text(viewModel.gamesError ?? "The \(SeasonLabel.display(viewModel.freeSeason)) schedule isn't published yet.")
             } actions: {
                 Button("Try Again") {
                     Task { await viewModel.loadGames(force: true) }
@@ -298,7 +277,7 @@ struct GameRow: View {
 
     private func teamLine(_ team: String, score: Int?, status: GameStatus, record: String?) -> some View {
         let isWinner = game.result(for: team) == "W"
-        let dim = status == .final && !isWinner && game.result(for: team) != "T"
+        let dim = status == .final && !isWinner
         return HStack(spacing: 8) {
             TeamColorDot(abbr: team, size: 10)
             Text(displayTeamAbbr(team))

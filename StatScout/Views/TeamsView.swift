@@ -430,12 +430,10 @@ struct TeamsView: View {
         return legacyWeekStatus(abbr)
     }
 
-    /// Before a club's first final: its first kickoff day, or its bye.
+    /// Before a club's first final: its first puck drop.
     private func legacyWeekStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
-        guard let week = viewModel.currentGameWeek else { return nil }
-        guard let game = viewModel.currentGame(forTeam: abbr) else {
-            return week.phase == .regular ? ("Bye", "bye week", RinkPalette.inkTertiary) : nil
-        }
+        guard viewModel.currentGameDay != nil else { return nil }
+        guard let game = viewModel.currentGame(forTeam: abbr) else { return nil }
         switch game.status() {
         case .final:
             let line = game.resultLine(for: abbr) ?? "Final"

@@ -204,17 +204,30 @@ season and the previous one.
 
 ## `game_details`
 
-One row per final game. `team_stats`: per side `{value, pct}` for `xg`,
-`xg_5v5`, `cf_pct_5v5`, `xgf_pct_5v5`, `hd_chances`, `sog`, `shot_attempts`,
-`goals`, `gax`, `pp_goals`, `pp_opportunities`, `faceoff_pct`, `hits`,
-`blocks`, `pim` (percentiles across this season's team games). `players`:
-skaters `{ixg, sog, shot_attempts, goals, assists, points, hd_shots, toi,
-gax}` and goalies `{saves, shots_against, goals_against, xga, gsax}`, each
-rate with a percentile across qualifying player games. `win_probability`
-holds the **cumulative xG race** `[{t, away_xg, home_xg, away_goals,
-home_goals}]` (t in game seconds; the Swift model is renamed `XGRacePoint`).
-`big_plays`: every goal plus the five highest-xG non-goals, `{t, period,
-team, player_id, player, xg, result, strength}`.
+One row per final game. Exact JSON shapes (the Swift `GameDetail` decoder
+reads these keys verbatim; `{value, pct}` is a rated number, a bare number
+is a plain count):
+
+- `team_stats`: `{"away": {...}, "home": {...}}` with keys `xg`, `xg_5v5`,
+  `xgf_pct_5v5`, `cf_pct_5v5`, `hd_chances`, `sog`, `shot_attempts`, `goals`,
+  `gax`, `pp_goals`, `pp_opportunities`, `faceoff_pct`, `hits`, `blocks`,
+  `pim`. Rated: `xg`, `xg_5v5`, `xgf_pct_5v5`, `cf_pct_5v5`, `hd_chances`,
+  `shot_attempts`, `gax`, `faceoff_pct` (percentile across this season's team
+  games). Plain: the rest.
+- `players`: list of `{role, player_id, name, team, position, toi, ...}` with
+  `role` `"skater"` or `"goalie"` and `toi` in seconds. Skater keys: `goals`,
+  `assists`, `points`, `sog`, `shot_attempts`, `hd_shots` (plain), `ixg`,
+  `gax`, `ixg_per_60` (rated among qualifying skater games, 8+ minutes).
+  Goalie keys: `shots_against`, `saves`, `goals_against` (plain), `xga`,
+  `gsax`, `sv_pct` (rated among goalie games with 20+ minutes).
+- `win_probability` (column name kept): the cumulative xG race as a list of
+  five-number arrays `[t_seconds, away_xg, home_xg, away_goals, home_goals]`,
+  one entry per shot plus a final entry at the end of the game. The Swift
+  model is `XGRacePoint`.
+- `big_plays`: every goal plus the five highest-xG non-goals, each
+  `{period, clock, team, description, xg, result, player_id, shooter}` with
+  `clock` as `"12:34"` elapsed in the period, `result` one of `GOAL`, `SAVE`,
+  `MISS`, `BLOCK`, and `description` like "Snap shot, slot, rebound".
 
 ## Enrichment
 

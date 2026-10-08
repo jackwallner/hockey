@@ -28,61 +28,90 @@ struct RatedValue: Decodable, Hashable, Sendable {
     }
 }
 
-/// Play-by-play breakdown for one game, from `public.game_details`.
+/// Shot-level breakdown for one game, from `public.game_details`: expected
+/// goals by side, every skater's and goalie's line, the cumulative xG race,
+/// and the chances that decided it.
 struct GameDetail: Decodable, Sendable {
     struct PlayerLine: Decodable, Identifiable, Hashable, Sendable {
         enum Role: String, Decodable, Sendable {
-            case passer, rusher, receiver
+            case skater, goalie
         }
 
         let role: Role
         let playerId: Int
         let name: String?
         let team: String
-        let dropbacks: Int?
-        let carries: Int?
-        let targets: Int?
-        let epa: Double?
-        let epaPerDropback: RatedValue?
-        let epaPerCarry: RatedValue?
-        let epaPerTarget: RatedValue?
-        let successRate: RatedValue?
-        let cpoe: RatedValue?
-        let adot: RatedValue?
+        let position: String?
+        /// Seconds on ice.
+        let toi: Int?
+        let goals: Int?
+        let assists: Int?
+        let points: Int?
+        let sog: Int?
+        let shotAttempts: Int?
+        let hdShots: Int?
+        let ixg: RatedValue?
+        let gax: RatedValue?
+        let ixgPer60: RatedValue?
+        let shotsAgainst: Int?
+        let saves: Int?
+        let goalsAgainst: Int?
+        let xga: RatedValue?
+        let gsax: RatedValue?
+        let svPct: RatedValue?
 
         var id: String { "\(role.rawValue)-\(playerId)" }
+
+        /// "18:42".
+        var toiLabel: String? {
+            guard let toi else { return nil }
+            return String(format: "%d:%02d", toi / 60, toi % 60)
+        }
 
         enum CodingKeys: String, CodingKey {
             case role
             case playerId = "player_id"
-            case name, team, dropbacks, carries, targets, epa
-            case epaPerDropback = "epa_per_dropback"
-            case epaPerCarry = "epa_per_carry"
-            case epaPerTarget = "epa_per_target"
-            case successRate = "success_rate"
-            case cpoe, adot
+            case name, team, position, toi, goals, assists, points, sog
+            case shotAttempts = "shot_attempts"
+            case hdShots = "hd_shots"
+            case ixg, gax
+            case ixgPer60 = "ixg_per_60"
+            case shotsAgainst = "shots_against"
+            case saves
+            case goalsAgainst = "goals_against"
+            case xga, gsax
+            case svPct = "sv_pct"
         }
     }
 
     struct BigPlay: Decodable, Identifiable, Hashable, Sendable {
-        let qtr: Int
+        let period: Int
         let clock: String
         let team: String
         let description: String
-        let epa: Double?
-        let homeWPA: Double
+        let xg: Double?
+        /// GOAL, SAVE, MISS or BLOCK.
+        let result: String
+        let playerId: Int?
+        let shooter: String?
 
-        var id: String { "\(qtr)-\(clock)-\(description.prefix(24))" }
+        var id: String { "\(period)-\(clock)-\(team)-\(result)-\(playerId ?? 0)" }
+        var isGoal: Bool { result.uppercased() == "GOAL" }
 
         enum CodingKeys: String, CodingKey {
-            case qtr, clock, team, description, epa
-            case homeWPA = "home_wpa"
+            case period, clock, team, description, xg, result, shooter
+            case playerId = "player_id"
         }
     }
 
-    struct WinProbabilityPoint: Hashable, Sendable, Identifiable {
+    /// One point on the cumulative expected-goals race.
+    struct XGRacePoint: Hashable, Sendable, Identifiable {
+        /// Game seconds elapsed.
         let elapsed: Double
-        let homeWinProbability: Double
+        let awayXG: Double
+        let homeXG: Double
+        let awayGoals: Int
+        let homeGoals: Int
         var id: Double { elapsed }
     }
 
@@ -92,7 +121,7 @@ struct GameDetail: Decodable, Sendable {
     let away: [String: RatedValue]
     let home: [String: RatedValue]
     let players: [PlayerLine]
-    let winProbability: [WinProbabilityPoint]
+    let xgRace: [XGRacePoint]
     let bigPlays: [BigPlay]
 
     enum CodingKeys: String, CodingKey {
@@ -101,7 +130,7 @@ struct GameDetail: Decodable, Sendable {
         case homeTeam = "home_team"
         case teamStats = "team_stats"
         case players
-        case winProbability = "win_probability"
+        case xgRace = "win_probability"
         case bigPlays = "big_plays"
     }
 
@@ -114,9 +143,13 @@ struct GameDetail: Decodable, Sendable {
         away = sides?.away ?? [:]
         home = sides?.home ?? [:]
         players = (try? c.decodeIfPresent([Lossy<PlayerLine>].self, forKey: .players))?.compactMap(\.value) ?? []
-        let raw = (try? c.decodeIfPresent([[Double]].self, forKey: .winProbability)) ?? []
-        winProbability = raw.compactMap { pair in
-            pair.count == 2 ? WinProbabilityPoint(elapsed: pair[0], homeWinProbability: pair[1]) : nil
+        let raw = (try? c.decodeIfPresent([[Double]].self, forKey: .xgRace)) ?? []
+        xgRace = raw.compactMap { row in
+            guard row.count >= 5 else { return nil }
+            return XGRacePoint(
+                elapsed: row[0], awayXG: row[1], homeXG: row[2],
+                awayGoals: Int(row[3].rounded()), homeGoals: Int(row[4].rounded())
+            )
         }
         bigPlays = (try? c.decodeIfPresent([Lossy<BigPlay>].self, forKey: .bigPlays))?.compactMap(\.value) ?? []
     }
@@ -125,8 +158,20 @@ struct GameDetail: Decodable, Sendable {
         normalizedTeamAbbreviation(team) == normalizedTeamAbbreviation(homeTeam) ? home : away
     }
 
+    /// Skaters by individual expected goals, goalies by goals saved above expected.
     func players(_ role: PlayerLine.Role) -> [PlayerLine] {
-        players.filter { $0.role == role }.sorted { ($0.epa ?? -.infinity) > ($1.epa ?? -.infinity) }
+        switch role {
+        case .skater:
+            return players.filter { $0.role == .skater }
+                .sorted { ($0.ixg?.value ?? -.infinity) > ($1.ixg?.value ?? -.infinity) }
+        case .goalie:
+            return players.filter { $0.role == .goalie }
+                .sorted { ($0.gsax?.value ?? -.infinity) > ($1.gsax?.value ?? -.infinity) }
+        }
+    }
+
+    func players(_ role: PlayerLine.Role, team: String) -> [PlayerLine] {
+        players(role).filter { normalizedTeamAbbreviation($0.team) == normalizedTeamAbbreviation(team) }
     }
 }
 
