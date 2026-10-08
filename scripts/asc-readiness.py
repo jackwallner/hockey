@@ -33,7 +33,7 @@ import asc_lib as A  # noqa: E402
 
 BUNDLE_ID = "com.jackwallner.hockey"
 EXPECTED_NAME = "Hockey Next: StatScout"
-EXPECTED_CATEGORY = "HEALTH_AND_FITNESS"
+EXPECTED_CATEGORY = "SPORTS"
 EXPECTED_SCREENSHOTS_BY_TYPE = {
     "APP_IPHONE_67": 6,
     "APP_WATCH_SERIES_10": 1,
