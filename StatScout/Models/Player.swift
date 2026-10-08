@@ -204,6 +204,38 @@ struct Metric: Identifiable, Codable, Hashable, Sendable {
     /// by the same rule as below.
     var rankable: Bool? = nil
 
+    init(id: String, label: String, value: String, percentile: Int, category: MetricCategory, qualified: Bool? = nil, rankable: Bool? = nil) {
+        self.id = id
+        self.label = label
+        self.value = value
+        self.percentile = percentile
+        self.category = category
+        self.qualified = qualified
+        self.rankable = rankable
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, label, value, percentile, category, qualified, rankable
+    }
+
+    /// The historical bundle leaves the id out (it is the single largest cost
+    /// in a 20,000-row plist and is fully determined by category and label
+    /// within one player); the live feed still carries it.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        label = try c.decode(String.self, forKey: .label)
+        value = try c.decode(String.self, forKey: .value)
+        percentile = try c.decode(Int.self, forKey: .percentile)
+        category = try c.decode(MetricCategory.self, forKey: .category)
+        id = try c.decodeIfPresent(String.self, forKey: .id) ?? Self.derivedID(category: category, label: label)
+        qualified = try c.decodeIfPresent(Bool.self, forKey: .qualified)
+        rankable = try c.decodeIfPresent(Bool.self, forKey: .rankable)
+    }
+
+    static func derivedID(category: MetricCategory, label: String) -> String {
+        "\(category.rawValue.lowercased().replacingOccurrences(of: " ", with: "-"))-\(label)"
+    }
+
     /// A traditional counting stat at zero: 0 INT, 0 sacks, 0 rushing TD.
     ///
     /// The feed ranks these with the midpoint of the tie, so at Week 3 the 674

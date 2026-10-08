@@ -27,7 +27,7 @@
 create table if not exists public.player_recent_form (
   player_id bigint not null,
   season integer not null,
-  player_type text not null, -- 'qb' | 'rb' | 'wr' | 'te' | 'def' | 'k'
+  player_type text not null, -- 'f' | 'd' | 'g'
   window_games integer not null, -- 3 | 5 | 8 (last N games, not calendar days)
   -- The last game_date included in the window. Lets the client tell a stale
   -- row (pipeline failed overnight) from a genuinely cold/inactive player.

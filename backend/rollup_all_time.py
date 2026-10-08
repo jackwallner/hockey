@@ -4,25 +4,27 @@ Career ("All Time") rollup.
 Writes one extra ``player_snapshots`` row per player under the sentinel season
 ``0``, aggregating every year from ``OLDEST_SUPPORTED_SEASON`` to the current
 season into a single career line, with percentiles ranked inside the career
-cohort rather than against any one season.
+cohort (forwards, defensemen, goalies) rather than against any one season.
 
 Why a stored row rather than an app-side mode: the leaderboards, Teams, Compare
 and the player page all read from ``selectedSeason``, so modelling the career
 view as just another season means every one of them gets it with no all-time
-branch of its own - and the numbers are computed once here instead of on every
+branch of its own, and the numbers are computed once here instead of on every
 device. It also means the formatting, the qualification thresholds and the
-percentile logic are literally the same code that produces a normal season,
-which is the only way the two can't drift.
+percentile logic are literally the same code that produces a normal season.
 
-This deliberately re-reads the weekly feed rather than summing the season
-snapshots already in Supabase. Snapshots hold *formatted* values ("6.2%") for
-*qualified* players only, so summing them would compound rounding and silently
-drop every season a player fell short of the cut - a career total that omits a
-player's rookie year is worse than no career total.
+This re-reads the MoneyPuck season files rather than summing the season
+snapshots already in Supabase. Snapshots hold *formatted* values for
+*qualified* players only, so summing them would compound rounding and drop
+every season a player fell short of the cut. The MoneyPuck columns are all
+additive (counts and ice time), so the career pass is the single-season pass
+over the concatenated raw rows: ``ingest.build_agg``. Finished seasons come
+from the same on-disk cache the backfill fills, so a rollup right after a
+backfill downloads nothing.
 
 Usage:
-  python backend/rollup_all_time.py                 # 2000..current
-  python backend/rollup_all_time.py --from 2010     # narrower window
+  python backend/rollup_all_time.py                 # 2008..current
+  python backend/rollup_all_time.py --from 2015     # narrower window
   python backend/rollup_all_time.py --dry-run       # build, don't write
 
 Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
@@ -34,25 +36,20 @@ import os
 import sys
 from datetime import datetime, timezone
 
-import nflreadpy as nfl
 import pandas as pd
 from dotenv import load_dotenv
 from supabase import create_client
 
 from ingest import (
     ALL_TIME_SEASON,
-    NGS_FIRST_SEASON,
+    DEFAULT_SEASON,
     OLDEST_SUPPORTED_SEASON,
-    PFR_DEF_FIRST_SEASON,
-    _to_pandas,
-    aggregate_seasons,
-    apply_def_rate_thresholds,
+    build_agg,
     build_snapshot_rows,
-    chunks,
-    load_headshots,
-    load_pfr_defense,
-    merge_ngs,
+    load_season_sources,
+    prune_orphans,
     resolve_season,
+    upsert_rows,
 )
 
 load_dotenv()
@@ -61,187 +58,38 @@ UTC = timezone.utc
 logger = logging.getLogger(__name__)
 
 
-def load_all_weekly(first: int, last: int) -> pd.DataFrame:
-    """Weekly player stats for the whole range, concatenated.
+def concat_frames(frames: list[pd.DataFrame]) -> pd.DataFrame:
+    frames = [f for f in frames if f is not None and not f.empty]
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
-    Seasons are fetched one at a time rather than in a single call so a gap in
-    one year can't take the whole rollup down, and so progress is visible in the
-    log - this walks twenty-odd seasons.
+
+def load_range(first: int, last: int, season_type: str) -> tuple[pd.DataFrame, ...]:
+    """Raw MoneyPuck and NHL summary frames for the whole range, concatenated.
+
+    A season that fails to download raises: a career total that silently omits
+    a season is worse than no career total. A phase with no file (404) is empty
+    and skipped.
     """
-    frames: list[pd.DataFrame] = []
+    parts: list[list[pd.DataFrame]] = [[], [], [], []]
     for season in range(first, last + 1):
-        try:
-            frame = _to_pandas(nfl.load_player_stats([season]))
-        except Exception:
-            logger.exception("Failed to load weekly stats for %s; skipping.", season)
-            continue
-        if frame is None or frame.empty:
-            logger.warning("No weekly rows for %s.", season)
-            continue
-        logger.info("Loaded %s: %d weekly rows", season, len(frame))
-        frames.append(frame)
-    if not frames:
-        return pd.DataFrame()
-    return pd.concat(frames, ignore_index=True)
+        frames = load_season_sources(season, season_type, cache=season < DEFAULT_SEASON)
+        for bucket, frame in zip(parts, frames):
+            bucket.append(frame)
+        logger.info("Loaded %s %s", season, season_type)
+    return tuple(concat_frames(bucket) for bucket in parts)
 
 
-def build_career_agg(
-    first: int,
-    last: int,
-    season_type: str = "REG",
-) -> pd.DataFrame:
+def build_career_agg(first: int, last: int, season_type: str = "REG") -> pd.DataFrame:
     """Aggregate the full range into one career row per player."""
-    weekly = load_all_weekly(first, last)
-    if weekly.empty:
-        return weekly
-
-    # `aggregate_seasons` filters to one season, so the career pass runs with the
-    # season column overwritten to the sentinel. Everything downstream of that
-    # filter - the sums, the derived rates, the targets-reliability detection -
-    # is season-agnostic and works unchanged over the pooled rows.
-    weekly = weekly.copy()
-    weekly["season"] = ALL_TIME_SEASON
-    agg = aggregate_seasons(weekly, ALL_TIME_SEASON, season_type)
-    if agg.empty:
-        return agg
-    logger.info("Career aggregate: %d players", len(agg))
-
-    # Next Gen Stats and PFR advanced defence only exist for part of the range,
-    # so a career figure from them would silently mean "since 2016" / "since
-    # 2018" while sitting next to a genuine career total. Summing NGS counting
-    # stats across seasons is fine (RYOE is yardage); the averages are pooled by
-    # the same volume weighting a single season uses.
-    ngs_first = max(first, NGS_FIRST_SEASON)
-    if ngs_first <= last and season_type == "REG":
-        agg = _merge_career_ngs(agg, ngs_first, last)
-
-    pfr_first = max(first, PFR_DEF_FIRST_SEASON)
-    if pfr_first <= last and season_type == "REG":
-        agg = _merge_career_pfr_defense(agg, pfr_first, last)
-
-    headshots = load_headshots()
-    agg["image_url"] = [headshots.get(int(pid)) for pid in agg.index]
+    skaters, goalies, sk_sum, g_sum = load_range(first, last, season_type)
+    agg = build_agg(skaters, goalies, sk_sum, g_sum)
+    logger.info("Career aggregate (%s): %d players", season_type, len(agg))
     return agg
-
-
-def _merge_career_ngs(agg: pd.DataFrame, first: int, last: int) -> pd.DataFrame:
-    """Pool per-season NGS rows into one career row, then merge as usual."""
-    frames: dict[str, list[pd.DataFrame]] = {"passing": [], "rushing": [], "receiving": []}
-    for season in range(first, last + 1):
-        for stat_type in frames:
-            try:
-                frame = _to_pandas(nfl.load_nextgen_stats([season], stat_type=stat_type))
-            except Exception:
-                logger.exception("Failed NGS %s %s; skipping.", stat_type, season)
-                continue
-            if frame is not None and not frame.empty:
-                frames[stat_type].append(frame)
-
-    # Which NGS column each per-season average should be weighted by, and which
-    # columns are totals to be added rather than averaged. Getting this wrong is
-    # not a rounding difference: RYOE is a *yardage total*, so averaging it across
-    # eight seasons reports one season's worth of yards as a career figure.
-    weights = {"passing": "attempts", "rushing": "rush_attempts", "receiving": "targets"}
-    totals = {"rush_yards_over_expected", "expected_rush_yards", "rush_yards",
-              "rush_attempts", "rush_touchdowns", "attempts", "pass_yards",
-              "pass_touchdowns", "interceptions", "completions", "receptions",
-              "targets", "yards", "rec_touchdowns"}
-
-    def pooled(stat_type: str) -> pd.DataFrame:
-        parts = frames[stat_type]
-        if not parts:
-            return pd.DataFrame()
-        out = pd.concat(parts, ignore_index=True)
-        # merge_ngs selects on (season, season_type, week == 0); the season-level
-        # NGS rows are already the week-0 summaries, so relabelling the season is
-        # all that is needed for it to see them as one cohort.
-        out = out[out["week"] == 0].copy()
-        out["season"] = ALL_TIME_SEASON
-
-        weight_col = weights[stat_type]
-        numeric = [c for c in out.select_dtypes(include="number").columns
-                   if c not in {"season", "week"}]
-        keys = ["player_gsis_id", "season", "season_type"]
-
-        grouped = out.groupby(keys, as_index=False)[
-            [c for c in numeric if c in totals]
-        ].sum(min_count=1)
-
-        averaged = [c for c in numeric if c not in totals]
-        if averaged and weight_col in out.columns:
-            w = out[keys + averaged + [weight_col]].copy()
-            w[weight_col] = pd.to_numeric(w[weight_col], errors="coerce")
-            w = w[w[weight_col] > 0]
-            if not w.empty:
-                for column in averaged:
-                    w["_p"] = pd.to_numeric(w[column], errors="coerce") * w[weight_col]
-                    sums = w.groupby(keys, as_index=False)[["_p", weight_col]].sum()
-                    sums[column] = sums["_p"] / sums[weight_col].replace(0, pd.NA)
-                    grouped = grouped.merge(sums[keys + [column]], on=keys, how="left")
-
-        grouped["week"] = 0
-        return grouped
-
-    return merge_ngs(
-        agg,
-        pooled("passing"),
-        pooled("rushing"),
-        pooled("receiving"),
-        ALL_TIME_SEASON,
-        "REG",
-    )
-
-
-def _merge_career_pfr_defense(agg: pd.DataFrame, first: int, last: int) -> pd.DataFrame:
-    """Sum career pressures and volume-weight career coverage rates."""
-    parts = [load_pfr_defense(season) for season in range(first, last + 1)]
-    parts = [p for p in parts if p is not None and not p.empty]
-    if not parts:
-        return agg
-
-    stacked = pd.concat(parts)
-    stacked.index.name = "pid"
-    stacked = stacked.reset_index()
-
-    counting = ["def_pressures", "def_hurries", "def_qb_knockdowns",
-                "def_targets_allowed", "def_combined_tackles"]
-    rate_weights = {
-        "def_cmp_pct_allowed": "def_targets_allowed",
-        "def_yds_per_tgt_allowed": "def_targets_allowed",
-        "def_rating_allowed": "def_targets_allowed",
-        "def_missed_tkl_pct": "def_combined_tackles",
-    }
-
-    out = pd.DataFrame(index=sorted(stacked["pid"].unique()))
-    out.index.name = "pid"
-    for column in counting:
-        if column in stacked.columns:
-            out[column] = stacked.groupby("pid")[column].sum(min_count=1)
-    for column, weight_col in rate_weights.items():
-        if column not in stacked.columns or weight_col not in stacked.columns:
-            continue
-        w = stacked[["pid", column, weight_col]].dropna()
-        w = w[w[weight_col] > 0]
-        if w.empty:
-            continue
-        product = (w[column] * w[weight_col]).groupby(w["pid"]).sum()
-        weight = w[weight_col].groupby(w["pid"]).sum()
-        out[column] = product / weight.replace(0, pd.NA)
-
-    # `load_pfr_defense` returns PFR's raw fractions; the ×100 scaling normally
-    # happens inside `merge_pfr_defense`. Pooling bypasses that, so scale here and
-    # then apply the same volume cut a single season gets.
-    for column in ("def_cmp_pct_allowed", "def_missed_tkl_pct"):
-        if column in out.columns:
-            out[column] = pd.to_numeric(out[column], errors="coerce") * 100
-
-    agg = agg.drop(columns=[c for c in out.columns if c in agg.columns], errors="ignore")
-    agg = agg.join(out, how="left")
-    return apply_def_rate_thresholds(agg)
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -295,42 +143,16 @@ def main() -> None:
             sample = rows[0]
             logger.info(
                 "Dry run sample: %s (%s) metrics=%d standard=%d",
-                sample["name"],
-                sample["player_type"],
-                len(sample["metrics"]),
-                len(sample["standard_stats"]),
+                sample["name"], sample["player_type"],
+                len(sample["metrics"]), len(sample["standard_stats"]),
             )
             continue
 
-        for i, batch in enumerate(chunks(rows, 150)):
-            logger.info("Upserting career batch %d (%d rows) for %s...", i + 1, len(batch), phase)
-            client.table("player_snapshots").upsert(
-                batch,
-                on_conflict="id,season,season_type",
-            ).execute()
-
-        # Prune players who no longer qualify for the career cohort, the same way
-        # the per-season ingest does, so a threshold change can't leave orphans.
-        kept = {row["id"] for row in rows}
-        existing = (
-            client.table("player_snapshots")
-            .select("id")
-            .eq("season", ALL_TIME_SEASON)
-            .eq("season_type", phase)
-            .execute()
-            .data
-        )
-        orphans = [row["id"] for row in existing if row["id"] not in kept]
-        for batch in chunks(orphans, 100):
-            (
-                client.table("player_snapshots")
-                .delete()
-                .in_("id", batch)
-                .eq("season", ALL_TIME_SEASON)
-                .eq("season_type", phase)
-                .execute()
-            )
-        logger.info("Upserted %d, pruned %d career %s rows.", len(rows), len(orphans), phase)
+        upsert_rows(client, rows)
+        # Prune players who no longer qualify for the career cohort so a
+        # threshold change can't leave orphans.
+        pruned = prune_orphans(client, rows, ALL_TIME_SEASON, phase)
+        logger.info("Upserted %d, pruned %d career %s rows.", len(rows), pruned, phase)
 
 
 if __name__ == "__main__":

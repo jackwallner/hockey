@@ -1,185 +1,119 @@
-# Backend ingestion (NFL)
+# Backend ingestion (NHL)
 
-The backend is serverless and free-tier friendly. GitHub Actions checks the
-nflverse release metadata every 30 minutes during the active season and once a
-day in the offseason. When a source generation changes, it pulls NFL data via
-[`nflreadpy`](https://github.com/nflverse/nflreadpy), computes within-category
-percentiles among qualified players, and publishes snapshots, per-game logs,
-and Recent Form as one Supabase revision. No API key is required for the data
-source.
+Python pipeline that turns MoneyPuck and NHL data into Supabase rows for the
+iOS app. The contract is `project-docs/architecture/HOCKEY_CONTRACT.md`;
+implementation notes are in `.claude/rules/backend-pipeline.md`.
+
+Status: snapshots, the historical backfill, the career rollup and the
+historical bundle export are implemented. Game logs, Recent Form, the source
+probe, the event-aware refresh, game details and enrichment are ported in a
+later pass (their sections below are marked and still describe the football
+chassis in code).
 
 ## Local setup
 
 ```bash
-python -m venv backend/.venv
-source backend/.venv/bin/activate
-pip install -r backend/requirements.txt
-cp backend/.env.example backend/.env   # fill in SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+python3 -m venv backend/.venv
+backend/.venv/bin/pip install -r backend/requirements.txt
+source ~/.hockey_credentials   # SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ...
 ```
 
-Run a season snapshot ingest:
+Run a season snapshot ingest (REG and POST are ranked separately):
 
 ```bash
-python backend/ingest.py --season 2025 --season-type all
+backend/.venv/bin/python backend/ingest.py --season 2025 --season-type all
 ```
 
-Backfill and validate every supported snapshot season (2000 through current):
+Backfill and validate every supported snapshot season (2008 through the last
+complete season), then the live season and the career rollup:
 
 ```bash
-python scripts/backfill_historical.py
+backend/.venv/bin/python scripts/backfill_historical.py
+backend/.venv/bin/python backend/ingest.py --season 2026 --season-type all
+backend/.venv/bin/python backend/rollup_all_time.py
 ```
 
-Use `--validate-only` to audit existing Supabase rows without re-ingesting.
+Use `--validate-only` on the backfill to audit existing Supabase rows without
+re-ingesting. Finished-season downloads are cached in `backend/.cache/`
+(gitignored); set `HOCKEY_NO_CACHE=1` to bypass it.
 
-Run the per-game logs ingest (Recent Form data):
+Regenerate the bundled history (`StatScout/Data/players-historical.plist`):
 
 ```bash
-python backend/ingest_game_logs.py --season 2025          # incremental
-python backend/ingest_game_logs.py --season 2025 --full   # full re-ingest
+backend/.venv/bin/python scripts/export_historical.py --historical-only
 ```
 
-## Event-aware refresh
-
-The production path is `backend/source_probe.py` followed by
-`backend/refresh.py`:
-
-1. The probe makes small requests for `timestamp.json` and HEAD metadata for
-   `stats_player_week_<season>.parquet`, `games.parquet`, the three NGS assets,
-   and `advstats_season_def.parquet`. The weekly player asset is the exact
-   input used by both current-season builders.
-2. A SHA-256 fingerprint combines each asset's release timestamp, ETag,
-   Last-Modified value, length, and HTTP status. `games.parquet` is excluded
-   because nflverse republishes it about every 30 minutes without any stat
-   change; it still gates readiness and feeds coverage at build time. The last successful
-   fingerprint is stored in `data_refresh_state`, so an unchanged probe exits
-   without downloading source files or writing player tables.
-3. A changed source creates a `data_refresh_runs` row. The builder reads the
-   current season in full, stages all three outputs under its `refresh_id`,
-   probes the source again, and calls `publish_data_refresh` only after the
-   source remained stable.
-4. The RPC validates row keys, same-season coverage, and existing game
-   identities, then swaps the requested season phases in one transaction. A
-   failure leaves the prior serving rows in place. Successful staging payloads
-   are removed immediately; run manifests are retained for bounded diagnostics.
-5. Before staging, the builder hashes its output without build timestamps. If
-   the hash matches the live revision, `mark_data_refresh_unchanged` records
-   the new source generation as handled and leaves rows, `refresh_id`, and
-   `published_at` alone, so `published_at` means "the stats last changed".
-
-The workflow is serialized with `cancel-in-progress: false`. A manual force
-run is available when a source correction does not change release metadata:
+Tests:
 
 ```bash
-gh workflow run nightly-statcast.yml -f force=true
+backend/.venv/bin/python -m pytest backend/tests/test_ingest.py backend/tests/test_rollup_all_time.py scripts/tests -q
 ```
-
-For a credential-free local probe, leave the Supabase variables unset:
-
-```bash
-python backend/source_probe.py --season 2026 --json
-```
-
-The current-season event path rebuilds the full season because the current
-feed is small and a full read catches corrections to earlier games. Direct
-`ingest.py` and `ingest_game_logs.py` writes remain useful for explicit
-historical backfills, but they are not the atomic current-season path.
-
-## Freshness status contract
-
-After applying
-`supabase/migrations/20260912000000_event_aware_refresh.sql`, the app can read
-one curated row from the normal Supabase REST endpoint:
-
-```text
-GET /rest/v1/data_refresh_status?select=*&limit=1
-```
-
-The stable fields are:
-
-- `status`: `unknown`, `source_pending`, `building`, `published`, `degraded`,
-  or `failed`.
-- `refresh_id`: the last successfully published revision. It stays unchanged
-  while a newer attempt is pending or failed.
-- `latest_refresh_id`: the in-flight or latest failed attempt when one exists.
-- `source_fingerprint`: the generation used by the live revision.
-- `source_published_at`: the source timestamp used by the live revision.
-- `published_at`: when that revision became live in Supabase.
-- `last_checked_at`: when the source was checked most recently.
-- `season`, `season_type`, `max_week`, `max_game_date`: coverage and phase
-  metadata. During a September rollover, `season` may already be the new
-  probe/build target while `refresh_id`, `published_at`, and the coverage
-  values still describe the last successful live revision. Use the published
-  revision fields when labeling what users are seeing.
-- `expected_games`, `observed_games`, `coverage_status`: schedule coverage;
-  early valid weeks can be `partial` while a later game is still arriving.
-- `ngs_status`, `pfr_status`: `ready`, `pending`, `degraded`, or
-  `not_applicable` enrichment state.
-- `last_error_code`: a short retry-safe code. Internal error details stay out
-  of the public view.
-
-The user-facing distinction is `published_at` versus `last_checked_at`.
-`degraded` means core data was published with partial coverage or delayed
-optional enrichment. A pending or failed attempt never turns into an empty
-serving dataset.
-
-## Refresh runbook
-
-Apply the migration with the Football database credentials before enabling the
-workflow:
-
-```bash
-source ~/.hockey_credentials
-psql "host=db.qwkmpwnhrejsuplcwxrb.supabase.co dbname=postgres user=postgres sslmode=require" \
-  -f supabase/migrations/20260912000000_event_aware_refresh.sql
-```
-
-For a new source generation, the next scheduled probe creates and runs the
-refresh automatically. If a run fails, inspect the GitHub log and the status
-row, then use the force dispatch if the source metadata is unchanged. The
-failed run's staging payload is discarded by the failure RPC, and the next
-attempt can reuse the same source generation safely. A source outage is
-recorded as `source_pending` and retried by the next probe.
-
-Do not manually delete `data_refresh_state` or the live player tables while
-investigating. The migration keeps old run manifests for bounded diagnostics,
-and the publisher removes successful payloads after the atomic swap.
 
 ## Season rule
 
-NFL season label = starting year. `season = year if month >= 9 else year - 1`
-(UTC). `STATCAST_SEASON` env var (kept for workflow compatibility) overrides;
-`--season N` overrides both.
+Season label = start year (2026 means 2026-27). `season = year if month >= 9
+else year - 1` (UTC). `STATCAST_SEASON` (name kept for workflow compatibility)
+overrides; `--season N` overrides both. NHL `seasonId` is `f"{season}{season+1}"`.
+Oldest supported season is 2008 (MoneyPuck's floor). The career rollup is
+season `0`.
 
 ## Data contract
 
-The iOS app reads `player_snapshots` via Supabase REST. Each row has
-PK `(id, season, season_type)`:
+The iOS app reads `player_snapshots` via Supabase REST. Each row has PK
+`(id, season, season_type)`:
 
-- `id`: bigint from the nflverse GSIS id (`"00-0034796"` -> `34796`)
+- `id`: NHL player id (MoneyPuck and the NHL API share it)
 - `season_type`: `REG` or `POST`; each phase is aggregated and ranked separately
-- `name`, `team`, `position`, `player_type` (`qb`/`rb`/`wr`/`te`/`def`/`k`)
-- `handedness` (always `""` for NFL), `image_url` (nflverse headshot)
+- `name`, `team`, `position` (C/L/R/D/G), `player_type` (`f` / `d` / `g`),
+  `handedness` (NHL `shootsCatches`), `image_url` (NHL mug URL)
 - `metrics`: JSON array of `{id, label, value, percentile, category}` where
-  `category` is `Passing` / `Rushing` / `Receiving` / `Defense`
-- `standard_stats`: JSON array of `{id, label, value}` counting totals
+  `category` is `Scoring` / `Shot Quality` / `Play Driving` / `Goaltending`
+- `standard_stats`: JSON array of `{id, label, value}` (skaters: GP, G, A, P,
+  +/-, PIM, PPG, PPP, SHG, GWG, SOG, Sh%, TOI/GP, Hits, Blk, FO%; goalies: GP,
+  GS, W, L, OT, GAA, SV%, SO, SA, SV)
 - `games`: JSON array (currently empty `[]`)
 
-Percentiles are computed within `(season, season_type, category)` among **qualified**
-players (Passing >= 150 attempts, Rushing >= 80 carries, Receiving >= 40
-targets, Defense >= 8 games). Inverted metrics (INT%, Sack%, Fumble%) rank
-lower raw values higher. Postseason uses smaller phase-appropriate qualification
-floors. For 2003 through 2008, nflverse targets are unavailable, so receiving
-qualification falls back to receptions and target-derived metrics are omitted.
+Percentiles are computed within `(season, season_type, category, cohort)`
+among qualified players: forwards against forwards, defensemen against
+defensemen, goalies against goalies. Regular season skaters need 200 minutes
+(Play Driving also 150 minutes at 5-on-5), goalies 600 minutes or 10 games;
+postseason 4 / 2 games; career 300 / 100 games. The live season ships every
+player with volume and flags each metric with `qualified`, prorated by
+`qual_scale` (median club games / 82, floor 0.1). All thresholds are the
+`QUAL_*` block at the top of `backend/ingest.py`.
 
-`player_game_logs` (PK `(player_id, season, season_type, game_date, player_type)`) holds one
-row per player per game with `plays`, `touches`, and a flat `metrics` jsonb of
-per-game raw stats. `player_recent_form` stores league-anchored 3/5/8-week
-aggregates for Trends.
+## Data sources
 
-## Data sources (nflreadpy)
+- MoneyPuck `seasonSummary/<season>/<regular|playoffs>/skaters.csv` and
+  `goalies.csv`: one file per phase, five situation rows per player.
+- NHL stats REST `skater/summary` and `goalie/summary` (paginated 100 at a
+  time): +/-, PPG, PPP, SHG, GWG, W/L/OT, SO, GS, shooting hand. When it is
+  unavailable the rows fall back to MoneyPuck-derivable standard stats.
+- NHL mugs `assets.nhle.com/mugs/nhl/<seasonId>/<TEAM>/<playerId>.png`.
 
-- `load_player_stats([season])` — weekly box-score rows, split into REG and POST.
-- `load_nextgen_stats(stat_type=...)` — season-level Next Gen Stats (week 0
-  rows): CPOE, time-to-throw, aggressiveness, RYOE, separation, YAC+.
-- `load_schedules([season])` — `game_id` -> `gameday` for per-game dates.
-- `load_players()` — headshot URLs.
+Requests send the User-Agent `Hockey StatScout (jackwallner+bb@gmail.com)`.
+Attribution shown in the app: "Expected goals and shot data from
+MoneyPuck.com. Schedule, box scores and bios from the NHL."
+
+## Ported in a later pass
+
+Everything below this line still describes the football implementation in the
+code and is rewritten as each hockey port lands.
+
+- **Game logs** (`ingest_game_logs.py`): per-player-per-game rows from the NHL
+  boxscore joined with the MoneyPuck shots file.
+- **Recent Form** (`rollup_recent_form.py`): league-anchored 2/4/8-week
+  windows.
+- **Probe and event-aware refresh** (`source_probe.py`, `refresh.py`,
+  `refresh_schedule.py`): fingerprints MoneyPuck `skaters.csv`, `goalies.csv`,
+  `teams.csv` and `shots_<season>.zip`, then publishes snapshots, game logs
+  and Recent Form atomically through `publish_data_refresh`.
+  `refresh.py` must adapt to the new `ingest.build_agg_for_season` signature
+  (see the docstring at the top of `backend/ingest.py`).
+- **Freshness status**: `GET /rest/v1/data_refresh_status?select=*&limit=1`.
+  Besides the football columns it now exposes `shots_status` (MoneyPuck shots
+  file) and `summary_status` (NHL stats summary); `ngs_status` and
+  `pfr_status` stay `unknown`.
+- **Game details and enrichment** (`ingest_game_details.py`,
+  `ingest_enrichment.py`, `team_ratings.py`): cumulative xG race, player
+  profiles, team ratings and projections.

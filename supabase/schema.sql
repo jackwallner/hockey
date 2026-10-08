@@ -1,4 +1,6 @@
--- Gridiron StatScout (NFL) schema. Reflects the canonical remote DB.
+-- Hockey StatScout (NHL) base schema. The hockey additions (player_profiles columns,
+-- shots_status / summary_status on the freshness view) are in
+-- migrations/20261008000000_hockey_schema.sql.
 
 create table if not exists public.player_snapshots (
   id bigint,
@@ -12,7 +14,7 @@ create table if not exists public.player_snapshots (
   season integer not null,
   season_type text not null default 'REG',
   player_type text not null default 'unknown',
-  source text not null default 'nflverse',
+  source text not null default 'moneypuck',
   metrics jsonb not null default '[]'::jsonb,
   standard_stats jsonb not null default '[]'::jsonb,
   games jsonb not null default '[]'::jsonb,
@@ -34,15 +36,15 @@ create policy "Public read player snapshots"
   for select
   using (true);
 
--- Per-player-per-game rows. plays = pass attempts + carries + targets;
--- touches = completions + carries + receptions. Powers the Recent Form card.
+-- Per-player-per-game rows. plays = TOI in whole minutes; touches = shot attempts
+-- (skaters) or shots against (goalies). Powers the Recent Form card.
 create table if not exists public.player_game_logs (
   player_id bigint not null,
   season integer not null,
   season_type text not null default 'REG',
   game_date date not null,
   week integer,
-  player_type text not null, -- 'qb' | 'rb' | 'wr' | 'te' | 'def' | 'k'
+  player_type text not null, -- 'f' | 'd' | 'g'
   team text,
   opponent text,
   plays integer not null default 0,

@@ -196,6 +196,11 @@ def export(
     for player in players:
         player.pop("image_url", None)
         player.pop("created_at", None)
+        # The metric id is derived client-side from category and label when it
+        # is missing (`Metric.init(from:)`), and it was the single largest cost
+        # in the bundle: dropping it takes the plist from 65 MB to 37 MB.
+        for metric in player.get("metrics") or []:
+            metric.pop("id", None)
     output = f"StatScout/Data/{name}.json"
     with open(output, "w") as file:
         json.dump(players, file, separators=(",", ":"))

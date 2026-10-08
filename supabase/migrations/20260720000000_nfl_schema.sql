@@ -39,7 +39,7 @@ create table if not exists public.player_game_logs (
   player_id bigint not null,
   season integer not null,
   game_date date not null,
-  player_type text not null, -- 'qb' | 'rb' | 'wr' | 'te' | 'def' | 'k'
+  player_type text not null, -- 'f' | 'd' | 'g'
   team text,
   opponent text,
   plays integer not null default 0,

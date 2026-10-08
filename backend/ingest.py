@@ -1,41 +1,65 @@
 """
-NFL season-snapshot ingest.
+NHL season-snapshot ingest.
 
-Builds one ``player_snapshots`` row per player per season from the nflverse
-data mirror (via ``nflreadpy``), computing within-category percentiles among
-qualified players. Powers the iOS player-percentile screens.
+Builds one ``player_snapshots`` row per player per season and phase from
+MoneyPuck's season summary files (expected goals, shot quality, on-ice
+impact, goaltending) plus the NHL stats REST summary (the standard stats
+MoneyPuck lacks), with percentiles ranked inside the player's own cohort:
+forwards against forwards, defensemen against defensemen, goalies against
+goalies. Powers the iOS player-percentile screens. The contract is
+``project-docs/architecture/HOCKEY_CONTRACT.md``.
 
 Pipeline (REG and POST are stored and ranked separately):
-  1. Aggregate weekly ``load_player_stats`` rows to season totals.
-  2. Derive rate stats (cmp%, Y/A, sack%, explosive-rush%, CPOE, ...).
-  3. Merge season-level Next Gen Stats (time-to-throw, separation, RYOE, ...).
-  4. Merge PFR advanced defensive stats (pressures, coverage allowed, ...).
-  5. Rank each metric within (season, category) among qualified players.
-  6. Upsert to Supabase ``player_snapshots`` on_conflict=(id, season, season_type).
+  1. Download MoneyPuck ``skaters.csv`` / ``goalies.csv`` (five situation rows
+     per player) and sum them to one additive row per player. Rates are always
+     derived from summed numerators and denominators, so the career rollup
+     (``rollup_all_time.py``) pools seasons with the very same code.
+  2. Merge the NHL skater/goalie summary (+/-, PPG, PPP, SHG, GWG, W/L/OT, SO,
+     GS, shooting hand).
+  3. Derive the metric catalog, rank each metric inside (category, cohort)
+     among qualified players, and upsert to Supabase ``player_snapshots`` on
+     (id, season, season_type).
 
-Metric availability is bounded by the sources, not by choice - see the coverage
-table in ``handoff/NFL_CONTRACT.md``. In short: EPA and every counting stat run
-the full 2000-present range; CPOE starts 2006 (when pbp air-yards tracking
-begins); Next Gen Stats start 2016 (2018 for rushing-over-expected); PFR
-advanced defence starts 2018; and nflverse's ``targets`` column is blank for
-2003-2008, which is detected at runtime rather than hardcoded.
+Signature changes for ``refresh.py`` (to be adapted in the refresh pass).
+Still exported with the same name and return type:
+  ``DEFAULT_SEASON``, ``resolve_season``, ``build_snapshot_rows``,
+  ``qualification_scale``, ``_to_pandas``.
+Changed:
+  ``build_agg_for_season(season, season_type="REG", live=False,
+  enrichment_status=None)``. The ``weekly_frame`` parameter is gone: MoneyPuck
+  publishes one file per phase, so there is no shared core download to pass in.
+  ``enrichment_status`` now receives the single key ``"summary"`` (NHL stats
+  REST: ``ready`` / ``pending`` / ``degraded``); it replaces the NFL ``ngs`` and
+  ``pfr`` keys, and ``refresh.py`` should map it onto ``summary_status``.
+  The ``shots`` key (MoneyPuck shots file) is owned by the game-details pass.
+  ``build_snapshot_rows`` is unchanged in signature, but ``qual_scale`` now
+  prorates by games played out of 82.
+Removed (NFL only): ``gsis_to_id``, ``passer_rating``, ``merge_ngs``,
+  ``merge_pfr_defense``, ``load_headshots``, ``NGS_FIRST_SEASON``. Other
+  modules that still import them (``ingest_game_logs``, ``ingest_game_details``,
+  ``ingest_enrichment``, ``rollup_recent_form``) are ported in later passes.
+  ``player_type_from_position(position)`` now takes one argument.
 
 Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY. STATCAST_SEASON overrides the
-season; ``--season N`` overrides both.
+season (name kept for workflow compatibility); ``--season N`` overrides both.
 """
 
 import argparse
+import hashlib
+import io
+import json
 import logging
 import math
 import os
 import sys
+import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Iterator, Optional
 
-import nflreadpy as nfl
 import numpy as np
 import pandas as pd
-import polars as pl
+import requests
 from dotenv import load_dotenv
 from supabase import create_client
 
@@ -47,199 +71,165 @@ logger = logging.getLogger(__name__)
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
+# Season label is the start year (2026 means 2026-27).
 _now = datetime.now(UTC)
 DEFAULT_SEASON = _now.year if _now.month >= 9 else _now.year - 1
-MIN_SEASON = 1999
-OLDEST_SUPPORTED_SEASON = 2000
-NGS_FIRST_SEASON = 2016
+MIN_SEASON = 2008
+OLDEST_SUPPORTED_SEASON = 2008  # MoneyPuck's floor
 # Sentinel season for the career rollup written by rollup_all_time.py. Zero
 # rather than a future year so nothing that clamps to a maximum can mistake it
 # for a real season; the app renders it as "All Time".
 ALL_TIME_SEASON = 0
-# Pro-Football-Reference advanced defensive stats (pressures, coverage allowed,
-# missed-tackle rate). Regular season only - the PFR season table carries no
-# season_type, so there is no postseason split to merge.
-PFR_DEF_FIRST_SEASON = 2018
-SOURCE = "nflverse"
+SOURCE = "moneypuck"
+LEAGUE_GAMES = 82
 
-# Qualification thresholds per metric category (see NFL_CONTRACT.md).
-QUAL_ATTEMPTS = 150   # Passing
-QUAL_CARRIES = 80     # Rushing
-QUAL_TARGETS = 40     # Receiving
-QUAL_RECEPTIONS = 25  # Receiving fallback when historical targets are absent
-QUAL_GAMES = 8        # Defense (>= 8 games; the contract's OR-branch, snaps not joined)
-# Defensive *rate* thresholds. These don't gate whether a defender appears at
-# all (games does that) - they gate the individual coverage and tackling rates,
-# which are noise at low volume: a corner thrown at twice who allowed one catch
-# is not a 50%-completion defender, and ranking him as one would put him
-# mid-leaderboard on a two-target sample. Below the threshold the rate is nulled,
-# so the player keeps his counting stats and simply isn't ranked on the rate.
-QUAL_DEF_TARGETS = 20   # Cmp% / Yds per target / rating allowed / ADOT
-QUAL_DEF_TACKLES = 20   # Missed tackle %
-POST_QUAL_ATTEMPTS = 20
-POST_QUAL_CARRIES = 8
-POST_QUAL_TARGETS = 4
-POST_QUAL_RECEPTIONS = 3
-POST_QUAL_GAMES = 1
-# Career thresholds for the all-time rollup, roughly three seasons as a starter.
-# The single-season cut is far too low to reuse here: 150 career attempts is one
-# month of one year, so an all-time rate board built on it would be topped by
-# backups with a hot fortnight rather than by careers.
-CAREER_QUAL_ATTEMPTS = 1500
-CAREER_QUAL_CARRIES = 500
-CAREER_QUAL_TARGETS = 300
-CAREER_QUAL_RECEPTIONS = 200
-CAREER_QUAL_GAMES = 48
-# Career *playoff* thresholds, roughly a handful of postseason starts. A career
-# is measured in seasons; a playoff career is measured in games, because nobody
-# accumulates a regular season's worth of volume in January. Reusing the numbers
-# above here produced a career-playoff board with exactly one qualifying player
-# in the league's entire modern history (Brady, on 1,921 attempts), which is a
-# hole dressed up as a leaderboard.
-CAREER_POST_QUAL_ATTEMPTS = 150
-CAREER_POST_QUAL_CARRIES = 60
-CAREER_POST_QUAL_TARGETS = 40
-CAREER_POST_QUAL_RECEPTIONS = 25
-CAREER_POST_QUAL_GAMES = 6
-# The single-season thresholds describe a finished season. A season in progress
-# is held to the same bar prorated by how much of it has been played, otherwise
-# nobody clears 150 attempts in week 1 and the live season has no rows at all
-# until mid-October. 16 games a season through 2020, 17 from 2021.
-SEVENTEEN_GAME_FIRST_SEASON = 2021
+# --------------------------------------------------------------------------- #
+# Qualification thresholds (one place, see HOCKEY_CONTRACT.md "Qualification")
+# --------------------------------------------------------------------------- #
+QUAL_SKATER_TOI_MIN = 200       # all-situations minutes (Scoring, Shot Quality, Play Driving)
+QUAL_SKATER_5V5_TOI_MIN = 150   # Play Driving additionally needs this at 5on5
+QUAL_GOALIE_TOI_MIN = 600       # goalies: minutes ...
+QUAL_GOALIE_GP = 10             # ... or games played
+POST_QUAL_SKATER_GP = 4
+POST_QUAL_GOALIE_GP = 2
+CAREER_QUAL_SKATER_GP = 300
+CAREER_QUAL_GOALIE_GP = 100
+# The contract fixes the regular-season career bars only. A career playoff bar
+# is measured in games, not seasons; these are roughly a deep run per season
+# across a long career, chosen so the board is not a single name.
+CAREER_POST_QUAL_SKATER_GP = 50
+CAREER_POST_QUAL_GOALIE_GP = 25
+# Live-season proration floor: qual_scale = league games played / 82, never
+# below this, so the first week still has a non-trivial bar.
+QUAL_SCALE_FLOOR = 0.1
+MIN_FACEOFFS_FOR_STANDARD_STAT = 50
 
+# --------------------------------------------------------------------------- #
+# Sources
+# --------------------------------------------------------------------------- #
+USER_AGENT = "Hockey StatScout (jackwallner+bb@gmail.com)"
+MONEYPUCK_URL = (
+    "https://moneypuck.com/moneypuck/playerData/seasonSummary/{season}/{phase}/{kind}.csv"
+)
+NHL_SUMMARY_URL = "https://api.nhle.com/stats/rest/en/{kind}/summary"
+NHL_PAGE_SIZE = 100
+MUG_URL = "https://assets.nhle.com/mugs/nhl/{season}{next}/{team}/{pid}.png"
+CACHE_DIR = Path(__file__).resolve().parent / ".cache"
+REQUEST_PAUSE_SECONDS = 0.3
+REQUEST_ATTEMPTS = 3
+REQUEST_TIMEOUT = 90
 
-def qualification_scale(agg: pd.DataFrame, season: int) -> float:
-    """Fraction of a full regular season played so far, capped at 1.
+# season_type -> (MoneyPuck folder, NHL gameTypeId)
+PHASES = {"REG": ("regular", 2), "POST": ("playoffs", 3)}
 
-    Measured as the median club's games played (each club's busiest player).
-    It used to be the most games any single player had appeared in, so one
-    Thursday night game moved the whole league's bar up a week before thirty
-    clubs had played: at 2026 Week 3 that flagged 56% of receiver metrics as
-    unqualified overnight. A finished season always scales to 1, so every past
-    season keeps exactly the thresholds it was ranked on.
-    """
-    if agg.empty or "games" not in agg.columns:
-        return 1.0
-    full = 17 if season >= SEVENTEEN_GAME_FIRST_SEASON else 16
-    games = pd.to_numeric(agg["games"], errors="coerce")
-    if "team" in agg.columns:
-        teams = agg["team"].astype(str).str.strip()
-        known = games[(teams != "") & (teams.str.lower() != "nan") & games.notna()]
-        per_team = known.groupby(teams[known.index]).max()
-        played = float(np.floor(per_team.median())) if not per_team.empty else games.max()
-    else:
-        played = games.max()
-    if pd.isna(played) or played <= 0:
-        return 1.0
-    return min(1.0, float(played) / full)
+# MoneyPuck and NHL team codes agree for the 32 current clubs; older seasons
+# use dotted codes. Normalised here so every stored row uses the NHL code.
+TEAM_ALIASES = {
+    "L.A": "LAK", "N.J": "NJD", "S.J": "SJS", "T.B": "TBL",
+    "PHX": "ARI", "WAS": "WSH", "VEG": "VGK", "MON": "MTL", "CLB": "CBJ",
+}
 
-# Weekly counting stats summed to season totals.
-SUM_COLS = [
-    "completions", "attempts", "passing_yards", "passing_tds",
-    "passing_interceptions", "sacks_suffered", "passing_air_yards",
-    "passing_first_downs", "passing_epa", "rushing_10",
-    "carries", "rushing_yards", "rushing_tds", "rushing_first_downs",
-    "rushing_epa", "rushing_fumbles",
-    "receptions", "targets", "receiving_yards", "receiving_tds",
-    "receiving_air_yards", "receiving_yards_after_catch",
-    "receiving_first_downs", "receiving_epa",
-    "def_tackles_solo", "def_tackle_assists", "def_sacks",
-    "def_interceptions", "def_pass_defended", "def_fumbles_forced",
-    "def_tackles_for_loss", "def_qb_hits",
-]
-# Weekly rate stats averaged across games.
-MEAN_COLS = ["target_share", "air_yards_share"]
-# Weekly rate stats averaged with a weight, because a plain mean of per-game
-# rates over-counts low-volume games. (col -> weight col)
-WEIGHTED_MEAN_COLS = {"passing_cpoe": "attempts"}
+POSITION_TO_TYPE = {"C": "f", "L": "f", "R": "f", "W": "f", "D": "d", "G": "g"}
+PLAYER_TYPES = ("f", "d", "g")
+
+# MoneyPuck columns summed per situation, mapped to our additive columns.
+SKATER_ALL = {
+    "games_played": "games", "icetime": "icetime", "gameScore": "game_score",
+    "I_F_goals": "goals", "I_F_primaryAssists": "assists1",
+    "I_F_secondaryAssists": "assists2", "I_F_points": "points",
+    "I_F_shotsOnGoal": "sog", "I_F_shotAttempts": "shot_attempts",
+    "I_F_xGoals": "ixg", "I_F_highDangerShots": "hd_shots",
+    "I_F_unblockedShotAttempts": "unblocked", "I_F_rebounds": "rebounds_created",
+    "shotsBlockedByPlayer": "blocks", "I_F_hits": "hits",
+    "I_F_takeaways": "takeaways", "I_F_giveaways": "giveaways",
+    "I_F_penalityMinutes": "pim_mp", "faceoffsWon": "fo_won",
+    "faceoffsLost": "fo_lost",
+}
+SKATER_5V5 = {
+    "icetime": "icetime_5v5",
+    "OnIce_F_xGoals": "xgf_5v5", "OnIce_A_xGoals": "xga_5v5",
+    "OnIce_F_goals": "gf_5v5", "OnIce_A_goals": "ga_5v5",
+    "OnIce_F_shotAttempts": "cf_5v5", "OnIce_A_shotAttempts": "ca_5v5",
+    "OnIce_F_highDangerShots": "hdf_5v5", "OnIce_A_highDangerShots": "hda_5v5",
+    "OffIce_F_xGoals": "off_xgf_5v5", "OffIce_A_xGoals": "off_xga_5v5",
+    "OffIce_F_shotAttempts": "off_cf_5v5", "OffIce_A_shotAttempts": "off_ca_5v5",
+}
+SKATER_PP = {"I_F_points": "pp_points"}
+GOALIE_ALL = {
+    "games_played": "games", "icetime": "icetime", "xGoals": "xgoals_against",
+    "goals": "goals_against", "ongoal": "shots_against",
+    "highDangerShots": "hd_shots_against", "highDangerGoals": "hd_goals_against",
+    "rebounds": "rebounds_against",
+}
+IDENTITY_COLS = ["name", "team", "position", "season"]
+
+# NHL stats REST columns summed (career pooling adds seasons), per report.
+NHL_SKATER_COLS = {
+    "gameWinningGoals": "gwg", "ppGoals": "ppg", "ppPoints": "ppp",
+    "shGoals": "shg", "plusMinus": "plus_minus", "penaltyMinutes": "pim_nhl",
+}
+NHL_GOALIE_COLS = {
+    "gamesStarted": "gs", "wins": "wins", "losses": "losses",
+    "otLosses": "ot_losses", "shutouts": "shutouts",
+}
 
 # Metric catalog: category -> list of (id, label, agg_col, fmt, inverted).
-# ``inverted`` = lower raw value ranks higher (e.g. turnovers, sacks taken).
+# ``inverted`` = lower raw value ranks higher.
 METRIC_DEFS: dict[str, list[tuple[str, str, str, str, bool]]] = {
-    "Passing": [
-        ("pass_yards", "Pass Yds", "passing_yards", "comma", False),
-        ("pass_tds", "Pass TD", "passing_tds", "int", False),
-        ("cmp_pct", "Cmp%", "cmp_pct", "pct1", False),
-        ("ypa", "Y/A", "ypa", "dec1", False),
-        ("int_rate", "INT%", "int_rate", "pct1", True),
-        ("passer_rating", "Rating", "passer_rating", "dec1", False),
-        ("passing_epa", "EPA/Play", "passing_epa_per_play", "dec2", False),
-        ("cpoe", "CPOE", "cpoe", "signed1", False),
-        ("avg_time_to_throw", "Time to Throw", "avg_time_to_throw", "dec2", False),
-        ("aggressiveness", "Aggressiveness", "aggressiveness", "pct1", False),
-        ("avg_intended_air_yards", "Intended Air Yds", "avg_intended_air_yards", "dec1", False),
-        ("sack_rate", "Sack%", "sack_rate", "pct1", True),
+    "Scoring": [
+        ("goals", "G", "goals", "int", False),
+        ("assists", "A", "assists", "int", False),
+        ("points", "P", "points", "int", False),
+        ("points_per_60", "P/60", "points_per_60", "dec2", False),
+        ("primary_points", "Primary P", "primary_points", "int", False),
+        ("pp_points", "PP P", "pp_points", "int", False),
+        ("shots_on_goal", "SOG", "sog", "int", False),
+        ("shooting_pct", "Sh%", "shooting_pct", "pct1", False),
+        ("game_score_per_gp", "Game Score", "game_score_per_gp", "dec2", False),
     ],
-    "Rushing": [
-        ("rush_yards", "Rush Yds", "rushing_yards", "comma", False),
-        ("rush_tds", "Rush TD", "rushing_tds", "int", False),
-        ("ypc", "Y/C", "ypc", "dec1", False),
-        ("rushing_epa_per_carry", "EPA/Rush", "rushing_epa_per_carry", "dec2", False),
-        ("rushing_epa", "Rush EPA", "rushing_epa", "dec1", False),
-        ("rush_first_downs", "Rush 1D", "rushing_first_downs", "int", False),
-        ("explosive_rush_rate", "Explosive%", "explosive_rush_rate", "pct1", False),
-        ("fumble_rate", "Fumble%", "fumble_rate", "pct1", True),
-        ("rush_yoe", "RYOE", "rush_yoe", "dec1", False),
+    "Shot Quality": [
+        ("ixg", "ixG", "ixg", "dec1", False),
+        ("gax", "GAx", "gax", "signed1", False),
+        ("ixg_per_60", "ixG/60", "ixg_per_60", "dec2", False),
+        ("shot_attempts", "Shot Att", "shot_attempts", "int", False),
+        ("shots_per_60", "Shots/60", "shots_per_60", "dec1", False),
+        ("hd_shots", "HD Shots", "hd_shots", "int", False),
+        ("xg_per_shot", "xG/Shot", "xg_per_shot", "dec3", False),
+        ("rebounds_created", "Rebounds", "rebounds_created", "int", False),
     ],
-    "Receiving": [
-        ("receptions", "Rec", "receptions", "int", False),
-        ("rec_yards", "Rec Yds", "receiving_yards", "comma", False),
-        ("rec_tds", "Rec TD", "receiving_tds", "int", False),
-        ("yac", "YAC", "rec_yac", "comma", False),
-        ("target_share", "Target Share", "target_share_pct", "pct1", False),
-        ("wopr", "WOPR", "wopr", "dec2", False),
-        ("racr", "RACR", "racr", "dec2", False),
-        ("receiving_epa_per_target", "EPA/Tgt", "receiving_epa_per_target", "dec2", False),
-        ("receiving_epa", "Rec EPA", "receiving_epa", "dec1", False),
-        ("catch_pct", "Catch%", "catch_pct", "pct1", False),
-        ("avg_separation", "Separation", "avg_separation", "dec1", False),
-        ("avg_yac_above_expectation", "YAC+", "avg_yac_above_expectation", "signed1", False),
+    "Play Driving": [
+        ("xgf_pct", "xGF%", "xgf_pct", "pct1", False),
+        ("rel_xgf_pct", "Rel xGF%", "rel_xgf_pct", "signed1", False),
+        ("cf_pct", "CF%", "cf_pct", "pct1", False),
+        ("rel_cf_pct", "Rel CF%", "rel_cf_pct", "signed1", False),
+        ("hdcf_pct", "HDCF%", "hdcf_pct", "pct1", False),
+        ("gf_pct", "GF%", "gf_pct", "pct1", False),
+        ("xgf_per_60", "xGF/60", "xgf_per_60", "dec2", False),
+        ("xga_per_60", "xGA/60", "xga_per_60", "dec2", True),
+        ("blocks", "Blocks", "blocks", "int", False),
+        ("hits", "Hits", "hits", "int", False),
+        ("takeaways", "Takeaways", "takeaways", "int", False),
+        ("giveaways", "Giveaways", "giveaways", "int", True),
     ],
-    # Defence used to be traditional counting stats only, which left defenders
-    # as the one position group with no advanced view anywhere in the app. The
-    # first six rows here are PFR's advanced defensive stats (2018+): what a
-    # defender allowed in coverage, and the pressure he generated rushing - the
-    # closest thing the public data has to a defensive EPA.
-    "Defense": [
-        ("def_pressures", "Pressures", "def_pressures", "int", False),
-        ("def_hurries", "Hurries", "def_hurries", "int", False),
-        ("def_qb_knockdowns", "QB KD", "def_qb_knockdowns", "int", False),
-        ("def_cmp_pct_allowed", "Cmp% Allowed", "def_cmp_pct_allowed", "pct1", True),
-        ("def_yds_per_tgt_allowed", "Yds/Tgt Allowed", "def_yds_per_tgt_allowed", "dec1", True),
-        ("def_rating_allowed", "Rating Allowed", "def_rating_allowed", "dec1", True),
-        ("def_missed_tkl_pct", "Missed Tkl%", "def_missed_tkl_pct", "pct1", True),
-        ("tackles", "Tackles", "tackles", "int", False),
-        ("sacks", "Sacks", "sacks", "dec1", False),
-        ("def_ints", "INT", "def_ints", "int", False),
-        ("passes_defended", "PD", "passes_defended", "int", False),
-        ("forced_fumbles", "FF", "forced_fumbles", "int", False),
-        ("tfl", "TFL", "tfl", "int", False),
-        ("qb_hits", "QB Hits", "qb_hits", "int", False),
+    "Goaltending": [
+        ("gsax", "GSAx", "gsax", "signed1", False),
+        ("gsax_per_60", "GSAx/60", "gsax_per_60", "dec2", False),
+        ("sv_pct", "SV%", "sv_pct", "sv3", False),
+        ("gaa", "GAA", "gaa", "dec2", True),
+        ("hd_sv_pct", "HD SV%", "hd_sv_pct", "sv3", False),
+        ("xga_per_60", "xGA/60", "g_xga_per_60", "dec2", False),
+        ("rebound_pct", "Rebound%", "rebound_pct", "pct1", True),
+        ("saves", "Saves", "saves", "int", False),
+        ("goals_against", "GA", "goals_against", "int", True),
+        ("wins", "W", "wins", "int", False),
+        ("shutouts", "SO", "shutouts", "int", False),
     ],
 }
-
-# PFR advanced-defence column -> our aggregate column. PFR ships the two rate
-# columns as fractions (0.68), not percentages, so they are scaled on merge.
-PFR_DEF_COLS = {
-    "prss": "def_pressures",
-    "hrry": "def_hurries",
-    "qbkd": "def_qb_knockdowns",
-    "cmp_percent": "def_cmp_pct_allowed",
-    "yds_tgt": "def_yds_per_tgt_allowed",
-    "rat": "def_rating_allowed",
-    "m_tkl_percent": "def_missed_tkl_pct",
-    "tgt": "def_targets_allowed",
-    "comb": "def_combined_tackles",
-}
-
-POSITION_GROUP_TO_TYPE = {
-    "QB": "qb",
-    "RB": "rb",
-    "WR": "wr",
-    "TE": "te",
-    "DB": "def",
-    "DL": "def",
-    "LB": "def",
+CATEGORY_TYPES: dict[str, tuple[str, ...]] = {
+    "Scoring": ("f", "d"),
+    "Shot Quality": ("f", "d"),
+    "Play Driving": ("f", "d"),
+    "Goaltending": ("g",),
 }
 
 
@@ -263,27 +253,29 @@ def resolve_season(cli_season: Optional[int] = None) -> int:
     return candidate
 
 
-def gsis_to_id(gsis: Any) -> Optional[int]:
-    """Convert an nflverse GSIS id ("00-0034796") to the DB bigint (34796)."""
-    if gsis is None or (isinstance(gsis, float) and pd.isna(gsis)):
-        return None
-    text = str(gsis).strip()
-    if not text:
-        return None
-    tail = text.split("-")[-1]
-    try:
-        return int(tail)
-    except ValueError:
-        return None
+def season_id(season: int) -> int:
+    """NHL API seasonId for a start-year season (2025 -> 20252026)."""
+    return int(f"{season}{season + 1}")
 
 
-def player_type_from_position(position: Any, position_group: Any) -> str:
-    """Map nflverse position/position_group to a contract player_type."""
-    pos = str(position or "").strip().upper()
-    if pos == "K":
-        return "k"
-    group = str(position_group or "").strip().upper()
-    return POSITION_GROUP_TO_TYPE.get(group, "def" if group in {"DB", "DL", "LB"} else "")
+def normalize_team(team: Any) -> str:
+    text = str(team or "").strip()
+    if not text or text.lower() == "nan":
+        return ""
+    return TEAM_ALIASES.get(text, text)
+
+
+def player_type_from_position(position: Any) -> str:
+    """Map a raw position code (C, L, R, W, D, G) to a contract player_type."""
+    return POSITION_TO_TYPE.get(str(position or "").strip().upper(), "")
+
+
+def headshot_url(season: Any, team: Any, pid: int) -> Optional[str]:
+    """NHL mug URL for a player on a team in a season (200 for the right team)."""
+    code = normalize_team(team)
+    if not code or pd.isna(season):
+        return None
+    return MUG_URL.format(season=int(season), next=int(season) + 1, team=code, pid=pid)
 
 
 def format_value(value: Any, fmt: str) -> str:
@@ -293,6 +285,8 @@ def format_value(value: Any, fmt: str) -> str:
     try:
         v = float(value)
     except (ValueError, TypeError):
+        return ""
+    if pd.isna(v):
         return ""
     if fmt == "comma":
         return f"{int(round(v)):,}"
@@ -304,30 +298,30 @@ def format_value(value: Any, fmt: str) -> str:
         return f"{v:.1f}"
     if fmt == "dec2":
         return f"{v:.2f}"
+    if fmt == "dec3":
+        return f"{v:.3f}"
     if fmt == "signed1":
-        return f"{v:+.1f}"
+        rounded = round(v, 1)
+        return f"{(rounded if rounded != 0 else 0.0):+.1f}"
+    if fmt == "sv3":
+        text = f"{v:.3f}"
+        return text[1:] if text.startswith("0.") else text
     return str(v)
 
 
-def passer_rating(cmp_: Any, att: Any, yds: Any, td: Any, ints: Any) -> Optional[float]:
-    """Standard NFL passer rating (0-158.3) from season totals."""
+def format_toi(seconds: Any) -> str:
+    """Seconds -> "19:42"."""
     try:
-        att = float(att)
-        if att <= 0:
-            return None
-        a = min(max(((float(cmp_) / att) - 0.3) * 5, 0.0), 2.375)
-        b = min(max(((float(yds) / att) - 3) * 0.25, 0.0), 2.375)
-        c = min(max((float(td) / att) * 20, 0.0), 2.375)
-        d = min(max(2.375 - (float(ints) / att) * 25, 0.0), 2.375)
+        total = int(round(float(seconds)))
     except (ValueError, TypeError):
-        return None
-    return round((a + b + c + d) / 6 * 100, 1)
+        return ""
+    return f"{total // 60}:{total % 60:02d}"
 
 
 def rank_percentiles(series: pd.Series, inverted: bool) -> dict[int, int]:
     """Percentile (1-100) of each non-null value within the series.
 
-    ``inverted`` ranks lower raw values higher (turnovers, sacks taken).
+    ``inverted`` ranks lower raw values higher (giveaways, goals against).
     """
     s = pd.to_numeric(series, errors="coerce").dropna()
     if s.empty:
@@ -336,7 +330,17 @@ def rank_percentiles(series: pd.Series, inverted: bool) -> dict[int, int]:
     return {int(pid): max(1, min(100, int(round(pct * 100)))) for pid, pct in ranks.items()}
 
 
-LIVE_OFFENSE_TYPES = {"qb", "rb", "wr", "te"}
+def _num(row: Any, col: str) -> float:
+    val = row.get(col)
+    try:
+        return float(val) if val is not None and not pd.isna(val) else 0.0
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _scaled(threshold: float, scale: float) -> float:
+    """A full-season bar prorated for a season in progress (never below 1)."""
+    return max(1, math.ceil(threshold * scale)) if scale < 1 else threshold
 
 
 def has_opportunity(row: Any, category: str, player_type: str) -> bool:
@@ -344,30 +348,13 @@ def has_opportunity(row: Any, category: str, player_type: str) -> bool:
 
     The live season ships every player who has played, not just those over the
     qualification bar: the app's "Qualified" filter is a choice the user makes,
-    and in the early weeks nobody is over the full-season bar. One attempt,
-    carry, target or game is data; zero is not (a receiver with no carries has
-    no rushing line to rank).
+    and early in the year nobody is over the full-season bar.
     """
-    def _num(col: str) -> float:
-        val = row.get(col)
-        try:
-            return float(val) if val is not None and not pd.isna(val) else 0.0
-        except (ValueError, TypeError):
-            return 0.0
-
-    if category == "Defense":
-        return player_type == "def" and _num("games") >= 1
-    if player_type not in LIVE_OFFENSE_TYPES:
+    if player_type not in CATEGORY_TYPES.get(category, ()):
         return False
-    if category == "Passing":
-        return _num("attempts") >= 1
-    if category == "Rushing":
-        return _num("carries") >= 1
-    if category == "Receiving":
-        if not bool(row.get("targets_reliable", True)):
-            return _num("receptions") >= 1
-        return _num("targets") >= 1
-    return False
+    if category == "Play Driving":
+        return _num(row, "icetime_5v5") > 0
+    return _num(row, "games") >= 1 and _num(row, "icetime") > 0
 
 
 def qualifies(
@@ -378,412 +365,288 @@ def qualifies(
     career: bool = False,
     scale: float = 1.0,
 ) -> bool:
-    """Whether a player clears the qualification threshold for a category.
+    """Whether a player clears the qualification bar for a category.
 
-    Four tiers, one per (career, postseason) combination: a full season, a
-    postseason run (a handful of games, so the bar drops), a career (roughly
-    three starting seasons, so it rises), and a *playoff* career, which is a
-    career measured in games rather than seasons.
-
-    ``scale`` prorates the full-season tier for a season still being played
-    (see ``qualification_scale``); the other tiers ignore it.
+    Tiers: a full regular season (ice time), a postseason run (games), a career
+    (games) and a career postseason (games). ``scale`` prorates only the
+    full-season tier for a season still being played (``qualification_scale``).
     """
-    def _num(col: str) -> float:
-        val = row.get(col)
-        try:
-            return float(val) if val is not None and not pd.isna(val) else 0.0
-        except (ValueError, TypeError):
-            return 0.0
-
+    if player_type not in CATEGORY_TYPES.get(category, ()):
+        return False
+    games = _num(row, "games")
+    goalie = player_type == "g"
     postseason = season_type == "POST"
-
-    def _threshold(
-        season: float,
-        post: float,
-        career_value: float,
-        career_post: float,
-    ) -> float:
-        if career:
-            return career_post if postseason else career_value
+    if career:
         if postseason:
-            return post
-        return max(1, math.ceil(season * scale)) if scale < 1 else season
-
-    if category == "Passing":
-        return _num("attempts") >= _threshold(
-            QUAL_ATTEMPTS, POST_QUAL_ATTEMPTS,
-            CAREER_QUAL_ATTEMPTS, CAREER_POST_QUAL_ATTEMPTS,
+            return games >= (CAREER_POST_QUAL_GOALIE_GP if goalie else CAREER_POST_QUAL_SKATER_GP)
+        return games >= (CAREER_QUAL_GOALIE_GP if goalie else CAREER_QUAL_SKATER_GP)
+    if postseason:
+        return games >= (POST_QUAL_GOALIE_GP if goalie else POST_QUAL_SKATER_GP)
+    icetime = _num(row, "icetime")
+    if goalie:
+        return (
+            icetime >= _scaled(QUAL_GOALIE_TOI_MIN * 60, scale)
+            or games >= _scaled(QUAL_GOALIE_GP, scale)
         )
-    if category == "Rushing":
-        return _num("carries") >= _threshold(
-            QUAL_CARRIES, POST_QUAL_CARRIES,
-            CAREER_QUAL_CARRIES, CAREER_POST_QUAL_CARRIES,
-        )
-    if category == "Receiving":
-        if not bool(row.get("targets_reliable", True)):
-            return _num("receptions") >= _threshold(
-                QUAL_RECEPTIONS, POST_QUAL_RECEPTIONS,
-                CAREER_QUAL_RECEPTIONS, CAREER_POST_QUAL_RECEPTIONS,
-            )
-        return _num("targets") >= _threshold(
-            QUAL_TARGETS, POST_QUAL_TARGETS,
-            CAREER_QUAL_TARGETS, CAREER_POST_QUAL_TARGETS,
-        )
-    if category == "Defense":
-        return player_type == "def" and _num("games") >= _threshold(
-            QUAL_GAMES, POST_QUAL_GAMES,
-            CAREER_QUAL_GAMES, CAREER_POST_QUAL_GAMES,
-        )
-    return False
+    if icetime < _scaled(QUAL_SKATER_TOI_MIN * 60, scale):
+        return False
+    if category == "Play Driving":
+        return _num(row, "icetime_5v5") >= _scaled(QUAL_SKATER_5V5_TOI_MIN * 60, scale)
+    return True
 
 
-def _safe_div(numer: pd.Series, denom: pd.Series) -> pd.Series:
+def qualification_scale(agg: pd.DataFrame, season: int) -> float:
+    """Fraction of an 82-game regular season played so far, floored at 0.1.
+
+    Measured as the median club's games played (each club's busiest player), so
+    one early game does not move the whole league's bar. Only the live season
+    is prorated: every finished season, including the shortened 2012-13 and
+    2019-20 ones, keeps exactly the thresholds it is ranked on.
+    """
+    if season != DEFAULT_SEASON or agg.empty or "games" not in agg.columns:
+        return 1.0
+    games = pd.to_numeric(agg["games"], errors="coerce")
+    if "team" in agg.columns:
+        teams = agg["team"].astype(str).str.strip()
+        known = games[(teams != "") & (teams.str.lower() != "nan") & games.notna()]
+        per_team = known.groupby(teams[known.index]).max()
+        played = float(np.floor(per_team.median())) if not per_team.empty else games.max()
+    else:
+        played = games.max()
+    if pd.isna(played) or played <= 0:
+        return QUAL_SCALE_FLOOR
+    return max(QUAL_SCALE_FLOOR, min(1.0, float(played) / LEAGUE_GAMES))
+
+
+def _col(df: pd.DataFrame, name: str) -> pd.Series:
+    """A numeric column, or an all-NaN series when the source lacks it."""
+    if name in df.columns:
+        return pd.to_numeric(df[name], errors="coerce")
+    return pd.Series(np.nan, index=df.index, dtype="float64")
+
+
+def _div(numer: pd.Series, denom: pd.Series) -> pd.Series:
     return numer / denom.replace(0, np.nan)
 
 
-def _derive(agg: pd.DataFrame, output: str, required: list[str], calculation: Any) -> None:
-    """Add a derived column only when every required source column exists."""
-    if all(column in agg.columns for column in required):
-        agg[output] = calculation()
+def _sum_situation(raw: pd.DataFrame, situation: str, mapping: dict[str, str]) -> pd.DataFrame:
+    """Sum the mapped MoneyPuck columns of one situation to one row per player."""
+    sub = raw[raw["situation"] == situation]
+    present = {src: dst for src, dst in mapping.items() if src in sub.columns}
+    if sub.empty or not present:
+        return pd.DataFrame(columns=list(mapping.values()), index=pd.Index([], dtype="int64"))
+    nums = sub[list(present)].apply(pd.to_numeric, errors="coerce")
+    nums.index = sub["playerId"].astype("int64").values
+    return nums.groupby(level=0).sum(min_count=1).rename(columns=present)
 
 
-def aggregate_seasons(
-    weekly: pd.DataFrame,
-    season: int,
-    season_type: str = "REG",
-) -> pd.DataFrame:
-    """Aggregate one season phase to one total row per player (indexed by id).
+def _identity(raw: pd.DataFrame) -> pd.DataFrame:
+    """Name, team, position and season of each player's most recent row."""
+    sub = raw[raw["situation"] == "all"].copy()
+    sub["playerId"] = sub["playerId"].astype("int64")
+    latest = sub.sort_values("season").groupby("playerId").tail(1).set_index("playerId")
+    out = latest[[c for c in IDENTITY_COLS if c in latest.columns]].copy()
+    out = out.rename(columns={"season": "season_last"})
+    out["team"] = out["team"].map(normalize_team)
+    return out
 
-    Pure: takes a DataFrame, returns a DataFrame with all counting totals,
-    derived rate columns, and identity columns. No NGS, no network.
-    """
-    df = weekly[
-        (weekly["season"] == season)
-        & (weekly["season_type"] == season_type)
-    ].copy()
-    if df.empty:
+
+def skater_totals(raw: pd.DataFrame) -> pd.DataFrame:
+    """Additive per-player totals from a MoneyPuck skaters frame (any seasons)."""
+    if raw is None or raw.empty:
         return pd.DataFrame()
-
-    df["pid"] = df["player_id"].map(gsis_to_id)
-    df = df[df["pid"].notna()].copy()
-    df["pid"] = df["pid"].astype(int)
-
-    present_sum = [c for c in SUM_COLS if c in df.columns]
-    present_mean = [c for c in MEAN_COLS if c in df.columns]
-
-    sums = df.groupby("pid")[present_sum].sum(min_count=1)
-    means = df.groupby("pid")[present_mean].mean() if present_mean else pd.DataFrame(index=sums.index)
-    games = df.groupby("pid").size().rename("games")
-
-    # Identity from the player's most recent (max week) row.
-    latest = df.sort_values("week").groupby("pid").tail(1).set_index("pid")
-    identity = latest[["player_display_name", "team", "position", "position_group"]]
-
-    agg = sums.join(means).join(games).join(identity)
-
-    # Volume-weighted season means. CPOE is the one that matters: it arrives as a
-    # per-game rate, and a flat mean would let a 3-attempt week count as much as
-    # a 40-attempt one. Weighting by attempts reconstructs the season figure.
-    #
-    # This is also what extends CPOE back to 2006. It used to come only from the
-    # Next Gen Stats join, so it started in 2016 and simply did not exist for the
-    # ten seasons before - even though the weekly feed has carried
-    # ``passing_cpoe`` since 2006, when pbp air-yards tracking began. Deriving it
-    # here and preferring it everywhere also keeps *one* definition across the
-    # whole range: NGS's completion-percentage-above-expectation is a different
-    # model (they correlate ~0.86 and differ by ~1.6 points over a season), so
-    # splicing the two at 2016 would put a seam in the middle of every
-    # year-over-year CPOE comparison the app draws.
-    for column, weight_col in WEIGHTED_MEAN_COLS.items():
-        if column not in df.columns or weight_col not in df.columns:
-            continue
-        w = df[["pid"]].copy()
-        w["_value"] = pd.to_numeric(df[column], errors="coerce")
-        w["_weight"] = pd.to_numeric(df[weight_col], errors="coerce")
-        w = w[w["_value"].notna() & w["_weight"].notna() & (w["_weight"] > 0)]
-        if w.empty:
-            continue
-        w["_product"] = w["_value"] * w["_weight"]
-        grouped = w.groupby("pid")[["_product", "_weight"]].sum()
-        agg[column] = grouped["_product"] / grouped["_weight"].replace(0, np.nan)
-
-    agg["name"] = agg["player_display_name"].astype(str)
-    agg["player_type"] = [
-        player_type_from_position(p, g)
-        for p, g in zip(agg["position"], agg["position_group"])
-    ]
-
-    # nflverse has complete receptions and yards back to 1999, but targets are
-    # effectively blank for 2003-2008. Detect that at the phase level. Those
-    # seasons qualify receivers by receptions and omit target-derived metrics.
-    targets_total = pd.to_numeric(agg.get("targets"), errors="coerce").sum()
-    receptions_total = pd.to_numeric(agg.get("receptions"), errors="coerce").sum()
-    targets_reliable = targets_total >= receptions_total
-    agg["targets_reliable"] = targets_reliable
-    if not targets_reliable:
-        for column in [
-            "targets",
-            "target_share",
-            "air_yards_share",
-            "receiving_air_yards",
-        ]:
-            if column in agg.columns:
-                agg[column] = np.nan
-
-    # Passing derived rates.
-    # `cpoe` is the metric catalog's column name; the weighted mean above lands
-    # under the feed's own name. Aliasing rather than renaming keeps the source
-    # column visible for debugging.
-    if "passing_cpoe" in agg.columns:
-        agg["cpoe"] = agg["passing_cpoe"]
-    _derive(agg, "cmp_pct", ["completions", "attempts"], lambda: _safe_div(agg["completions"], agg["attempts"]) * 100)
-    _derive(agg, "ypa", ["passing_yards", "attempts"], lambda: _safe_div(agg["passing_yards"], agg["attempts"]))
-    _derive(agg, "int_rate", ["passing_interceptions", "attempts"], lambda: _safe_div(agg["passing_interceptions"], agg["attempts"]) * 100)
-    _derive(
-        agg,
-        "sack_rate",
-        ["sacks_suffered", "attempts"],
-        lambda: _safe_div(agg["sacks_suffered"], agg["attempts"] + agg["sacks_suffered"]) * 100,
-    )
-    _derive(
-        agg,
-        "passing_epa_per_play",
-        ["passing_epa", "attempts", "sacks_suffered"],
-        lambda: _safe_div(agg["passing_epa"], agg["attempts"] + agg["sacks_suffered"]),
-    )
-    passer_rating_columns = [
-        "completions", "attempts", "passing_yards", "passing_tds",
-        "passing_interceptions",
-    ]
-    if all(column in agg.columns for column in passer_rating_columns):
-        agg["passer_rating"] = [
-            passer_rating(c, a, y, t, i)
-            for c, a, y, t, i in zip(
-                agg["completions"], agg["attempts"], agg["passing_yards"],
-                agg["passing_tds"], agg["passing_interceptions"],
-            )
-        ]
-
-    # Rushing derived rates.
-    _derive(agg, "ypc", ["rushing_yards", "carries"], lambda: _safe_div(agg["rushing_yards"], agg["carries"]))
-    _derive(agg, "rushing_epa_per_carry", ["rushing_epa", "carries"], lambda: _safe_div(agg["rushing_epa"], agg["carries"]))
-    _derive(agg, "explosive_rush_rate", ["rushing_10", "carries"], lambda: _safe_div(agg["rushing_10"], agg["carries"]) * 100)
-    _derive(agg, "fumble_rate", ["rushing_fumbles", "carries"], lambda: _safe_div(agg["rushing_fumbles"], agg["carries"]) * 100)
-
-    # Receiving derived rates.
-    _derive(agg, "catch_pct", ["receptions", "targets"], lambda: _safe_div(agg["receptions"], agg["targets"]) * 100)
-    _derive(agg, "receiving_epa_per_target", ["receiving_epa", "targets"], lambda: _safe_div(agg["receiving_epa"], agg["targets"]))
-    _derive(agg, "racr", ["receiving_yards", "receiving_air_yards"], lambda: _safe_div(agg["receiving_yards"], agg["receiving_air_yards"]))
-    if "receiving_yards_after_catch" in agg.columns:
-        agg["rec_yac"] = agg["receiving_yards_after_catch"]
-    if "target_share" in agg.columns:
-        agg["target_share_pct"] = agg["target_share"] * 100
-        if "air_yards_share" in agg.columns:
-            agg["wopr"] = 1.5 * agg["target_share"] + 0.7 * agg["air_yards_share"]
-
-    # Defense aliases. Only combine fields that the source season actually has.
-    tackle_columns = [column for column in ["def_tackles_solo", "def_tackle_assists"] if column in agg.columns]
-    if tackle_columns:
-        agg["tackles"] = agg[tackle_columns].sum(axis=1, min_count=1)
-    defense_aliases = {
-        "sacks": "def_sacks",
-        "def_ints": "def_interceptions",
-        "passes_defended": "def_pass_defended",
-        "forced_fumbles": "def_fumbles_forced",
-        "tfl": "def_tackles_for_loss",
-        "qb_hits": "def_qb_hits",
-    }
-    for alias, source in defense_aliases.items():
-        if source in agg.columns:
-            agg[alias] = agg[source]
-
-    return agg
+    out = _identity(raw).join(_sum_situation(raw, "all", SKATER_ALL), how="left")
+    out = out.join(_sum_situation(raw, "5on5", SKATER_5V5), how="left")
+    out = out.join(_sum_situation(raw, "5on4", SKATER_PP), how="left")
+    out["pp_points"] = _col(out, "pp_points").fillna(0)
+    out["player_type"] = out["position"].map(player_type_from_position)
+    return out[out["player_type"].isin(("f", "d"))]
 
 
-def merge_ngs(
-    agg: pd.DataFrame,
-    ngs_passing: pd.DataFrame,
-    ngs_rushing: pd.DataFrame,
-    ngs_receiving: pd.DataFrame,
-    season: int,
-    season_type: str = "REG",
+def goalie_totals(raw: pd.DataFrame) -> pd.DataFrame:
+    """Additive per-player totals from a MoneyPuck goalies frame (any seasons)."""
+    if raw is None or raw.empty:
+        return pd.DataFrame()
+    out = _identity(raw).join(_sum_situation(raw, "all", GOALIE_ALL), how="left")
+    out["player_type"] = "g"
+    return out
+
+
+def summary_totals(summary: Optional[pd.DataFrame], cols: dict[str, str]) -> pd.DataFrame:
+    """Sum an NHL summary frame (any seasons) to one row per player."""
+    if summary is None or summary.empty or "playerId" not in summary.columns:
+        return pd.DataFrame()
+    present = {src: dst for src, dst in cols.items() if src in summary.columns}
+    nums = summary[list(present)].apply(pd.to_numeric, errors="coerce")
+    nums.index = summary["playerId"].astype("int64").values
+    out = nums.groupby(level=0).sum(min_count=1).rename(columns=present)
+    if "shootsCatches" in summary.columns:
+        hand = summary.dropna(subset=["shootsCatches"])
+        hand = hand.assign(playerId=hand["playerId"].astype("int64"))
+        out["handedness"] = hand.groupby("playerId")["shootsCatches"].last()
+    return out
+
+
+def derive_skater_metrics(agg: pd.DataFrame) -> None:
+    """Add every skater metric column (in place) from the additive totals."""
+    hours = _col(agg, "icetime") / 3600
+    hours5 = _col(agg, "icetime_5v5") / 3600
+    goals = _col(agg, "goals")
+    ixg = _col(agg, "ixg")
+    agg["assists"] = _col(agg, "assists1") + _col(agg, "assists2")
+    agg["primary_points"] = goals + _col(agg, "assists1")
+    agg["points_per_60"] = _div(_col(agg, "points"), hours)
+    agg["shooting_pct"] = _div(goals, _col(agg, "sog")) * 100
+    agg["game_score_per_gp"] = _div(_col(agg, "game_score"), _col(agg, "games"))
+    agg["gax"] = goals - ixg
+    agg["ixg_per_60"] = _div(ixg, hours)
+    agg["shots_per_60"] = _div(_col(agg, "shot_attempts"), hours)
+    agg["xg_per_shot"] = _div(ixg, _col(agg, "unblocked"))
+
+    xgf, xga = _col(agg, "xgf_5v5"), _col(agg, "xga_5v5")
+    cf, ca = _col(agg, "cf_5v5"), _col(agg, "ca_5v5")
+    gf, ga = _col(agg, "gf_5v5"), _col(agg, "ga_5v5")
+    hdf, hda = _col(agg, "hdf_5v5"), _col(agg, "hda_5v5")
+    off_xgf, off_xga = _col(agg, "off_xgf_5v5"), _col(agg, "off_xga_5v5")
+    off_cf, off_ca = _col(agg, "off_cf_5v5"), _col(agg, "off_ca_5v5")
+    agg["xgf_pct"] = _div(xgf, xgf + xga) * 100
+    agg["rel_xgf_pct"] = agg["xgf_pct"] - _div(off_xgf, off_xgf + off_xga) * 100
+    agg["cf_pct"] = _div(cf, cf + ca) * 100
+    agg["rel_cf_pct"] = agg["cf_pct"] - _div(off_cf, off_cf + off_ca) * 100
+    agg["hdcf_pct"] = _div(hdf, hdf + hda) * 100
+    agg["gf_pct"] = _div(gf, gf + ga) * 100
+    agg["xgf_per_60"] = _div(xgf, hours5)
+    agg["xga_per_60"] = _div(xga, hours5)
+
+
+def derive_goalie_metrics(agg: pd.DataFrame) -> None:
+    """Add every goalie metric column (in place) from the additive totals."""
+    hours = _col(agg, "icetime") / 3600
+    xga = _col(agg, "xgoals_against")
+    ga = _col(agg, "goals_against")
+    shots = _col(agg, "shots_against")
+    agg["gsax"] = xga - ga
+    agg["gsax_per_60"] = _div(agg["gsax"], hours)
+    agg["sv_pct"] = 1 - _div(ga, shots)
+    agg["gaa"] = _div(ga, hours)
+    agg["hd_sv_pct"] = 1 - _div(_col(agg, "hd_goals_against"), _col(agg, "hd_shots_against"))
+    agg["g_xga_per_60"] = _div(xga, hours)
+    agg["rebound_pct"] = _div(_col(agg, "rebounds_against"), shots) * 100
+    agg["saves"] = shots - ga
+
+
+def build_agg(
+    skaters_raw: Optional[pd.DataFrame],
+    goalies_raw: Optional[pd.DataFrame],
+    skater_summary: Optional[pd.DataFrame] = None,
+    goalie_summary: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
-    """Join season-level Next Gen Stats columns onto ``agg``.
+    """One id-indexed row per player with totals, identity and every metric.
 
-    Pure: NGS DataFrames in, augmented ``agg`` out.
+    Pure. The raw frames may span several seasons (the career rollup passes the
+    whole range), because every column is additive and every rate is derived
+    after the sum.
     """
-    def _season_level(ngs: pd.DataFrame, cols: dict[str, str]) -> pd.DataFrame:
-        if ngs is None or ngs.empty:
-            return pd.DataFrame(columns=list(cols.values()))
-        d = ngs[
-            (ngs["season"] == season)
-            & (ngs["season_type"] == season_type)
-            & (ngs["week"] == 0)
-        ].copy()
-        if d.empty:
-            return pd.DataFrame(columns=list(cols.values()))
-        d["pid"] = d["player_gsis_id"].map(gsis_to_id)
-        d = d[d["pid"].notna()].copy()
-        d["pid"] = d["pid"].astype(int)
-        d = d[~d["pid"].duplicated(keep="first")].set_index("pid")
-        present = {src: dst for src, dst in cols.items() if src in d.columns}
-        return d[list(present.keys())].rename(columns=present)
+    parts = [p for p in (skater_totals(skaters_raw), goalie_totals(goalies_raw)) if not p.empty]
+    if not parts:
+        return pd.DataFrame()
+    agg = pd.concat(parts, sort=False)
+    # A player in both files (an emergency goalie) keeps his busier role.
+    agg = agg.sort_values("icetime", ascending=False)
+    agg = agg[~agg.index.duplicated(keep="first")].sort_index()
+    agg.index.name = "pid"
 
-    # NGS's completion-percentage-above-expectation lands in its own column, not
-    # straight into `cpoe`: the pbp-derived CPOE computed in `aggregate_seasons`
-    # is the preferred source because it spans 2006-present, and mixing two
-    # different expectation models inside one column would put a discontinuity at
-    # 2016. This is a fallback for the rare passer NGS has and pbp doesn't.
-    pass_ngs = _season_level(ngs_passing, {
-        "completion_percentage_above_expectation": "cpoe_ngs",
-        "avg_time_to_throw": "avg_time_to_throw",
-        "aggressiveness": "aggressiveness",
-        "avg_intended_air_yards": "avg_intended_air_yards",
-    })
-    rush_ngs = _season_level(ngs_rushing, {
-        "rush_yards_over_expected": "rush_yoe",
-    })
-    rec_ngs = _season_level(ngs_receiving, {
-        "avg_separation": "avg_separation",
-        "avg_yac_above_expectation": "avg_yac_above_expectation",
-    })
+    for summary, cols in ((skater_summary, NHL_SKATER_COLS), (goalie_summary, NHL_GOALIE_COLS)):
+        extra = summary_totals(summary, cols)
+        if extra.empty:
+            continue
+        extra = extra[~extra.index.duplicated(keep="first")]
+        fresh = extra.drop(columns=[c for c in extra.columns if c in agg.columns], errors="ignore")
+        agg = agg.join(fresh, how="left")
+        if "handedness" in extra.columns:
+            hand = extra["handedness"].reindex(agg.index)
+            existing = agg["handedness"] if "handedness" in agg.columns else pd.Series(np.nan, index=agg.index)
+            agg["handedness"] = existing.fillna(hand)
 
-    for extra in (pass_ngs, rush_ngs, rec_ngs):
-        if not extra.empty:
-            agg = agg.join(extra, how="left")
-
-    if "cpoe_ngs" in agg.columns:
-        if "cpoe" in agg.columns:
-            agg["cpoe"] = agg["cpoe"].fillna(agg["cpoe_ngs"])
-        else:
-            agg["cpoe"] = agg["cpoe_ngs"]
+    derive_skater_metrics(agg)
+    derive_goalie_metrics(agg)
+    if "handedness" not in agg.columns:
+        agg["handedness"] = ""
+    agg["handedness"] = agg["handedness"].fillna("").astype(str)
+    agg["image_url"] = [
+        headshot_url(season, team, int(pid))
+        for pid, season, team in zip(agg.index, agg["season_last"], agg["team"])
+    ]
     return agg
 
 
-def merge_pfr_defense(
-    agg: pd.DataFrame,
-    pfr_def: pd.DataFrame,
-    rate_thresholds: bool = True,
-) -> pd.DataFrame:
-    """Join PFR advanced defensive stats onto ``agg`` and derive their rates.
-
-    Pure: an id-indexed PFR frame in, augmented ``agg`` out. ``pfr_def`` is
-    already remapped from ``pfr_id`` to our integer player id by the loader.
-    """
-    if pfr_def is None or pfr_def.empty:
-        return agg
-
-    present = [c for c in pfr_def.columns if c in set(PFR_DEF_COLS.values())]
-    if not present:
-        return agg
-    agg = agg.join(pfr_def[present], how="left")
-
-    # PFR ships these two as fractions; the app formats them as percentages.
-    for column in ("def_cmp_pct_allowed", "def_missed_tkl_pct"):
-        if column in agg.columns:
-            agg[column] = pd.to_numeric(agg[column], errors="coerce") * 100
-
-    return apply_def_rate_thresholds(agg) if rate_thresholds else agg
-
-
-# Defensive rate columns and the volume each one is measured over. The live
-# season keeps these rates at any volume and flags the thin ones instead of
-# nulling them (see ``def_rate_volume_ok``).
-DEF_RATE_GATES = {
-    "def_cmp_pct_allowed": ("def_targets_allowed", QUAL_DEF_TARGETS),
-    "def_yds_per_tgt_allowed": ("def_targets_allowed", QUAL_DEF_TARGETS),
-    "def_rating_allowed": ("def_targets_allowed", QUAL_DEF_TARGETS),
-    "def_missed_tkl_pct": ("def_combined_tackles", QUAL_DEF_TACKLES),
-}
-
-
-def def_rate_volume_ok(row: Any, column: str, scale: float = 1.0) -> bool:
-    """Whether a defensive rate clears its (prorated) volume bar."""
-    gate = DEF_RATE_GATES.get(column)
-    if gate is None:
-        return True
-    volume_col, threshold = gate
-    try:
-        volume = float(row.get(volume_col))
-    except (TypeError, ValueError):
-        return False
-    if pd.isna(volume):
-        return False
-    bar = max(1, math.ceil(threshold * scale)) if scale < 1 else threshold
-    return volume >= bar
-
-
-def apply_def_rate_thresholds(agg: pd.DataFrame) -> pd.DataFrame:
-    """Null defensive rates measured over too little volume to mean anything.
-
-    The counting stats (pressures, hurries, knockdowns) are kept whatever the
-    volume - they are totals, not rates, so a small number is simply a small
-    number rather than a misleading one. Split out from ``merge_pfr_defense`` so
-    the career rollup, which pools already-scaled rates from several seasons, can
-    apply exactly the same cut without going back through the scaling step.
-    """
-    targets = pd.to_numeric(agg.get("def_targets_allowed"), errors="coerce")
-    if targets is not None:
-        below = targets.isna() | (targets < QUAL_DEF_TARGETS)
-        for column in (
-            "def_cmp_pct_allowed",
-            "def_yds_per_tgt_allowed",
-            "def_rating_allowed",
-        ):
-            if column in agg.columns:
-                agg.loc[below, column] = np.nan
-
-    tackles = pd.to_numeric(agg.get("def_combined_tackles"), errors="coerce")
-    if tackles is not None and "def_missed_tkl_pct" in agg.columns:
-        agg.loc[
-            tackles.isna() | (tackles < QUAL_DEF_TACKLES),
-            "def_missed_tkl_pct",
-        ] = np.nan
-
-    return agg
+def _int_text(value: float) -> str:
+    return str(int(round(value)))
 
 
 def build_standard_stats(row: Any) -> list[dict[str, str]]:
-    """Assemble the standard_stats jsonb array from an aggregated row."""
-    def n(col: str) -> float:
-        val = row.get(col)
-        try:
-            return float(val) if val is not None and not pd.isna(val) else 0.0
-        except (ValueError, TypeError):
-            return 0.0
+    """Assemble the standard_stats jsonb array from an aggregated row.
 
+    Values come from MoneyPuck where it has them, and from the NHL summary for
+    the fields it lacks; a field with no source is omitted rather than zeroed.
+    """
     stats: list[dict[str, str]] = []
 
     def add(label: str, value: str) -> None:
         stats.append({"id": f"std-{label}", "label": label, "value": value})
 
-    add("G", str(int(n("games"))))
+    def has(col: str) -> bool:
+        val = row.get(col)
+        return val is not None and not pd.isna(val)
 
-    if n("attempts") > 0:
-        add("Cmp/Att", f"{int(n('completions'))}/{int(n('attempts'))}")
-        add("Pass Yds", f"{int(n('passing_yards')):,}")
-        add("Pass TD", str(int(n("passing_tds"))))
-        add("INT", str(int(n("passing_interceptions"))))
-    if n("carries") > 0:
-        add("Car", str(int(n("carries"))))
-        add("Rush Yds", f"{int(n('rushing_yards')):,}")
-        add("Rush TD", str(int(n("rushing_tds"))))
-    if n("targets") > 0:
-        add("Rec/Tgt", f"{int(n('receptions'))}/{int(n('targets'))}")
-        add("Rec Yds", f"{int(n('receiving_yards')):,}")
-        add("Rec TD", str(int(n("receiving_tds"))))
-    if row.get("player_type") == "def":
-        add("Tackles", str(int(n("tackles"))))
-        add("Sacks", f"{n('sacks'):.1f}")
-        add("Def INT", str(int(n("def_ints"))))
-        # The volume behind the coverage rates. Emitted so the app can weight
-        # them when pooling a roster (a team's Cmp% allowed is the target-weighted
-        # mean of its defenders', not the flat average), and because "targeted 96
-        # times" is context a reader wants next to "allowed 61%".
-        if n("def_targets_allowed") > 0:
-            add("Tgt Allowed", str(int(n("def_targets_allowed"))))
+    def add_int(label: str, col: str, signed: bool = False) -> None:
+        if has(col):
+            value = float(row.get(col))
+            add(label, f"{int(round(value)):+d}" if signed and round(value) != 0 else _int_text(value))
 
+    games = _num(row, "games")
+    add("GP", _int_text(games))
+    if row.get("player_type") == "g":
+        add_int("GS", "gs")
+        add_int("W", "wins")
+        add_int("L", "losses")
+        add_int("OT", "ot_losses")
+        if has("gaa"):
+            add("GAA", format_value(row.get("gaa"), "dec2"))
+        if has("sv_pct"):
+            add("SV%", format_value(row.get("sv_pct"), "sv3"))
+        add_int("SO", "shutouts")
+        add_int("SA", "shots_against")
+        if has("saves"):
+            add("SV", _int_text(_num(row, "saves")))
+        return stats
+
+    add_int("G", "goals")
+    add("A", _int_text(_num(row, "assists1") + _num(row, "assists2")))
+    add_int("P", "points")
+    add_int("+/-", "plus_minus", signed=True)
+    pim = row.get("pim_nhl") if has("pim_nhl") else row.get("pim_mp")
+    if pim is not None and not pd.isna(pim):
+        add("PIM", _int_text(float(pim)))
+    add_int("PPG", "ppg")
+    add_int("PPP", "ppp")
+    add_int("SHG", "shg")
+    add_int("GWG", "gwg")
+    add_int("SOG", "sog")
+    if has("shooting_pct"):
+        add("Sh%", format_value(row.get("shooting_pct"), "pct1"))
+    if games > 0 and has("icetime"):
+        add("TOI/GP", format_toi(_num(row, "icetime") / games))
+    add_int("Hits", "hits")
+    add_int("Blk", "blocks")
+    faceoffs = _num(row, "fo_won") + _num(row, "fo_lost")
+    if faceoffs >= MIN_FACEOFFS_FOR_STANDARD_STAT:
+        add("FO%", format_value(_num(row, "fo_won") / faceoffs * 100, "pct1"))
     return stats
+
+
+def _metric_id(category: str, pid: int, mid: str) -> str:
+    return f"{category.lower().replace(' ', '-')}-{pid}-{mid}"
 
 
 def build_snapshot_rows(
@@ -796,8 +659,9 @@ def build_snapshot_rows(
 ) -> list[dict]:
     """Build player_snapshots rows from an aggregated (id-indexed) DataFrame.
 
-    Past seasons: percentiles are computed per category among qualified players
-    only, and a player receives every category's metrics for which they qualify.
+    Past seasons: percentiles are computed per category inside each cohort
+    (forwards, defensemen, goalies) among qualified players only, and a player
+    receives every category's metrics for which he qualifies.
 
     The live season (``live``): no minimum. Every player with any volume in a
     category is ranked and shipped, and each metric carries ``qualified`` (the
@@ -808,19 +672,20 @@ def build_snapshot_rows(
 
     now_str = now.isoformat()
     players: dict[int, dict] = {}
-    # The career rollup reuses this function wholesale - same formatting, same
-    # percentile ranking - and differs only in where the qualification bar sits.
+    # The career rollup reuses this function wholesale and differs only in where
+    # the qualification bar sits.
     career = season == ALL_TIME_SEASON
 
     def _ensure(pid: int, row: Any) -> dict:
         if pid not in players:
+            image = row.get("image_url")
             players[pid] = {
                 "id": pid,
                 "name": str(row.get("name") or ""),
                 "team": str(row.get("team") or "TBD"),
                 "position": str(row.get("position") or ""),
-                "handedness": "",
-                "image_url": row.get("image_url") if pd.notna(row.get("image_url")) else None,
+                "handedness": str(row.get("handedness") or ""),
+                "image_url": image if isinstance(image, str) and image else None,
                 "player_type": row.get("player_type") or "",
                 "season": season,
                 "season_type": season_type,
@@ -833,240 +698,192 @@ def build_snapshot_rows(
         return players[pid]
 
     for category, defs in METRIC_DEFS.items():
-        qual_ids = [
-            int(pid) for pid, row in agg.iterrows()
-            if qualifies(
-                row,
-                category,
-                str(row.get("player_type") or ""),
-                season_type,
-                career=career,
-                scale=qual_scale,
-            )
-        ]
-        if live:
-            ranked_ids = [
-                int(pid) for pid, row in agg.iterrows()
-                if has_opportunity(row, category, str(row.get("player_type") or ""))
-            ]
-        else:
-            ranked_ids = qual_ids
-        if not ranked_ids:
-            continue
-        qualified_ids = set(qual_ids)
-        sub = agg.loc[ranked_ids]
+        cohort_types = CATEGORY_TYPES[category]
+        for ptype in cohort_types:
+            cohort = agg[agg["player_type"] == ptype]
+            qual_ids = {
+                int(pid) for pid, row in cohort.iterrows()
+                if qualifies(row, category, ptype, season_type, career=career, scale=qual_scale)
+            }
+            if live:
+                ranked_ids = [
+                    int(pid) for pid, row in cohort.iterrows()
+                    if has_opportunity(row, category, ptype)
+                ]
+            else:
+                ranked_ids = sorted(qual_ids)
+            if not ranked_ids:
+                continue
+            sub = agg.loc[ranked_ids]
+            pct_maps = {
+                mid: rank_percentiles(sub[col], inverted)
+                for mid, _label, col, _fmt, inverted in defs
+                if col in sub.columns
+            }
+            for pid in ranked_ids:
+                row = agg.loc[pid]
+                player = _ensure(pid, row)
+                for mid, label, col, fmt, _inverted in defs:
+                    if col not in agg.columns:
+                        continue
+                    raw = row.get(col)
+                    if raw is None or pd.isna(raw):
+                        continue
+                    percentile = pct_maps.get(mid, {}).get(pid)
+                    if percentile is None:
+                        continue
+                    metric = {
+                        "id": _metric_id(category, pid, mid),
+                        "label": label,
+                        "value": format_value(raw, fmt),
+                        "percentile": percentile,
+                        "category": category,
+                    }
+                    if live:
+                        metric["qualified"] = pid in qual_ids
+                    player["metrics"].append(metric)
 
-        pct_maps: dict[str, dict[int, int]] = {}
-        for mid, _label, col, _fmt, inverted in defs:
-            if col in sub.columns:
-                pct_maps[mid] = rank_percentiles(sub[col], inverted)
-
-        for pid in ranked_ids:
-            row = agg.loc[pid]
-            player = _ensure(pid, row)
-            for mid, label, col, fmt, _inverted in defs:
-                if col not in agg.columns:
-                    continue
-                raw = row.get(col)
-                if raw is None or pd.isna(raw):
-                    continue
-                percentile = pct_maps.get(mid, {}).get(pid)
-                if percentile is None:
-                    continue
-                metric = {
-                    "id": f"{category.lower()}-{pid}-{mid}",
-                    "label": label,
-                    "value": format_value(raw, fmt),
-                    "percentile": percentile,
-                    "category": category,
-                }
-                if live:
-                    metric["qualified"] = pid in qualified_ids and def_rate_volume_ok(row, col, qual_scale)
-                player["metrics"].append(metric)
-
-    snapshots = [p for p in players.values() if p["metrics"]]
-    return snapshots
+    return [p for p in players.values() if p["metrics"]]
 
 
 # --------------------------------------------------------------------------- #
 # Network loaders
 # --------------------------------------------------------------------------- #
 def _to_pandas(frame: Any) -> pd.DataFrame:
-    if isinstance(frame, pl.DataFrame):
-        return frame.to_pandas()
+    """Kept for refresh.py: every loader here already returns pandas."""
     return frame
 
 
-def load_headshots() -> dict[int, str]:
-    """Map DB player id -> headshot URL from load_players()."""
-    players = _to_pandas(nfl.load_players())
-    lookup: dict[int, str] = {}
-    for _, row in players.iterrows():
-        pid = gsis_to_id(row.get("gsis_id"))
-        url = row.get("headshot")
-        if pid is not None and isinstance(url, str) and url:
-            lookup[pid] = url
-    logger.info("Loaded %d headshots", len(lookup))
-    return lookup
+def _cache_file(url: str, params: Optional[dict]) -> Path:
+    key = url + "?" + "&".join(f"{k}={v}" for k, v in sorted((params or {}).items()))
+    return CACHE_DIR / (hashlib.sha1(key.encode()).hexdigest() + ".bin")
 
 
-def load_pfr_id_crosswalk() -> dict[str, int]:
-    """Map PFR player id -> our integer (gsis-derived) player id.
+def http_get(url: str, params: Optional[dict] = None, cache: bool = False) -> Optional[bytes]:
+    """GET with a polite User-Agent, retries and an optional on-disk cache.
 
-    PFR's advanced stats are keyed by their own id, so they cannot be joined to
-    the weekly feed without this. ``load_players()`` carries both.
+    Returns None on a 404 (a phase that has no file yet, e.g. playoffs in
+    October). ``cache`` reads and writes ``backend/.cache/`` keyed by URL and
+    parameters; callers enable it only for finished seasons.
     """
-    players = _to_pandas(nfl.load_players())
-    lookup: dict[str, int] = {}
-    for _, row in players.iterrows():
-        pfr_id = row.get("pfr_id")
-        pid = gsis_to_id(row.get("gsis_id"))
-        if pid is not None and isinstance(pfr_id, str) and pfr_id:
-            lookup[pfr_id] = pid
-    logger.info("Loaded %d PFR id mappings", len(lookup))
-    return lookup
+    path = _cache_file(url, params)
+    if cache and os.environ.get("HOCKEY_NO_CACHE") != "1" and path.exists():
+        return path.read_bytes()
+    last_error: Optional[Exception] = None
+    for attempt in range(1, REQUEST_ATTEMPTS + 1):
+        try:
+            response = requests.get(
+                url, params=params, headers={"User-Agent": USER_AGENT}, timeout=REQUEST_TIMEOUT
+            )
+            time.sleep(REQUEST_PAUSE_SECONDS)
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            if cache:
+                CACHE_DIR.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(response.content)
+            return response.content
+        except requests.RequestException as error:
+            last_error = error
+            logger.warning("GET %s failed (attempt %d): %s", url, attempt, error)
+            time.sleep(2 ** attempt)
+    raise RuntimeError(f"GET {url} failed after {REQUEST_ATTEMPTS} attempts") from last_error
 
 
-def load_pfr_defense(season: int) -> pd.DataFrame:
-    """Season-level PFR advanced defensive stats, indexed by our player id.
+def moneypuck_columns() -> set[str]:
+    wanted = {"playerId", "season", "name", "team", "position", "situation"}
+    for mapping in (SKATER_ALL, SKATER_5V5, SKATER_PP, GOALIE_ALL):
+        wanted |= set(mapping)
+    return wanted
 
-    Returns an empty frame for seasons before PFR coverage begins, so callers
-    can join unconditionally.
+
+def load_moneypuck(kind: str, season: int, season_type: str, cache: bool = False) -> pd.DataFrame:
+    """MoneyPuck season summary (``skaters`` or ``goalies``); empty when absent."""
+    folder, _game_type = PHASES[season_type]
+    url = MONEYPUCK_URL.format(season=season, phase=folder, kind=kind)
+    content = http_get(url, cache=cache)
+    if not content:
+        return pd.DataFrame()
+    wanted = moneypuck_columns()
+    frame = pd.read_csv(io.BytesIO(content), usecols=lambda c: c in wanted)
+    logger.info("MoneyPuck %s %s %s: %d rows", kind, season, season_type, len(frame))
+    return frame
+
+
+def load_nhl_summary(kind: str, season: int, season_type: str, cache: bool = False) -> pd.DataFrame:
+    """NHL stats REST ``skater`` / ``goalie`` summary, paginated 100 at a time."""
+    _folder, game_type = PHASES[season_type]
+    url = NHL_SUMMARY_URL.format(kind=kind)
+    expression = f"seasonId={season_id(season)} and gameTypeId={game_type}"
+    rows: list[dict] = []
+    start = 0
+    while True:
+        params = {
+            "limit": NHL_PAGE_SIZE, "start": start,
+            "sort": "playerId", "cayenneExp": expression,
+        }
+        content = http_get(url, params=params, cache=cache)
+        if not content:
+            break
+        payload = json.loads(content)
+        page = payload.get("data", [])
+        rows.extend(page)
+        start += NHL_PAGE_SIZE
+        if len(page) < NHL_PAGE_SIZE or start >= int(payload.get("total", 0)):
+            break
+    logger.info("NHL %s summary %s %s: %d rows", kind, season, season_type, len(rows))
+    return pd.DataFrame(rows)
+
+
+def load_season_sources(
+    season: int,
+    season_type: str,
+    cache: bool,
+    enrichment_status: Optional[dict[str, str]] = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Skater and goalie MoneyPuck frames plus the two NHL summary frames.
+
+    The NHL summary is an enrichment: with ``enrichment_status`` supplied a
+    failure publishes MoneyPuck-only rows and records ``degraded``; without it
+    (the CLI backfill) a failure raises.
     """
-    if season < PFR_DEF_FIRST_SEASON:
-        logger.info(
-            "Skipping PFR advanced defence for %s (available since %s).",
-            season,
-            PFR_DEF_FIRST_SEASON,
-        )
-        return pd.DataFrame()
-
-    raw = _to_pandas(nfl.load_pfr_advstats(seasons=[season], stat_type="def", summary_level="season"))
-    if raw is None or raw.empty:
-        logger.warning("No PFR advanced defence rows for %s.", season)
-        return pd.DataFrame()
-
-    df = raw[raw["season"] == season].copy()
-    if df.empty:
-        return pd.DataFrame()
-
-    crosswalk = load_pfr_id_crosswalk()
-    df["pid"] = df["pfr_id"].map(crosswalk)
-    unmatched = int(df["pid"].isna().sum())
-    df = df[df["pid"].notna()].copy()
-    df["pid"] = df["pid"].astype(int)
-    # A player who changed teams mid-season has one PFR row per stop. Sum the
-    # counting columns and volume-weight the rates, so his season reads as one
-    # line the way the weekly aggregate already does.
-    present = {src: dst for src, dst in PFR_DEF_COLS.items() if src in df.columns}
-    for src in present:
-        df[src] = pd.to_numeric(df[src], errors="coerce")
-
-    counting = ["prss", "hrry", "qbkd", "tgt", "comb"]
-    rate_weights = {
-        "cmp_percent": "tgt",
-        "yds_tgt": "tgt",
-        "rat": "tgt",
-        "m_tkl_percent": "comb",
-    }
-
-    out = pd.DataFrame(index=sorted(df["pid"].unique()))
-    for src in counting:
-        if src in df.columns:
-            out[PFR_DEF_COLS[src]] = df.groupby("pid")[src].sum(min_count=1)
-    for src, weight_col in rate_weights.items():
-        if src not in df.columns or weight_col not in df.columns:
-            continue
-        w = df[["pid", src, weight_col]].dropna()
-        w = w[w[weight_col] > 0]
-        if w.empty:
-            continue
-        product = (w[src] * w[weight_col]).groupby(w["pid"]).sum()
-        weight = w[weight_col].groupby(w["pid"]).sum()
-        out[PFR_DEF_COLS[src]] = product / weight.replace(0, np.nan)
-
-    logger.info(
-        "Loaded PFR advanced defence for %s: %d players (%d unmatched pfr ids).",
-        season,
-        len(out),
-        unmatched,
-    )
-    return out
+    skaters = load_moneypuck("skaters", season, season_type, cache)
+    goalies = load_moneypuck("goalies", season, season_type, cache)
+    empty = pd.DataFrame()
+    if skaters.empty and goalies.empty:
+        return skaters, goalies, empty, empty
+    try:
+        sk_sum = load_nhl_summary("skater", season, season_type, cache)
+        g_sum = load_nhl_summary("goalie", season, season_type, cache)
+    except Exception:
+        if enrichment_status is None:
+            raise
+        logger.exception("Failed to load NHL summary; publishing MoneyPuck stats as degraded.")
+        enrichment_status["summary"] = "degraded"
+        return skaters, goalies, empty, empty
+    if enrichment_status is not None:
+        enrichment_status["summary"] = "ready" if not (sk_sum.empty and g_sum.empty) else "pending"
+    return skaters, goalies, sk_sum, g_sum
 
 
 def build_agg_for_season(
     season: int,
     season_type: str = "REG",
     live: bool = False,
-    weekly_frame: Optional[pd.DataFrame] = None,
     enrichment_status: Optional[dict[str, str]] = None,
 ) -> pd.DataFrame:
-    """Fetch nflverse data and produce the fully-merged aggregate DataFrame.
+    """Fetch MoneyPuck and NHL data and produce the fully-merged aggregate frame.
 
-    ``weekly_frame`` and ``enrichment_status`` are used by the event-aware
-    publisher.  The normal command-line ingest keeps the original behavior,
-    while the publisher can share one core download across REG and POST and
-    publish core stats when an optional enrichment source is temporarily late.
+    Finished seasons are cached on disk (backend/.cache/) so a backfill and the
+    career rollup download each file once; the live season always hits the
+    network. Returns an empty frame when the phase has no file yet.
     """
-    logger.info("Loading weekly player stats for %s...", season)
-    weekly = weekly_frame if weekly_frame is not None else _to_pandas(nfl.load_player_stats([season]))
-    logger.info("Weekly rows: %d", len(weekly))
-
-    agg = aggregate_seasons(weekly, season, season_type)
-    if agg.empty:
-        return agg
-    logger.info("Aggregated to %d players", len(agg))
-
-    if season >= NGS_FIRST_SEASON:
-        logger.info("Loading Next Gen Stats for %s...", season)
-        try:
-            ngs_pass = _to_pandas(nfl.load_nextgen_stats([season], stat_type="passing"))
-            ngs_rush = _to_pandas(nfl.load_nextgen_stats([season], stat_type="rushing"))
-            ngs_rec = _to_pandas(nfl.load_nextgen_stats([season], stat_type="receiving"))
-            agg = merge_ngs(
-                agg,
-                ngs_pass,
-                ngs_rush,
-                ngs_rec,
-                season,
-                season_type,
-            )
-            if enrichment_status is not None:
-                enrichment_status["ngs"] = "ready" if any(
-                    not frame.empty for frame in (ngs_pass, ngs_rush, ngs_rec)
-                ) else "pending"
-        except Exception:
-            if enrichment_status is None:
-                raise
-            logger.exception("Failed to load Next Gen Stats; publishing core stats as degraded.")
-            enrichment_status["ngs"] = "degraded"
-    else:
-        logger.info("Skipping Next Gen Stats for %s (available since %s).", season, NGS_FIRST_SEASON)
-        if enrichment_status is not None:
-            enrichment_status["ngs"] = "not_applicable"
-
-    # PFR's advanced defensive table is regular season only - it carries no
-    # season_type column to split on - so the postseason board keeps the
-    # traditional defensive stats and simply has no advanced rows.
-    if season_type == "REG":
-        try:
-            pfr = load_pfr_defense(season)
-            agg = merge_pfr_defense(agg, pfr, rate_thresholds=not live)
-            if enrichment_status is not None:
-                enrichment_status["pfr"] = "ready" if not pfr.empty else "pending"
-        except Exception:
-            if enrichment_status is None:
-                raise
-            logger.exception("Failed to load PFR advanced defense; publishing core stats as degraded.")
-            enrichment_status["pfr"] = "degraded"
-    else:
-        logger.info("Skipping PFR advanced defence for %s POST (regular season only).", season)
-        if enrichment_status is not None:
-            enrichment_status["pfr"] = "not_applicable"
-
-    headshots = load_headshots()
-    agg["image_url"] = [headshots.get(int(pid)) for pid in agg.index]
-
+    cache = season < DEFAULT_SEASON and not live
+    skaters, goalies, sk_sum, g_sum = load_season_sources(
+        season, season_type, cache, enrichment_status
+    )
+    agg = build_agg(skaters, goalies, sk_sum, g_sum)
+    logger.info("Aggregated %s %s to %d players", season, season_type, len(agg))
     return agg
 
 
@@ -1075,8 +892,52 @@ def chunks(lst: list, n: int) -> Iterator[list]:
         yield lst[i:i + n]
 
 
+def stored_ids(client: Any, season: int, phase: str, page_size: int = 1000) -> list[int]:
+    """Every player id stored for (season, phase), paged past PostgREST's row cap."""
+    ids: list[int] = []
+    offset = 0
+    while True:
+        page = (
+            client.table("player_snapshots")
+            .select("id")
+            .eq("season", season)
+            .eq("season_type", phase)
+            .order("id")
+            .range(offset, offset + page_size - 1)
+            .execute()
+            .data
+        )
+        ids.extend(row["id"] for row in page)
+        if len(page) < page_size:
+            return ids
+        offset += page_size
+
+
+def prune_orphans(client: Any, rows: list[dict], season: int, phase: str) -> int:
+    """Delete stored rows for (season, phase) that this run no longer produced."""
+    kept = {row["id"] for row in rows}
+    orphans = [pid for pid in stored_ids(client, season, phase) if pid not in kept]
+    for batch in chunks(orphans, 100):
+        (
+            client.table("player_snapshots")
+            .delete()
+            .in_("id", batch)
+            .eq("season", season)
+            .eq("season_type", phase)
+            .execute()
+        )
+    return len(orphans)
+
+
+def upsert_rows(client: Any, rows: list[dict], batch_size: int = 150) -> None:
+    for i, batch in enumerate(chunks(rows, batch_size)):
+        logger.info("Upserting batch %d (%d rows)...", i + 1, len(batch))
+        client.table("player_snapshots").upsert(batch, on_conflict="id,season,season_type").execute()
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--season", type=int, default=None, help="Season (starting year) to ingest.")
@@ -1100,7 +961,7 @@ def main() -> None:
     now = datetime.now(UTC)
 
     phases = ("REG", "POST") if args.season_type == "all" else (args.season_type,)
-    logger.info("=== Ingesting NFL season %s (%s) ===", season, ", ".join(phases))
+    logger.info("=== Ingesting NHL season %s (%s) ===", season, ", ".join(phases))
     try:
         any_rows = False
         for phase in phases:
@@ -1119,69 +980,18 @@ def main() -> None:
 
             by_type: dict[str, int] = {}
             for row in rows:
-                player_type = row["player_type"]
-                by_type[player_type] = by_type.get(player_type, 0) + 1
-            logger.info(
-                "Built %d %s snapshots by type: %s",
-                len(rows),
-                phase,
-                by_type,
-            )
+                by_type[row["player_type"]] = by_type.get(row["player_type"], 0) + 1
+            logger.info("Built %d %s snapshots by type: %s", len(rows), phase, by_type)
 
-            batch_size = 150
-            for i, batch in enumerate(chunks(rows, batch_size)):
-                logger.info(
-                    "Upserting batch %d (%d rows) for %s %s...",
-                    i + 1,
-                    len(batch),
-                    season,
-                    phase,
-                )
-                client.table("player_snapshots").upsert(
-                    batch,
-                    on_conflict="id,season,season_type",
-                ).execute()
-
-            logger.info(
-                "Upserted %d player snapshots for %s %s.",
-                len(rows),
-                season,
-                phase,
-            )
+            upsert_rows(client, rows)
+            logger.info("Upserted %d player snapshots for %s %s.", len(rows), season, phase)
 
             sanity_floor = 20 if phase == "POST" else 150
             if len(rows) >= sanity_floor:
-                kept = {row["id"] for row in rows}
-                existing = (
-                    client.table("player_snapshots")
-                    .select("id")
-                    .eq("season", season)
-                    .eq("season_type", phase)
-                    .execute()
-                    .data
-                )
-                orphans = [row["id"] for row in existing if row["id"] not in kept]
-                for batch in chunks(orphans, 100):
-                    (
-                        client.table("player_snapshots")
-                        .delete()
-                        .in_("id", batch)
-                        .eq("season", season)
-                        .eq("season_type", phase)
-                        .execute()
-                    )
-                logger.info(
-                    "Pruned %d stale/unqualified rows for %s %s.",
-                    len(orphans),
-                    season,
-                    phase,
-                )
+                pruned = prune_orphans(client, rows, season, phase)
+                logger.info("Pruned %d stale/unqualified rows for %s %s.", pruned, season, phase)
             else:
-                logger.warning(
-                    "Only %d %s rows built — skipping prune.",
-                    len(rows),
-                    phase,
-                )
+                logger.warning("Only %d %s rows built, skipping prune.", len(rows), phase)
         if not any_rows:
             logger.error("No snapshots built for %s.", season)
             sys.exit(1)
