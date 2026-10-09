@@ -198,7 +198,7 @@ struct StandardStatsLeadersView: View {
                         .foregroundStyle(RinkPalette.inkTertiary)
                         .frame(width: 44, alignment: .leading)
                     HStack(spacing: 4) {
-                        Text(selectedStat.uppercased())
+                        Text(selectedStat)
                             .font(RinkType.micro)
                             .foregroundStyle(RinkPalette.turf)
                             .lineLimit(1)

@@ -362,6 +362,24 @@ struct GameDetailView: View {
         return markers
     }
 
+    /// The two clubs' colors for the race lines. Several matchups pair near
+    /// identical navies (Seattle and Toronto, say), which turns the chart into
+    /// one line; when the colors are that close the home line takes a
+    /// contrasting accent so the two stay apart.
+    private func raceColors(_ game: Game) -> (away: Color, home: Color) {
+        let away = TeamColor.color(game.awayTeam)
+        let home = TeamColor.color(game.homeTeam)
+        func rgb(_ color: Color) -> (CGFloat, CGFloat, CGFloat) {
+            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+            UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+            return (r, g, b)
+        }
+        let (ar, ag, ab) = rgb(away)
+        let (hr, hg, hb) = rgb(home)
+        let distance = ((ar - hr) * (ar - hr) + (ag - hg) * (ag - hg) + (ab - hb) * (ab - hb)).squareRoot()
+        return distance < 0.45 ? (away, Color(red: 0.86, green: 0.56, blue: 0.10)) : (away, home)
+    }
+
     private func xgRaceCard(_ detail: GameDetail, game: Game) -> some View {
         let points = detail.xgRace
         let end = max(3600, points.last?.elapsed ?? 3600)
@@ -400,8 +418,8 @@ struct GameDetailView: View {
                     }
                 }
                 .chartForegroundStyleScale([
-                    awayName: TeamColor.color(game.awayTeam),
-                    homeName: TeamColor.color(game.homeTeam),
+                    awayName: raceColors(game).away,
+                    homeName: raceColors(game).home,
                 ])
                 .chartLegend(position: .top, alignment: .leading)
                 .chartYScale(domain: 0...top)

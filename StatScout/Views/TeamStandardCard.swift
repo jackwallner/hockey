@@ -78,7 +78,7 @@ struct TeamStandardCard: View {
 
             RinkPickerRow {
                 RinkSegmented(
-                    segments: PlayerPositionGroup.allCases.map { .init(value: $0, label: $0.displayName) },
+                    segments: PlayerPositionGroup.allCases.map { .init(value: $0, label: $0.pickerLabel) },
                     selection: $side
                 )
                 .segmentCount(PlayerPositionGroup.allCases.count)

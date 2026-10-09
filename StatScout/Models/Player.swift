@@ -156,7 +156,7 @@ struct Player: Identifiable, Codable, Hashable, Sendable {
             let valueText = metric.value.isEmpty ? "\(metric.percentile.ordinal) percentile" : "\(metric.value), \(metric.percentile.ordinal) percentile"
             return "\(metric.label) \(valueText)"
         } ?? "\(overallPercentile.ordinal) overall percentile"
-        return "\(name) · \(team) \(displayPosition)\nOverall: \(overallPercentile.ordinal) percentile\nTop stat: \(headline)\nRink StatScout"
+        return "\(name) · \(team) \(displayPosition)\nOverall: \(overallPercentile.ordinal) percentile\nTop stat: \(headline)\nHockey Next: StatScout"
     }
 
     func percentile(for category: MetricCategory) -> Int? {
@@ -354,6 +354,8 @@ struct MetricValueFormat: Hashable, Sendable {
     var isPercent = false
     var isSigned = false
     var hasGrouping = false
+    /// Save percentages ship as ".915", never "0.915".
+    var dropsLeadingZero = false
 
     static func inferred(from samples: [String]) -> MetricValueFormat {
         var format = MetricValueFormat()
@@ -362,6 +364,7 @@ struct MetricValueFormat: Hashable, Sendable {
             if trimmed.hasSuffix("%") { format.isPercent = true }
             if trimmed.hasPrefix("+") { format.isSigned = true }
             if trimmed.contains(",") { format.hasGrouping = true }
+            if trimmed.hasPrefix(".") { format.dropsLeadingZero = true }
             // Max rather than first: a column holding both "0.1" and "0.12"
             // should render its aggregate at the finer precision, not truncate.
             let digits = trimmed
@@ -383,6 +386,7 @@ struct MetricValueFormat: Hashable, Sendable {
         } else {
             text = String(format: "%.\(decimals)f", value)
         }
+        if dropsLeadingZero, text.hasPrefix("0.") { text.removeFirst() }
         if isSigned, value > 0 { text = "+" + text }
         if isPercent { text += "%" }
         return text
@@ -562,6 +566,16 @@ enum PlayerPositionGroup: String, CaseIterable, Identifiable, Hashable, Sendable
         switch self {
         case .forward: return "Forwards"
         case .defense: return "Defensemen"
+        case .goalie: return "Goalies"
+        }
+    }
+
+    /// For a segmented control that shares a row with another: "Defensemen" does
+    /// not fit a fifth of the screen.
+    var pickerLabel: String {
+        switch self {
+        case .forward: return "Forwards"
+        case .defense: return "Defense"
         case .goalie: return "Goalies"
         }
     }

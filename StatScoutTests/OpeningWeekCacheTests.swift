@@ -1,5 +1,5 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 final class OpeningWeekCacheTests: XCTestCase {
     func testCompleteOpeningGameIsCacheableBeforeFullSlate() {
@@ -10,8 +10,8 @@ final class OpeningWeekCacheTests: XCTestCase {
         XCTAssertFalse(PlayerSnapshotValidator.isCompleteCurrent(players(oneTeam: true)))
     }
 
-    func testOpeningGameStillRequiresEveryPositionGroup() {
-        XCTAssertFalse(PlayerSnapshotValidator.isCompleteCurrent(players().filter { $0.playerType != "def" }))
+    func testOpeningGameStillRequiresEveryCohort() {
+        XCTAssertFalse(PlayerSnapshotValidator.isCompleteCurrent(players().filter { $0.playerType != "g" }))
     }
 
     func testLastYearsOpeningGameIsNotCurrentData() {
@@ -42,13 +42,13 @@ final class OpeningWeekCacheTests: XCTestCase {
         (0..<30).map { index in
             Player(
                 playerId: index, name: "Player \(index)",
-                team: oneTeam || index < 15 ? "SEA" : "NE", position: "QB",
+                team: oneTeam || index < 15 ? "SEA" : "EDM", position: "C",
                 handedness: "", updatedAt: Date(timeIntervalSince1970: 0), season: season,
-                playerType: ["qb", "rb", "wr", "te", "def"][index % 5],
+                playerType: ["f", "d", "g"][index % 3],
                 metrics: [
-                    Metric(id: "pass", label: "EPA/Play", value: "0.1", percentile: 50, category: .passing),
-                    Metric(id: "rush", label: "EPA/Rush", value: "0.1", percentile: 50, category: .rushing),
-                    Metric(id: "rec", label: "EPA/Tgt", value: "0.1", percentile: 50, category: .receiving),
+                    Metric(id: "scoring", label: "P/60", value: "2.1", percentile: 50, category: .scoring),
+                    Metric(id: "shots", label: "ixG", value: "3.1", percentile: 50, category: .shotQuality),
+                    Metric(id: "goalie", label: "GSAx", value: "+1.2", percentile: 50, category: .goaltending),
                 ],
                 standardStats: [], games: []
             )

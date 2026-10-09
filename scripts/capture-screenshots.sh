@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
-# Capture the product-only Football 1.2 screenshot set from the real app.
+# Capture the product-only App Store screenshot set from the real app.
 #
 # Usage:
-#   scripts/capture-v1.2-screenshots.sh <simulator-udid> <output-dir>
+#   scripts/capture-screenshots.sh <simulator-udid> <raw-dir> [<final-dir>]
 #
-# The same adapter works for the iPhone App Store set and an iPad proof run.
-# The manifest owns the expected raw dimensions, while the test owns only real
-# app navigation and screenshots. Runs are headless and never open Simulator.app.
+# Runs StatScoutScreenshotUITests against the DEBUG fixture provider (invented
+# players and games, no network) and exports the eight XCTAttachment PNGs
+# (01_league_leaders .. 08_standings) into <raw-dir> at the device's native
+# size. With <final-dir>, each is also normalized to 1320x2868 RGB with no alpha
+# channel, the iPhone 6.9" App Store size, with no text or frame added.
+# Runs are headless and never open Simulator.app.
 set -euo pipefail
 
-UDID="${1:?usage: capture-v1.2-screenshots.sh <simulator-udid> <output-dir>}"
-OUT="${2:?usage: capture-v1.2-screenshots.sh <simulator-udid> <output-dir>}"
+UDID="${1:?usage: capture-screenshots.sh <simulator-udid> <raw-dir> [<final-dir>]}"
+OUT="${2:?usage: capture-screenshots.sh <simulator-udid> <raw-dir> [<final-dir>]}"
+FINAL="${3:-}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-RESULT="$ROOT/build/screenshots-v1.2-$(date +%Y%m%d-%H%M%S)-$$.xcresult"
+RESULT="$ROOT/build/screenshots-$(date +%Y%m%d-%H%M%S)-$$.xcresult"
 STAGE="$(mktemp -d)"
 STATUS=0
 
@@ -23,15 +27,18 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "$ROOT/build" "$OUT"
-find "$OUT" -maxdepth 1 -type f -name '0[1-7]_*.png' -delete
+# CAPTURE_ONLY=testCapture05GameDetail re-runs one capture and keeps the rest.
+ONLY="${CAPTURE_ONLY:-}"
+if [[ -z "$ONLY" ]]; then
+    find "$OUT" -maxdepth 1 -type f -name '0[1-8]_*.png' -delete
+fi
 # Keep the fan context stable even if the app fixture hook is being iterated.
 # These are fictional fixture IDs and local simulator defaults only.
-xcrun simctl spawn "$UDID" defaults write com.jackwallner.football favorites.playerIds -array 12001 12007 12011
-xcrun simctl spawn "$UDID" defaults write com.jackwallner.football favorites.team KC
-xcrun simctl spawn "$UDID" defaults write com.jackwallner.football hasCompletedOnboarding -bool YES
+xcrun simctl spawn "$UDID" defaults write com.jackwallner.hockey favorites.playerIds -array 12001 12008 12013
+xcrun simctl spawn "$UDID" defaults write com.jackwallner.hockey favoriteTeam SEA
+xcrun simctl spawn "$UDID" defaults write com.jackwallner.hockey hasCompletedOnboarding -bool YES
 
 cd "$ROOT"
-VERSION="$(awk '/MARKETING_VERSION/ {gsub(/[":]/, "", $2); print $2; exit}' project.yml)"
 
 # Export whatever completed before a UI assertion fails. The shell still returns
 # the test status, making a partial run useful during iteration but unsafe as a
@@ -40,10 +47,11 @@ xcodebuild test \
     -project StatScout.xcodeproj \
     -scheme StatScoutUITests \
     -destination "id=$UDID" \
-    -derivedDataPath "$ROOT/build/DerivedData12" \
+    -derivedDataPath "$ROOT/build/DerivedData-ui" \
     -resultBundlePath "$RESULT" \
-    -only-testing:StatScoutUITests/StatScoutV12ScreenshotUITests \
-    TEST_RUNNER_SCREENSHOT_APP_VERSION="$VERSION" \
+    -only-testing:"StatScoutUITests/StatScoutScreenshotUITests${ONLY:+/$ONLY}" \
+    SUPABASE_URL="${SUPABASE_URL:-}" \
+    SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY:-}" \
     || STATUS=$?
 
 if [[ ! -d "$RESULT" ]]; then
@@ -92,6 +100,24 @@ print(f"wrote {len(copied)} screenshots to {out}")
 if copied:
     print("\n".join(sorted(copied)))
 PY
+
+if [[ -n "$FINAL" ]]; then
+    mkdir -p "$FINAL"
+    python3 - "$OUT" "$FINAL" <<'PY'
+import pathlib
+import sys
+
+from PIL import Image
+
+raw = pathlib.Path(sys.argv[1])
+final = pathlib.Path(sys.argv[2])
+for source in sorted(raw.glob("0[1-8]_*.png")):
+    image = Image.open(source).convert("RGB")
+    image = image.resize((1320, 2868), Image.LANCZOS)
+    image.save(final / source.name, format="PNG")
+    print(f"normalized {source.name} -> {final / source.name}")
+PY
+fi
 
 if [[ "$STATUS" -ne 0 ]]; then
     echo "screenshot UI tests failed; partial captures remain in $OUT" >&2

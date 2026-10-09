@@ -1,5 +1,5 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 @MainActor
 final class YearComparisonFeatureTests: XCTestCase {
@@ -7,8 +7,8 @@ final class YearComparisonFeatureTests: XCTestCase {
     func testYearCompareTabExistsForPlayersWithHistory() {
         // Create mock players with multi-year history
         let history = [
-            Player(playerId: 1, name: "Test Player", team: "NYY", position: "RF", handedness: "R/R", updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: []),
-            Player(playerId: 1, name: "Test Player", team: "NYY", position: "RF", handedness: "R/R", updatedAt: Date(), season: 2024, metrics: [], standardStats: [], games: [])
+            Player(playerId: 1, name: "Test Player", team: "SEA", position: "C", handedness: "L", updatedAt: Date(), season: 2026, metrics: [], standardStats: [], games: []),
+            Player(playerId: 1, name: "Test Player", team: "SEA", position: "C", handedness: "L", updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: [])
         ]
 
         // Verify player has history
@@ -22,7 +22,7 @@ final class YearComparisonFeatureTests: XCTestCase {
     func testYearCompareTabDisabledForPlayersWithoutHistory() {
         // Create mock player with single year
         let history = [
-            Player(playerId: 2, name: "New Player", team: "LAA", position: "SP", handedness: "R/R", updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: [])
+            Player(playerId: 2, name: "New Player", team: "VAN", position: "G", handedness: "L", updatedAt: Date(), season: 2026, metrics: [], standardStats: [], games: [])
         ]
 
         // Verify Year Compare tab would be disabled
@@ -32,9 +32,9 @@ final class YearComparisonFeatureTests: XCTestCase {
 
     func testYearSelectionLogic() {
         let history = [
-            Player(playerId: 1, name: "Test", team: "NYY", position: "RF", handedness: "R/R", updatedAt: Date(), season: 2025, playerType: "batter", source: "baseball_savant", metrics: [], standardStats: [], games: []),
-            Player(playerId: 1, name: "Test", team: "NYY", position: "RF", handedness: "R/R", updatedAt: Date(), season: 2024, playerType: "batter", source: "baseball_savant", metrics: [], standardStats: [], games: []),
-            Player(playerId: 1, name: "Test", team: "NYY", position: "RF", handedness: "R/R", updatedAt: Date(), season: 2023, playerType: "batter", source: "baseball_savant", metrics: [], standardStats: [], games: [])
+            Player(playerId: 1, name: "Test", team: "SEA", position: "C", handedness: "L", updatedAt: Date(), season: 2026, playerType: "f", source: "moneypuck", metrics: [], standardStats: [], games: []),
+            Player(playerId: 1, name: "Test", team: "SEA", position: "C", handedness: "L", updatedAt: Date(), season: 2025, playerType: "f", source: "moneypuck", metrics: [], standardStats: [], games: []),
+            Player(playerId: 1, name: "Test", team: "SEA", position: "C", handedness: "L", updatedAt: Date(), season: 2024, playerType: "f", source: "moneypuck", metrics: [], standardStats: [], games: [])
         ]
 
         // Sort history by season descending
@@ -45,35 +45,35 @@ final class YearComparisonFeatureTests: XCTestCase {
 
         // Extract unique years
         let availableYears = sortedHistory.compactMap { $0.season }.uniqued().sorted(by: >)
-        XCTAssertEqual(availableYears, [2025, 2024, 2023])
+        XCTAssertEqual(availableYears, [2026, 2025, 2024])
 
         // Default selection: most recent and second most recent
         let selectedYear1 = availableYears.first
         let selectedYear2 = availableYears.dropFirst().first
-        XCTAssertEqual(selectedYear1, 2025)
-        XCTAssertEqual(selectedYear2, 2024)
+        XCTAssertEqual(selectedYear1, 2026)
+        XCTAssertEqual(selectedYear2, 2025)
     }
 
     func testMetricComparisonDisplay() {
         // Create two seasons with different metrics
+        let metrics2026 = [
+            Metric(id: "m1", label: "ixG", value: "31.4", percentile: 92, category: .shotQuality),
+            Metric(id: "m2", label: "GAx", value: "+4.2", percentile: 88, category: .shotQuality),
+            Metric(id: "m3", label: "Sh%", value: "11%", percentile: 45, category: .shotQuality)
+        ]
+
         let metrics2025 = [
-            Metric(id: "m1", label: "xwOBA", value: ".420", percentile: 92, category: .passing),
-            Metric(id: "m2", label: "xSLG", value: ".550", percentile: 88, category: .passing),
-            Metric(id: "m3", label: "K%", value: "22%", percentile: 45, category: .passing)
+            Metric(id: "m1", label: "ixG", value: "27.8", percentile: 78, category: .shotQuality),
+            Metric(id: "m2", label: "GAx", value: "+1.9", percentile: 72, category: .shotQuality),
+            Metric(id: "m3", label: "Sh%", value: "9%", percentile: 35, category: .shotQuality)
         ]
 
-        let metrics2024 = [
-            Metric(id: "m1", label: "xwOBA", value: ".380", percentile: 78, category: .passing),
-            Metric(id: "m2", label: "xSLG", value: ".480", percentile: 72, category: .passing),
-            Metric(id: "m3", label: "K%", value: "25%", percentile: 35, category: .passing)
-        ]
-
-        let player2025 = Player(playerId: 1, name: "Test", team: "NYY", position: "RF", handedness: "R/R", updatedAt: Date(), season: 2025, metrics: metrics2025, standardStats: [], games: [])
-        let player2024 = Player(playerId: 1, name: "Test", team: "NYY", position: "RF", handedness: "R/R", updatedAt: Date(), season: 2024, metrics: metrics2024, standardStats: [], games: [])
+        let player2026 = Player(playerId: 1, name: "Test", team: "SEA", position: "C", handedness: "L", updatedAt: Date(), season: 2026, metrics: metrics2026, standardStats: [], games: [])
+        let player2025 = Player(playerId: 1, name: "Test", team: "SEA", position: "C", handedness: "L", updatedAt: Date(), season: 2025, metrics: metrics2025, standardStats: [], games: [])
 
         // Build comparison (same logic as YearComparisonView)
-        let dict1 = Dictionary(grouping: player2025.metrics) { $0.label }
-        let dict2 = Dictionary(grouping: player2024.metrics) { $0.label }
+        let dict1 = Dictionary(grouping: player2026.metrics) { $0.label }
+        let dict2 = Dictionary(grouping: player2025.metrics) { $0.label }
         let allLabels = Set(dict1.keys).union(dict2.keys)
 
         var comparisons: [(label: String, change: Int, pct1: Int, pct2: Int)] = []
@@ -88,38 +88,38 @@ final class YearComparisonFeatureTests: XCTestCase {
 
         // Verify comparisons - sorted by absolute change magnitude (descending)
         XCTAssertEqual(comparisons.count, 3)
-        // xSLG has biggest change: 88-72=16
-        XCTAssertEqual(comparisons[0].label, "xSLG")
+        // GAx has biggest change: 88-72=16
+        XCTAssertEqual(comparisons[0].label, "GAx")
         XCTAssertEqual(comparisons[0].change, 16)
-        // xwOBA has second biggest: 92-78=14
-        XCTAssertEqual(comparisons[1].label, "xwOBA")
+        // ixG has second biggest: 92-78=14
+        XCTAssertEqual(comparisons[1].label, "ixG")
         XCTAssertEqual(comparisons[1].change, 14)
         // K% has smallest: 45-35=10
-        XCTAssertEqual(comparisons[2].label, "K%")
+        XCTAssertEqual(comparisons[2].label, "Sh%")
         XCTAssertEqual(comparisons[2].change, 10)
     }
 
     func testOverallPercentileChangeCalculation() {
-        let metrics2025 = [
-            Metric(id: "m1", label: "A", value: "1", percentile: 80, category: .passing),
-            Metric(id: "m2", label: "B", value: "2", percentile: 90, category: .passing)
+        let metrics2026 = [
+            Metric(id: "m1", label: "A", value: "1", percentile: 80, category: .shotQuality),
+            Metric(id: "m2", label: "B", value: "2", percentile: 90, category: .shotQuality)
         ]
-        let metrics2024 = [
-            Metric(id: "m1", label: "A", value: "1", percentile: 70, category: .passing),
-            Metric(id: "m2", label: "B", value: "2", percentile: 60, category: .passing)
+        let metrics2025 = [
+            Metric(id: "m1", label: "A", value: "1", percentile: 70, category: .shotQuality),
+            Metric(id: "m2", label: "B", value: "2", percentile: 60, category: .shotQuality)
         ]
 
-        let player2025 = Player(playerId: 1, name: "Test", team: "NYY", position: "RF", handedness: "R/R", updatedAt: Date(), season: 2025, metrics: metrics2025, standardStats: [], games: [])
-        let player2024 = Player(playerId: 1, name: "Test", team: "NYY", position: "RF", handedness: "R/R", updatedAt: Date(), season: 2024, metrics: metrics2024, standardStats: [], games: [])
+        let player2026 = Player(playerId: 1, name: "Test", team: "SEA", position: "C", handedness: "L", updatedAt: Date(), season: 2026, metrics: metrics2026, standardStats: [], games: [])
+        let player2025 = Player(playerId: 1, name: "Test", team: "SEA", position: "C", handedness: "L", updatedAt: Date(), season: 2025, metrics: metrics2025, standardStats: [], games: [])
 
         // Calculate overall percentile change
-        let overallChange = player2025.overallPercentile - player2024.overallPercentile
+        let overallChange = player2026.overallPercentile - player2025.overallPercentile
 
         // 2025: (80+90)/2 = 85
         // 2024: (70+60)/2 = 65
         // Change: 85-65 = 20
-        XCTAssertEqual(player2025.overallPercentile, 85)
-        XCTAssertEqual(player2024.overallPercentile, 65)
+        XCTAssertEqual(player2026.overallPercentile, 85)
+        XCTAssertEqual(player2025.overallPercentile, 65)
         XCTAssertEqual(overallChange, 20)
     }
 }

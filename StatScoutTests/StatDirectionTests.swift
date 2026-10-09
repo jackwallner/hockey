@@ -1,5 +1,5 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 @MainActor
 final class StatDirectionTests: XCTestCase {
@@ -8,18 +8,18 @@ final class StatDirectionTests: XCTestCase {
         _ name: String,
         value: String,
         percentile: Int,
-        label: String = "EPA/Play",
-        category: MetricCategory = .passing
+        label: String = "ixG",
+        category: MetricCategory = .shotQuality
     ) -> Player {
         Player(
             playerId: id,
             name: name,
             team: "BUF",
-            position: "QB",
+            position: "C",
             handedness: "",
             updatedAt: Date(),
-            season: 2025,
-            playerType: "qb",
+            season: 2026,
+            playerType: "f",
             metrics: [
                 Metric(
                     id: "m\(id)",
@@ -34,12 +34,15 @@ final class StatDirectionTests: XCTestCase {
         )
     }
 
-    func testFootballLowerIsBetterMetrics() {
-        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "INT%", category: .passing))
-        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "Sack%", category: .passing))
-        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "Fumble%", category: .rushing))
-        XCTAssertFalse(DashboardViewModel.lowerIsBetter(label: "EPA/Play", category: .passing))
-        XCTAssertFalse(DashboardViewModel.lowerIsBetter(label: "Tackles", category: .defense))
+    func testHockeyLowerIsBetterMetrics() {
+        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "xGA/60", category: .playDriving))
+        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "Giveaways", category: .playDriving))
+        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "GAA", category: .goaltending))
+        XCTAssertTrue(DashboardViewModel.lowerIsBetter(label: "Rebound%", category: .goaltending))
+        XCTAssertFalse(DashboardViewModel.lowerIsBetter(label: "ixG", category: .shotQuality))
+        XCTAssertFalse(DashboardViewModel.lowerIsBetter(label: "Blocks", category: .playDriving))
+        // The same label is workload for a goalie: more is not worse.
+        XCTAssertFalse(DashboardViewModel.lowerIsBetter(label: "xGA/60", category: .goaltending))
     }
 
     func testBlankValuesRankByPercentileInsteadOfLast() {
@@ -50,8 +53,8 @@ final class StatDirectionTests: XCTestCase {
         ]
         let ranked = players.sorted(
             by: DashboardViewModel.metricComparator(
-                label: "EPA/Play",
-                category: .passing,
+                label: "ixG",
+                category: .shotQuality,
                 descending: true
             )
         )
@@ -68,8 +71,8 @@ final class StatDirectionTests: XCTestCase {
         ]
         let ranked = players.sorted(
             by: DashboardViewModel.metricComparator(
-                label: "EPA/Play",
-                category: .passing,
+                label: "ixG",
+                category: .shotQuality,
                 descending: true
             )
         )
@@ -81,15 +84,16 @@ final class StatDirectionTests: XCTestCase {
         let lacksMetric = player(
             2,
             "Lacks it",
-            value: "62.0%",
+            value: "11.0%",
             percentile: 40,
-            label: "Cmp%"
+            label: "Sh%",
+            category: .scoring
         )
         for descending in [true, false] {
             let ranked = [lacksMetric, hasMetric].sorted(
                 by: DashboardViewModel.metricComparator(
-                    label: "EPA/Play",
-                    category: .passing,
+                    label: "ixG",
+                    category: .shotQuality,
                     descending: descending
                 )
             )

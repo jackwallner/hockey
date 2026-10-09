@@ -1,5 +1,5 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 final class UpgradeCTATests: XCTestCase {
     func testSaysTryFreeWhenATrialIsAvailable() {

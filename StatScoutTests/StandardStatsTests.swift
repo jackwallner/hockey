@@ -1,19 +1,21 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 final class StandardStatsTests: XCTestCase {
-    func testPositionCatalogUsesNFLStatLines() {
-        XCTAssertEqual(StandardStatCatalog.defaultStat(for: .qb), "Pass Yds")
-        XCTAssertEqual(StandardStatCatalog.defaultStat(for: .rb), "Rush Yds")
-        XCTAssertEqual(StandardStatCatalog.defaultStat(for: .wr), "Rec Yds")
-        XCTAssertEqual(StandardStatCatalog.defaultStat(for: .te), "Rec Yds")
-        XCTAssertEqual(StandardStatCatalog.defaultStat(for: .defense), "Tackles")
+    func testPositionCatalogUsesHockeyStatLines() {
+        XCTAssertEqual(StandardStatCatalog.defaultStat(for: .forward), "P")
+        XCTAssertEqual(StandardStatCatalog.defaultStat(for: .defense), "P")
+        XCTAssertEqual(StandardStatCatalog.defaultStat(for: .goalie), "SV%")
+        XCTAssertTrue(StandardStatCatalog.stats(for: .forward).contains("TOI/GP"))
+        XCTAssertTrue(StandardStatCatalog.stats(for: .goalie).contains("GAA"))
+        XCTAssertFalse(StandardStatCatalog.stats(for: .goalie).contains("G"), "goalies do not score")
+        XCTAssertFalse(StandardStatCatalog.stats(for: .forward).contains("SV%"))
     }
 
     func testWalkingThePositionTabsRanksEachPositionByItsOwnDefault() {
-        var stat = StandardStatCatalog.defaultStat(for: .qb)
-        var position = PlayerPositionGroup.qb
-        for next in [PlayerPositionGroup.rb, .wr, .te, .defense, .qb] {
+        var stat = StandardStatCatalog.defaultStat(for: .forward)
+        var position = PlayerPositionGroup.forward
+        for next in [PlayerPositionGroup.defense, .goalie, .forward, .goalie, .defense] {
             stat = StandardStatCatalog.stat(keeping: stat, from: position, to: next)
             position = next
             XCTAssertEqual(stat, StandardStatCatalog.defaultStat(for: next))
@@ -22,65 +24,83 @@ final class StandardStatsTests: XCTestCase {
 
     func testDeliberatelyChosenStatFollowsToPositionsThatOfferIt() {
         XCTAssertEqual(
-            StandardStatCatalog.stat(keeping: "Rush TD", from: .qb, to: .rb),
-            "Rush TD"
+            StandardStatCatalog.stat(keeping: "G", from: .forward, to: .defense),
+            "G"
         )
         XCTAssertEqual(
-            StandardStatCatalog.stat(keeping: "Rush TD", from: .rb, to: .wr),
-            "Rush TD"
+            StandardStatCatalog.stat(keeping: "G", from: .defense, to: .forward),
+            "G"
+        )
+        // Goalies do not score: the choice falls back to their own default.
+        XCTAssertEqual(
+            StandardStatCatalog.stat(keeping: "G", from: .forward, to: .goalie),
+            "SV%"
         )
         XCTAssertEqual(
-            StandardStatCatalog.stat(keeping: "Rush TD", from: .wr, to: .defense),
-            "Tackles"
+            StandardStatCatalog.stat(keeping: "GP", from: .goalie, to: .forward),
+            "GP"
         )
     }
 
-    func testQuarterbackInterceptionsDefaultLowestFirst() {
-        XCTAssertFalse(StandardStatCatalog.defaultDescending(for: "INT", position: .qb))
-        XCTAssertTrue(StandardStatCatalog.defaultDescending(for: "Def INT", position: .defense))
+    func testGoalsAgainstAndPenaltiesDefaultLowestFirst() {
+        XCTAssertFalse(StandardStatCatalog.defaultDescending(for: "GAA", position: .goalie))
+        XCTAssertFalse(StandardStatCatalog.defaultDescending(for: "PIM", position: .forward))
+        XCTAssertFalse(StandardStatCatalog.defaultDescending(for: "L", position: .goalie))
+        XCTAssertTrue(StandardStatCatalog.defaultDescending(for: "SV%", position: .goalie))
+        XCTAssertTrue(StandardStatCatalog.defaultDescending(for: "P", position: .forward))
     }
 
-    func testMetricCategoryDecodesCaseInsensitively() throws {
-        for rawValue in ["passing", "PASSING", "Passing"] {
-            let json = """
-            {"id":"m","label":"EPA/Play","value":"0.12","percentile":88,"category":"\(rawValue)"}
-            """.data(using: .utf8)!
-            let metric = try JSONDecoder().decode(Metric.self, from: json)
-            XCTAssertEqual(metric.category, .passing)
-        }
-    }
-
-    func testCompositeStandardStatsUseRatesInsteadOfLeadingCounts() {
+    func testTimeOnIceRanksByItsMinutes() {
         XCTAssertEqual(
-            StandardStatSemantics.numericValue(label: "Rec/Tgt", value: "8/11")!,
-            72.727,
+            StandardStatSemantics.numericValue(label: "TOI/GP", value: "19:42")!,
+            19.7,
             accuracy: 0.001
         )
         XCTAssertEqual(
-            StandardStatSemantics.numericValue(label: "Cmp/Att", value: "15/25")!,
-            60,
+            StandardStatSemantics.numericValue(label: "FO%", value: "54.2%")!,
+            54.2,
             accuracy: 0.001
+        )
+        XCTAssertEqual(
+            StandardStatSemantics.numericValue(label: "SV%", value: ".915")!,
+            0.915,
+            accuracy: 0.0001
+        )
+        XCTAssertEqual(
+            StandardStatSemantics.winner(label: "TOI/GP", left: "21:05", right: "19:42"),
+            .left,
+            "a clock compares as minutes, not as the text before the colon"
         )
     }
 
     func testStandardComparisonRespectsDirectionAndRates() {
         XCTAssertEqual(
-            StandardStatSemantics.winner(label: "Rec/Tgt", left: "8/11", right: "5/9"),
+            StandardStatSemantics.winner(label: "SV%", left: ".915", right: ".907"),
             .left
         )
         XCTAssertEqual(
-            StandardStatSemantics.winner(label: "INT", left: "1", right: "3"),
-            .left
+            StandardStatSemantics.winner(label: "GAA", left: "2.31", right: "2.88"),
+            .left,
+            "the lower goals-against average wins"
+        )
+        XCTAssertEqual(
+            StandardStatSemantics.winner(label: "PIM", left: "30", right: "12"),
+            .right
+        )
+        XCTAssertEqual(
+            StandardStatSemantics.winner(label: "L", left: "14", right: "9"),
+            .right
         )
         XCTAssertNil(StandardStatSemantics.winner(label: "G", left: "1", right: "1"))
+        XCTAssertNil(StandardStatSemantics.winner(label: "G", left: nil, right: "1"))
     }
 
     func testEveryExistingStandardStatGetsAPercentile() {
         XCTAssertEqual(
             StandardStatSemantics.percentile(
-                label: "Rec/Tgt",
-                value: "8/11",
-                peerValues: ["8/11", "5/9", "10/10"]
+                label: "TOI/GP",
+                value: "19:42",
+                peerValues: ["19:42", "15:00", "22:30"]
             ),
             50
         )
@@ -95,35 +115,35 @@ final class StandardStatsTests: XCTestCase {
     }
 
     func testPercentileRanksAgainstWhicheverPeersHaveTheStat() {
-        // Week one: two peers, and a value that beats one of them.
+        // Opening week: two peers, and a value that beats one of them.
         XCTAssertEqual(
             StandardStatSemantics.percentile(
-                label: "Rush Yds",
-                value: "80",
-                peerValues: ["80", "20"]
+                label: "SOG",
+                value: "8",
+                peerValues: ["8", "2"]
             ),
             75
         )
         // A cohort of one is the middle of its own distribution, never 0.
         XCTAssertEqual(
             StandardStatSemantics.percentile(
-                label: "Rush Yds",
-                value: "80",
-                peerValues: ["80"]
+                label: "SOG",
+                value: "8",
+                peerValues: ["8"]
             ),
             50
         )
-        // Direction still applies with a thin pool: fewer picks is better.
+        // Direction still applies with a thin pool: fewer penalty minutes is better.
         XCTAssertGreaterThan(
             StandardStatSemantics.percentile(
-                label: "INT",
+                label: "PIM",
                 value: "0",
-                peerValues: ["0", "3"]
+                peerValues: ["0", "12"]
             ),
             StandardStatSemantics.percentile(
-                label: "INT",
-                value: "3",
-                peerValues: ["0", "3"]
+                label: "PIM",
+                value: "12",
+                peerValues: ["0", "12"]
             )
         )
     }
@@ -133,7 +153,7 @@ final class StandardStatsTests: XCTestCase {
         // stat that exists always lands on a drawable 1-100 bar.
         for value in ["0", "1", "250", "0.0%"] {
             let pct = StandardStatSemantics.percentile(
-                label: "Rec Yds",
+                label: "SOG",
                 value: value,
                 peerValues: ["0", "1", "250", "999"]
             )
@@ -144,21 +164,12 @@ final class StandardStatsTests: XCTestCase {
 
     func testLeagueCurveInterpolatesFromTwoPoints() {
         // Was nil below five points, which dropped the Recent Form bar
-        // entirely in an opening week.
+        // entirely on opening night.
         let curve = LeaguePercentileCurve(points: [(100, 20), (300, 80)])
         XCTAssertNotNil(curve)
         XCTAssertEqual(curve?.percentile(for: 200), 50)
         XCTAssertEqual(curve?.percentile(for: 50), 20)
         XCTAssertEqual(curve?.percentile(for: 400), 80)
         XCTAssertNil(LeaguePercentileCurve(points: [(100, 20)]))
-    }
-
-    func testRecentWindowCaptionNamesTheGamesInHand() {
-        XCTAssertEqual(RecentFormWindow.caption(games: 1, span: 5), "1 game")
-        XCTAssertEqual(RecentFormWindow.caption(games: 3, span: 5), "3 games")
-        XCTAssertEqual(RecentFormWindow.caption(games: 5, span: 5), "5 games")
-        // A window can never hold more than it asked for; if it somehow does,
-        // the span is still what was requested.
-        XCTAssertEqual(RecentFormWindow.caption(games: 9, span: 8), "8 games")
     }
 }

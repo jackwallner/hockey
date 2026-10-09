@@ -1,7 +1,7 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
-/// Regressions for the three context bugs found in the 1.2.1 audit: an
+/// Regressions for the three context bugs found in an earlier audit: an
 /// unprovenanced current-season cache surviving an upgrade, a team page whose
 /// roster ignored its own season picker, and drill-down routes that dropped the
 /// phase they were opened from.
@@ -9,7 +9,7 @@ final class UpgradeContextTests: XCTestCase {
 
     // MARK: - Current-season cache provenance
 
-    /// The exact shape of the artifact 1.2 shipped and wrote to this path: a
+    /// The shape of an artifact written before the provenance marker existed: a
     /// real server export, but only the teams that had played by then. It
     /// passes `isCompleteCurrent`, by design, so the validator can never be
     /// what separates it from a full snapshot.
@@ -18,13 +18,13 @@ final class UpgradeContextTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        let openingWeek = players(teams: ["LA", "NE", "SEA", "SF"], count: 110)
+        let openingWeek = players(teams: ["VAN", "EDM", "SEA", "CGY"], count: 110)
         XCTAssertTrue(
             PlayerSnapshotValidator.isCompleteCurrent(openingWeek),
-            "The 1.2 artifact has to clear the opening-week rule, or this test isn't reproducing the bug"
+            "The old artifact has to clear the opening-week rule, or this test isn't reproducing the bug"
         )
 
-        // Written the way 1.2 wrote it: rows only, no marker beside them.
+        // Written the way the old build wrote it: rows only, no marker beside them.
         let file = directory.appending(path: "players-current.json")
         try JSONEncoder.statScout.encode(openingWeek).write(to: file)
 
@@ -44,7 +44,7 @@ final class UpgradeContextTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
 
         let cache = TwoTierPlayerCache(directory: directory)
-        try cache.savePlayers(players(teams: ["SEA", "NE"], count: 30))
+        try cache.savePlayers(players(teams: ["SEA", "EDM"], count: 30))
 
         XCTAssertEqual(try cache.loadCurrentPlayers().count, 30)
         XCTAssertTrue(
@@ -59,13 +59,13 @@ final class UpgradeContextTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try JSONEncoder.statScout
-            .encode(players(teams: ["LA", "NE", "SEA", "SF"], count: 110))
+            .encode(players(teams: ["VAN", "EDM", "SEA", "CGY"], count: 110))
             .write(to: directory.appending(path: "players-current.json"))
 
         let cache = TwoTierPlayerCache(directory: directory)
         XCTAssertTrue(try cache.loadCurrentPlayers().isEmpty)
 
-        try cache.savePlayers(players(teams: ["SEA", "NE", "KC", "BUF"], count: 40))
+        try cache.savePlayers(players(teams: ["SEA", "EDM", "BOS", "BUF"], count: 40))
         XCTAssertEqual(try cache.loadCurrentPlayers().count, 40)
     }
 
@@ -99,9 +99,9 @@ final class UpgradeContextTests: XCTestCase {
 
     @MainActor
     func testPlayersForSeasonHonoursAnExplicitPhase() async {
-        let regular = players(teams: ["SEA", "NE"], count: 6, season: StatScoutSeason.current - 1)
+        let regular = players(teams: ["SEA", "EDM"], count: 6, season: StatScoutSeason.current - 1)
         let playoffs = players(
-            teams: ["SEA", "NE"], count: 2, season: StatScoutSeason.current - 1,
+            teams: ["SEA", "EDM"], count: 2, season: StatScoutSeason.current - 1,
             phase: .playoffs, idOffset: 50
         )
         let vm = DashboardViewModel(provider: MockProvider(players: regular + playoffs))
@@ -115,11 +115,11 @@ final class UpgradeContextTests: XCTestCase {
     }
 
     func testRoutesCarrySeasonAndPhase() {
-        let metric = MetricRoute(label: "EPA/Play", category: .passing, season: 2024, phase: .playoffs)
+        let metric = MetricRoute(label: "ixG", category: .shotQuality, season: 2024, phase: .playoffs)
         XCTAssertEqual(metric.season, 2024)
         XCTAssertEqual(metric.phase, .playoffs)
 
-        let standard = StandardStatRoute(stat: "Pass Yds", category: .passing, season: 2024, phase: .playoffs)
+        let standard = StandardStatRoute(stat: "SOG", position: .forward, season: 2024, phase: .playoffs)
         XCTAssertEqual(standard.season, 2024)
         XCTAssertEqual(standard.phase, .playoffs)
 
@@ -127,7 +127,7 @@ final class UpgradeContextTests: XCTestCase {
         // it are different destinations, or the stack coalesces them.
         XCTAssertNotEqual(
             metric,
-            MetricRoute(label: "EPA/Play", category: .passing, season: 2024, phase: .regular)
+            MetricRoute(label: "ixG", category: .shotQuality, season: 2024, phase: .regular)
         )
     }
 
@@ -143,14 +143,14 @@ final class UpgradeContextTests: XCTestCase {
         (0..<count).map { index in
             Player(
                 playerId: idOffset + index, name: "Player \(idOffset + index)",
-                team: teams[index % teams.count], position: "QB",
+                team: teams[index % teams.count], position: "C",
                 handedness: "", updatedAt: Date(timeIntervalSince1970: 0), season: season,
                 seasonPhase: phase,
-                playerType: ["qb", "rb", "wr", "te", "def"][index % 5],
+                playerType: ["f", "d", "g"][index % 3],
                 metrics: [
-                    Metric(id: "pass", label: "EPA/Play", value: "0.1", percentile: 50, category: .passing),
-                    Metric(id: "rush", label: "EPA/Rush", value: "0.1", percentile: 50, category: .rushing),
-                    Metric(id: "rec", label: "EPA/Tgt", value: "0.1", percentile: 50, category: .receiving),
+                    Metric(id: "scoring", label: "P/60", value: "2.1", percentile: 50, category: .scoring),
+                    Metric(id: "shots", label: "ixG", value: "3.1", percentile: 50, category: .shotQuality),
+                    Metric(id: "goalie", label: "GSAx", value: "+1.2", percentile: 50, category: .goaltending),
                 ],
                 standardStats: [], games: []
             )

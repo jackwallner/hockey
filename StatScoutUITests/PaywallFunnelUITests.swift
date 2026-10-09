@@ -12,17 +12,17 @@ import XCTest
 /// charts. A Test Store subscription expires five minutes after purchase, so
 /// read the attributes promptly:
 ///
-///     rc-funnel-attributes football --user <the id this run used>
+///     rc-funnel-attributes hockey --user <the id this run used>
 final class PaywallFunnelUITests: XCTestCase {
 
     func testTestStorePurchaseRecordsTheConversion() {
         let probeUser = ProcessInfo.processInfo.environment["RC_PROBE_USER"]
-            ?? "funnel-probe-football-uitest"
+            ?? "funnel-probe-hockey-uitest"
 
         // Addressed by bundle id rather than by the implicit initialiser: several
         // apps in this fleet have a PRODUCT_NAME that differs from the target
         // name, and XCUIApplication() cannot resolve those, failing with "pid 0".
-        let app = XCUIApplication(bundleIdentifier: "com.jackwallner.football")
+        let app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
         app.launchArguments += ["-ResetUITestState", "-rcfunnelprobe", "-rcfunnelprobepurchase"]
         app.launchEnvironment["RC_PROBE_USER"] = probeUser
         app.launch()

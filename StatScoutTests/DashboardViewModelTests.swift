@@ -1,5 +1,5 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 final class DashboardViewModelTests: XCTestCase {
     override func setUp() {
@@ -10,19 +10,19 @@ final class DashboardViewModelTests: XCTestCase {
     func testAllMetricsKeyCollision() async throws {
         let players: [Player] = [
             Player(
-                playerId: 1, name: "A", team: "KC", position: "QB", handedness: "",
-                updatedAt: Date(), season: StatScoutSeason.current, playerType: "qb",
+                playerId: 1, name: "A", team: "SEA", position: "C", handedness: "",
+                updatedAt: Date(), season: StatScoutSeason.current, playerType: "f",
                 metrics: [
-                    Metric(id: "m1", label: "TD", value: "26", percentile: 90, category: .passing)
+                    Metric(id: "m1", label: "xGA/60", value: "2.41", percentile: 90, category: .playDriving)
                 ],
                 standardStats: [],
                 games: []
             ),
             Player(
-                playerId: 2, name: "B", team: "PHI", position: "RB", handedness: "",
-                updatedAt: Date(), season: StatScoutSeason.current, playerType: "rb",
+                playerId: 2, name: "B", team: "EDM", position: "G", handedness: "",
+                updatedAt: Date(), season: StatScoutSeason.current, playerType: "g",
                 metrics: [
-                    Metric(id: "m2", label: "TD", value: "13", percentile: 85, category: .rushing)
+                    Metric(id: "m2", label: "xGA/60", value: "2.80", percentile: 85, category: .goaltending)
                 ],
                 standardStats: [],
                 games: []
@@ -33,6 +33,7 @@ final class DashboardViewModelTests: XCTestCase {
         await vm.load()
         let all = vm.allMetrics
         XCTAssertEqual(all.count, 2, "Same label in different categories should produce 2 entries")
+        XCTAssertEqual(Set(all.map(\.category)), [.playDriving, .goaltending])
     }
 
     @MainActor
@@ -57,24 +58,26 @@ final class DashboardViewModelTests: XCTestCase {
     @MainActor
     func testTeamFullNameReturnsCorrectFullName() {
         // Test the teamFullName helper function directly
-        XCTAssertEqual(teamFullName("KC"), "Kansas City Chiefs")
-        XCTAssertEqual(teamFullName("SF"), "San Francisco 49ers")
-        XCTAssertEqual(teamFullName("PHI"), "Philadelphia Eagles")
+        XCTAssertEqual(teamFullName("SEA"), "Seattle Kraken")
+        XCTAssertEqual(teamFullName("TBL"), "Tampa Bay Lightning")
+        XCTAssertEqual(teamFullName("VGK"), "Vegas Golden Knights")
         XCTAssertEqual(teamFullName("Unknown"), "Unknown")
+        XCTAssertEqual(teamNickname("TOR"), "Maple Leafs")
+        XCTAssertEqual(teamNickname("TBL"), "Lightning")
     }
 
     @MainActor
     func testPlayersForTeamMatchesAliases() async {
         let players = [
             Player(
-                playerId: 1, name: "A", team: "Kansas City Chiefs", position: "QB", handedness: "",
+                playerId: 1, name: "A", team: "Seattle Kraken", position: "C", handedness: "",
                 updatedAt: Date(), season: 2025,
                 metrics: [],
                 standardStats: [],
                 games: []
             ),
             Player(
-                playerId: 2, name: "B", team: "OAK", position: "WR", handedness: "",
+                playerId: 2, name: "B", team: "LV", position: "L", handedness: "",
                 updatedAt: Date(), season: 2025,
                 metrics: [],
                 standardStats: [],
@@ -85,24 +88,24 @@ final class DashboardViewModelTests: XCTestCase {
         vm.selectedSeason = 2025
         await vm.load()
 
-        XCTAssertEqual(vm.players(forTeam: "KC").map { $0.playerId }, [1])
-        XCTAssertEqual(vm.players(forTeam: "LV").map { $0.playerId }, [2])
+        XCTAssertEqual(vm.players(forTeam: "SEA").map { $0.playerId }, [1])
+        XCTAssertEqual(vm.players(forTeam: "VGK").map { $0.playerId }, [2])
     }
 
     @MainActor
     func testConferenceFilterScopesPlayersTeamsAndMetrics() async {
         let players = [
             Player(
-                playerId: 1, name: "AFC Player", team: "KC", position: "QB", handedness: "",
-                updatedAt: Date(), season: 2025, playerType: "qb",
-                metrics: [Metric(id: "afc", label: "Pass Yds", value: "4,000", percentile: 90, category: .passing)],
+                playerId: 1, name: "East Player", team: "BOS", position: "C", handedness: "",
+                updatedAt: Date(), season: 2025, playerType: "f",
+                metrics: [Metric(id: "east", label: "ixG", value: "28.0", percentile: 90, category: .shotQuality)],
                 standardStats: [],
                 games: []
             ),
             Player(
-                playerId: 2, name: "NFC Player", team: "PHI", position: "QB", handedness: "",
-                updatedAt: Date(), season: 2025, playerType: "qb",
-                metrics: [Metric(id: "nfc", label: "CPOE", value: "5.1", percentile: 80, category: .passing)],
+                playerId: 2, name: "West Player", team: "SEA", position: "C", handedness: "",
+                updatedAt: Date(), season: 2025, playerType: "f",
+                metrics: [Metric(id: "west", label: "GAx", value: "+3.1", percentile: 80, category: .shotQuality)],
                 standardStats: [],
                 games: []
             ),
@@ -111,31 +114,45 @@ final class DashboardViewModelTests: XCTestCase {
         vm.selectedSeason = 2025
         await vm.load()
 
-        vm.selectedConference = .afc
-        vm.searchText = "Kansas"
-        XCTAssertEqual(vm.filteredPlayers.map(\.name), ["AFC Player"])
-        XCTAssertEqual(vm.searchedTeams, ["KC"])
-        XCTAssertEqual(vm.allMetrics.map(\.label), ["Pass Yds"])
+        vm.selectedConference = .east
+        vm.searchText = "Boston"
+        XCTAssertEqual(vm.filteredPlayers.map(\.name), ["East Player"])
+        XCTAssertEqual(vm.searchedTeams, ["BOS"])
+        XCTAssertEqual(vm.allMetrics.map(\.label), ["ixG"])
 
-        vm.selectedConference = .nfc
-        vm.searchText = "Philadelphia"
-        XCTAssertEqual(vm.filteredPlayers.map(\.name), ["NFC Player"])
-        XCTAssertEqual(vm.searchedTeams, ["PHI"])
-        XCTAssertEqual(vm.allMetrics.map(\.label), ["CPOE"])
+        vm.selectedConference = .west
+        vm.searchText = "Seattle"
+        XCTAssertEqual(vm.filteredPlayers.map(\.name), ["West Player"])
+        XCTAssertEqual(vm.searchedTeams, ["SEA"])
+        XCTAssertEqual(vm.allMetrics.map(\.label), ["GAx"])
+    }
+
+    func testConferencesAndDivisionsPartitionTheLeague() {
+        XCTAssertEqual(leagueTeamAbbreviations.count, 32)
+        XCTAssertEqual(LeagueDivision.allCases.count, 4)
+        let divisionTeams = LeagueDivision.allCases.flatMap(\.teams)
+        XCTAssertEqual(Set(divisionTeams), Set(leagueTeamAbbreviations))
+        XCTAssertEqual(divisionTeams.count, 32)
+        XCTAssertEqual(LeagueDivision.division(of: "Seattle Kraken"), .pacific)
+        XCTAssertEqual(LeagueDivision.pacific.conference, .west)
+        XCTAssertEqual(LeagueDivision.division(of: "TBL"), .atlantic)
+        XCTAssertTrue(LeagueConference.east.contains(team: "NYR"))
+        XCTAssertFalse(LeagueConference.east.contains(team: "SEA"))
+        XCTAssertTrue(LeagueConference.all.contains(team: "SEA"))
     }
 
     @MainActor
     func testTeamCountsPopulatedAfterLoad() async {
         let players = [
-            Player(playerId: 1, name: "A", team: "KC", position: "QB", handedness: "", updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: []),
-            Player(playerId: 2, name: "B", team: "KC", position: "RB", handedness: "", updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: []),
-            Player(playerId: 3, name: "C", team: "SF", position: "WR", handedness: "", updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: [])
+            Player(playerId: 1, name: "A", team: "SEA", position: "C", handedness: "", updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: []),
+            Player(playerId: 2, name: "B", team: "SEA", position: "D", handedness: "", updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: []),
+            Player(playerId: 3, name: "C", team: "VAN", position: "G", handedness: "", updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: [])
         ]
         let vm = DashboardViewModel(provider: MockProvider(players: players))
         vm.selectedSeason = 2025
         await vm.load()
-        XCTAssertEqual(vm.teamCounts["KC"], 2)
-        XCTAssertEqual(vm.teamCounts["SF"], 1)
+        XCTAssertEqual(vm.teamCounts["SEA"], 2)
+        XCTAssertEqual(vm.teamCounts["VAN"], 1)
     }
 
     @MainActor
@@ -148,7 +165,7 @@ final class DashboardViewModelTests: XCTestCase {
         await vm.load()
 
         XCTAssertEqual(vm.seasonPlayers.count, cached.count)
-        XCTAssertEqual(vm.teamsWithData.count, 32)
+        XCTAssertEqual(vm.teamsWithData.count, leagueTeamAbbreviations.count)
         XCTAssertTrue(vm.lastFetchFailed)
         XCTAssertEqual(cache.savedPlayers.count, cached.count)
     }
@@ -169,7 +186,7 @@ final class DashboardViewModelTests: XCTestCase {
     @MainActor
     func testCacheHydratesPlayersBeforeFetch() async {
         let cached = [
-            Player(playerId: 99, name: "Cached", team: "KC", position: "QB", handedness: "", updatedAt: Date(), metrics: [], standardStats: [], games: [])
+            Player(playerId: 99, name: "Cached", team: "SEA", position: "C", handedness: "", updatedAt: Date(), metrics: [], standardStats: [], games: [])
         ]
         let cache = InMemoryPlayerCache(seed: cached)
         let vm = DashboardViewModel(provider: MockProvider(error: URLError(.notConnectedToInternet)), cache: cache)
@@ -179,68 +196,71 @@ final class DashboardViewModelTests: XCTestCase {
 
     @MainActor
     func testSortLabelReflectsCategory() async {
-        // Passers with a Pass Yds metric
-        let passers = [
-            Player(playerId: 1, name: "A", team: "KC", position: "QB", handedness: "", updatedAt: Date(), season: StatScoutSeason.current, playerType: "qb", source: "nflreadpy",
-                   metrics: [Metric(id: "m1", label: "Pass Yds", value: "4,000", percentile: 90, category: .passing)], standardStats: [], games: [])
+        // Forwards with an ixG metric
+        let forwards = [
+            Player(playerId: 1, name: "A", team: "SEA", position: "C", handedness: "", updatedAt: Date(), season: StatScoutSeason.current, playerType: "f", source: "moneypuck",
+                   metrics: [Metric(id: "m1", label: "ixG", value: "31.4", percentile: 90, category: .shotQuality)], standardStats: [], games: [])
         ]
 
-        let vm = DashboardViewModel(provider: MockProvider(players: passers))
+        let vm = DashboardViewModel(provider: MockProvider(players: forwards))
         await vm.load()
         _ = vm.leaderboard  // Trigger computation of sort metric
 
-        // Default category is passing, should find Pass Yds in data
-        XCTAssertEqual(vm.sortLabel, "Pass Yds")
+        // Default cohort is forwards, which lead with ixG.
+        XCTAssertEqual(vm.sortLabel, "ixG")
 
-        // Test with rushers
-        let rushers = [
-            Player(playerId: 2, name: "B", team: "PHI", position: "RB", handedness: "", updatedAt: Date(), season: StatScoutSeason.current, playerType: "rb", source: "nflreadpy",
-                   metrics: [Metric(id: "m1", label: "Rush Yds", value: "1,500", percentile: 85, category: .rushing)], standardStats: [], games: [])
+        // Test with goalies
+        let goalies = [
+            Player(playerId: 2, name: "B", team: "EDM", position: "G", handedness: "", updatedAt: Date(), season: StatScoutSeason.current, playerType: "g", source: "moneypuck",
+                   metrics: [Metric(id: "m1", label: "GSAx", value: "+14.2", percentile: 95, category: .goaltending)], standardStats: [], games: [])
         ]
-        let vmRushing = DashboardViewModel(provider: MockProvider(players: rushers))
-        await vmRushing.load()
-        vmRushing.selectedCategory = .rushing
-        _ = vmRushing.leaderboard  // Trigger computation
-        XCTAssertEqual(vmRushing.sortLabel, "Rush Yds")
+        let vmGoalies = DashboardViewModel(provider: MockProvider(players: goalies))
+        await vmGoalies.load()
+        vmGoalies.selectedCategory = .goaltending
+        _ = vmGoalies.leaderboard  // Trigger computation
+        XCTAssertEqual(vmGoalies.selectedPosition, .goalie)
+        XCTAssertEqual(vmGoalies.sortLabel, "GSAx")
 
-        // Test empty data falls back to the default label. The NFL redesign
-        // renamed this from "Top Category" to "Top Metric"; the fixture never
-        // followed.
+        // Test empty data falls back to the default label.
         let vmEmpty = DashboardViewModel(provider: MockProvider(players: []))
         await vmEmpty.load()
-        vmEmpty.selectedCategory = .passing
+        vmEmpty.selectedCategory = .scoring
         _ = vmEmpty.leaderboard  // Trigger computation
         XCTAssertEqual(vmEmpty.sortLabel, "Top Metric")
 
-        // Test nil category shows the default label
-        let vmNil = DashboardViewModel(provider: MockProvider(players: passers))
+        // Test nil category leaves the cohort alone
+        let vmNil = DashboardViewModel(provider: MockProvider(players: forwards))
         await vmNil.load()
         vmNil.selectedCategory = nil
         _ = vmNil.leaderboard
-        XCTAssertEqual(vmNil.sortLabel, "Pass Yds")
+        XCTAssertEqual(vmNil.sortLabel, "ixG")
     }
 
     @MainActor
-    func testRushingSortUsesAvailableMetrics() async {
-        let back = Player(
-            playerId: 1, name: "Test RB", team: "PHI", position: "RB",
-            handedness: "", updatedAt: Date(), season: StatScoutSeason.current, playerType: "rb", source: "nflreadpy",
+    func testCohortSortUsesAvailableMetrics() async {
+        let defenseman = Player(
+            playerId: 1, name: "Test D", team: "SEA", position: "D",
+            handedness: "", updatedAt: Date(), season: StatScoutSeason.current, playerType: "d", source: "moneypuck",
             metrics: [
-                Metric(id: "m1", label: "Rush Yds", value: "1,500", percentile: 85, category: .rushing),
-                Metric(id: "m2", label: "Y/C", value: "5.2", percentile: 70, category: .rushing)
+                Metric(id: "m1", label: "Blocks", value: "150", percentile: 85, category: .playDriving),
+                Metric(id: "m2", label: "Hits", value: "90", percentile: 70, category: .playDriving)
             ],
             standardStats: [],
             games: []
         )
 
-        let vm = DashboardViewModel(provider: MockProvider(players: [back]))
+        let vm = DashboardViewModel(provider: MockProvider(players: [defenseman]))
         await vm.load()
-        vm.selectedCategory = .rushing
+        vm.selectedPosition = .defense
 
-        // Should find the back in filtered list
+        // Should find the defenseman in the filtered list
         XCTAssertEqual(vm.filteredPlayers.count, 1)
-        // Should sort by Rush Yds since that's the first available priority metric
+        // None of the defense headline metrics exist, so it falls to the first available one.
+        XCTAssertEqual(vm.sortLabel, "Blocks")
         XCTAssertEqual(vm.leaderboard.first?.playerId, 1)
+        // Skaters never show on the goalie board.
+        vm.selectedPosition = .goalie
+        XCTAssertTrue(vm.filteredPlayers.isEmpty)
     }
 
     @MainActor
@@ -254,14 +274,14 @@ final class DashboardViewModelTests: XCTestCase {
 
     /// The career rollup leads the menu, then real years newest-first. It sits at
     /// the top rather than sorting into place because its sentinel is 0, which
-    /// would otherwise bury "All Time" below 2000.
+    /// would otherwise bury "All Time" below 2008.
     private var expectedSeasons: [Int] {
         [StatScoutSeason.allTime]
             + Array(StatScoutSeason.earliest...StatScoutSeason.current).reversed()
     }
 
     @MainActor
-    func testAvailableSeasonsIncludes2000ThroughCurrentPlusAllTime() async {
+    func testAvailableSeasonsIncludes2008ThroughCurrentPlusAllTime() async {
         let players = makeCompleteHistoricalPlayers() + makeCompleteCurrentPlayers()
         let vm = DashboardViewModel(provider: MockProvider(players: players))
         vm.isPro = true
@@ -294,7 +314,7 @@ final class DashboardViewModelTests: XCTestCase {
 
     /// The free season is the calendar's season, even before its data lands.
     ///
-    /// Baseball StatScout's model: the live season is free and the default for
+    /// The model: the live season is free and the default for
     /// everyone from the day it starts; every earlier season is StatScout+. It
     /// used to trail the data, which kept 2025 free and 2026 hidden after the
     /// 2026 opener had been played.
@@ -314,12 +334,12 @@ final class DashboardViewModelTests: XCTestCase {
         XCTAssertTrue(vm.availableSeasons.contains(StatScoutSeason.current))
     }
 
-    /// Week 1: two teams have played. The live season is still the default,
+    /// Opening night: two teams have played. The live season is still the default,
     /// for Pro too, and its thin board is what shows.
     @MainActor
     func testAThinLiveSeasonIsStillTheDefault() async {
         let lastSeason = makeCompleteSeasonPlayers(season: StatScoutSeason.current - 1, namePrefix: "LastYear")
-        let opener = makeCompleteCurrentPlayers(namePrefix: "Opener").filter { ["NE", "SEA"].contains($0.team) }
+        let opener = makeCompleteCurrentPlayers(namePrefix: "Opener").filter { ["EDM", "SEA"].contains($0.team) }
         let vm = DashboardViewModel(provider: MockProvider(players: lastSeason + opener))
         vm.isPro = true
 
@@ -337,15 +357,15 @@ final class DashboardViewModelTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: "stats.qualifier")
         defer { UserDefaults.standard.removeObject(forKey: "stats.qualifier") }
         let starter = Player(
-            playerId: 1, name: "Starter", team: "NE", position: "QB", handedness: "",
-            updatedAt: Date(), season: StatScoutSeason.current, playerType: "qb",
-            metrics: [Metric(id: "s", label: "EPA/Play", value: "0.10", percentile: 60, category: .passing, qualified: true)],
+            playerId: 1, name: "Starter", team: "BOS", position: "C", handedness: "",
+            updatedAt: Date(), season: StatScoutSeason.current, playerType: "f",
+            metrics: [Metric(id: "s", label: "ixG", value: "10.0", percentile: 60, category: .shotQuality, qualified: true)],
             standardStats: [], games: []
         )
         let backup = Player(
-            playerId: 2, name: "Backup", team: "SEA", position: "QB", handedness: "",
-            updatedAt: Date(), season: StatScoutSeason.current, playerType: "qb",
-            metrics: [Metric(id: "b", label: "EPA/Play", value: "0.90", percentile: 99, category: .passing, qualified: false)],
+            playerId: 2, name: "Backup", team: "SEA", position: "C", handedness: "",
+            updatedAt: Date(), season: StatScoutSeason.current, playerType: "f",
+            metrics: [Metric(id: "b", label: "ixG", value: "1.9", percentile: 99, category: .shotQuality, qualified: false)],
             standardStats: [], games: []
         )
         let vm = DashboardViewModel(provider: MockProvider(players: [starter, backup]))
@@ -362,8 +382,8 @@ final class DashboardViewModelTests: XCTestCase {
 
     func testMetricDecodesWithAndWithoutTheQualifiedFlag() throws {
         let json = #"""
-        [{"id":"a","label":"EPA/Play","value":"0.1","percentile":50,"category":"Passing","qualified":false},
-         {"id":"b","label":"EPA/Play","value":"0.2","percentile":60,"category":"Passing"}]
+        [{"id":"a","label":"ixG","value":"3.1","percentile":50,"category":"Shot Quality","qualified":false},
+         {"id":"b","label":"ixG","value":"4.2","percentile":60,"category":"Shot Quality"}]
         """#
         let metrics = try JSONDecoder().decode([Metric].self, from: Data(json.utf8))
         XCTAssertEqual(metrics.map(\.qualified), [false, nil])
@@ -412,12 +432,11 @@ final class DashboardViewModelTests: XCTestCase {
 
     /// The floor is a fact about the database, not a preference.
     ///
-    /// Verified against the live Football project on 2026-08-07:
-    /// `player_game_logs` and `player_recent_form` hold 2025 and nothing else
-    /// (16,745 and 3,607 rows; 2024 and earlier return zero). `player_snapshots`
-    /// still carries 2024 and back, which is why season boards reach further
-    /// than form boards do. Moving this constant down without re-ingesting the
-    /// per-game tables first puts an empty year in the Trends menu.
+    /// The per-game tables hold the live season and the one before it (2025-26
+    /// onward); `player_snapshots` carries everything back to 2008-09, which is
+    /// why season boards reach further than form boards do. Moving this
+    /// constant down without ingesting the per-game tables first puts an empty
+    /// year in the Trends menu.
     func testRecentFormFloorMatchesTheSeasonsTheRollupStillHolds() {
         XCTAssertEqual(StatScoutSeason.earliestRecentForm, 2025)
         XCTAssertLessThanOrEqual(
@@ -469,7 +488,7 @@ final class DashboardViewModelTests: XCTestCase {
     /// Picking a past season fetches that season.
     ///
     /// History is decoded on demand, and nothing in the nav bar used to ask for
-    /// it - so the first tap on any past season, and on "All since 2000" most
+    /// it - so the first tap on any past season, and on "All Time" most
     /// visibly since it is the first row of the menu, landed on an empty board.
     @MainActor
     func testSelectingAPastSeasonLoadsTheHistoryItNeeds() async {
@@ -508,16 +527,16 @@ final class DashboardViewModelTests: XCTestCase {
         XCTAssertEqual(vm.seasonsExcludingAllTime.count, vm.availableSeasons.count - 1)
     }
 
-    /// The sentinel must never reach the UI as "0", and it must name its own
-    /// start date rather than claiming every season ever played.
-    func testSeasonLabelRendersSentinelAsAllSinceEarliest() {
-        XCTAssertEqual(SeasonLabel.text(StatScoutSeason.allTime), "All since 2000")
-        XCTAssertEqual(SeasonLabel.text(2024), "2024")
+    /// The sentinel must never reach the UI as "0", and a real season always
+    /// reads as the two years the NHL season spans.
+    func testSeasonLabelRendersSentinelAsAllTime() {
+        XCTAssertEqual(SeasonLabel.display(StatScoutSeason.allTime), "All Time")
+        XCTAssertEqual(SeasonLabel.display(2024), "2024-25")
         XCTAssertEqual(
-            SeasonLabel.text(StatScoutSeason.allTime, phase: .regular),
-            "All since 2000 · Regular Season"
+            SeasonLabel.display(StatScoutSeason.allTime, phase: .regular),
+            "All Time"
         )
-        XCTAssertEqual(SeasonLabel.text(2024, phase: .playoffs), "2024 Playoffs")
+        XCTAssertEqual(SeasonLabel.display(2024, phase: .playoffs), "2024-25 playoffs")
     }
 
     /// One name for the phase everywhere. The nav pill used to get a bare
@@ -531,11 +550,11 @@ final class DashboardViewModelTests: XCTestCase {
     func testSeasonPlayersReturnsPlayersForSelectedSeason() async {
         // Create players with different seasons
         let player2025 = Player(
-            playerId: 1, name: "Player 2025", team: "NYY", position: "RF", handedness: "R/R",
+            playerId: 1, name: "Player 2025", team: "SEA", position: "C", handedness: "L",
             updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: []
         )
         let player2024 = Player(
-            playerId: 2, name: "Player 2024", team: "BOS", position: "1B", handedness: "L/R",
+            playerId: 2, name: "Player 2024", team: "BOS", position: "C", handedness: "R",
             updatedAt: Date(), season: 2024, metrics: [], standardStats: [], games: []
         )
 
@@ -557,7 +576,7 @@ final class DashboardViewModelTests: XCTestCase {
     func testSeasonPlayersIsEmptyWhenSeasonHasNoData() async {
         // Players only have 2025 data
         let player2025 = Player(
-            playerId: 1, name: "Player 2025", team: "NYY", position: "RF", handedness: "R/R",
+            playerId: 1, name: "Player 2025", team: "SEA", position: "C", handedness: "L",
             updatedAt: Date(), season: 2025, metrics: [], standardStats: [], games: []
         )
 
@@ -572,7 +591,7 @@ final class DashboardViewModelTests: XCTestCase {
     @MainActor
     func testLoadNeverSnapsAwayFromTheLiveSeason() async {
         let lastSeason = Player(
-            playerId: 1, name: "Last Season", team: "KC", position: "QB", handedness: "",
+            playerId: 1, name: "Last Season", team: "SEA", position: "C", handedness: "",
             updatedAt: Date(), season: StatScoutSeason.current - 1, metrics: [], standardStats: [], games: []
         )
         let vm = DashboardViewModel(provider: MockProvider(players: [lastSeason]))
@@ -581,14 +600,9 @@ final class DashboardViewModelTests: XCTestCase {
         XCTAssertEqual(vm.selectedSeason, StatScoutSeason.current)
     }
 
-    @MainActor
-    func testSeasonIndicatorCanBeFormatted() async {
-        // Test that season can be displayed correctly (no commas, just the year)
-        let season: Int = 2026
-
-        // Swift string interpolation should not add commas
-        let formatted = "\(season)"
-        XCTAssertEqual(formatted, "2026")
+    func testSeasonIndicatorHasNoGroupingAndShowsBothYears() {
+        let formatted = SeasonLabel.display(2026)
+        XCTAssertEqual(formatted, "2026-27")
         XCTAssertFalse(formatted.contains(","), "Season should not contain comma separators")
     }
 
@@ -604,15 +618,14 @@ final class DashboardViewModelTests: XCTestCase {
 
     private func makeCompleteSeasonPlayers(season: Int, namePrefix: String) -> [Player] {
         let teams = leagueTeamAbbreviations
-        let types = ["qb", "rb", "wr", "te", "def"]
+        let types = ["f", "d", "g"]
         return teams.enumerated().map { index, team in
             let type = types[index % types.count]
-            let position = type == "def" ? "LB" : type.uppercased()
+            let position = type == "g" ? "G" : type == "d" ? "D" : "C"
             let metric: (label: String, category: MetricCategory) = switch type {
-            case "qb": ("EPA/Play", .passing)
-            case "rb": ("EPA/Rush", .rushing)
-            case "wr", "te": ("EPA/Tgt", .receiving)
-            default: ("Tackles", .defense)
+            case "f": ("ixG", .shotQuality)
+            case "d": ("xGF%", .playDriving)
+            default: ("GSAx", .goaltending)
             }
             return Player(
                 playerId: 10_000 + index,
@@ -624,7 +637,7 @@ final class DashboardViewModelTests: XCTestCase {
                 season: season,
                 playerType: type,
                 metrics: [Metric(id: "metric-\(index)", label: metric.label, value: "1", percentile: 50, category: metric.category)],
-                standardStats: [StandardStat(id: "games-\(index)", label: "G", value: "1")],
+                standardStats: [StandardStat(id: "games-\(index)", label: "GP", value: "1")],
                 games: []
             )
         }
@@ -656,7 +669,7 @@ struct MockProvider: StatcastProviding, @unchecked Sendable {
 
     func fetchHistoricalPlayers() async throws -> [Player] {
         if let error { throw error }
-        return (players ?? []).filter { ($0.season ?? 0) < 2025 }
+        return (players ?? []).filter { ($0.season ?? 0) < StatScoutSeason.current }
     }
 
     func fetchCurrentPlayers() async throws -> [Player] {

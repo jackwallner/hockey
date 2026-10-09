@@ -1,12 +1,12 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 final class DataFreshnessTests: XCTestCase {
     func testProductionStatusDecodesCoverageAndPendingEnrichment() throws {
         let json = """
-        {"status":"degraded","refresh_id":"v2","source_published_at":"2026-09-12T12:00:00Z",
-         "published_at":"2026-09-12T12:05:00Z","last_checked_at":"2026-09-12T12:10:00Z",
-         "max_game_date":"2026-09-10","max_week":1,"observed_games":2,"expected_games":2,"season_type":"REG"}
+        {"status":"degraded","refresh_id":"v2","source_published_at":"2026-10-10T12:00:00Z",
+         "published_at":"2026-10-10T12:05:00Z","last_checked_at":"2026-10-10T12:10:00Z",
+         "max_game_date":"2026-10-09","max_week":1,"observed_games":2,"expected_games":2,"season_type":"REG"}
         """
         let status = try JSONDecoder.statScout.decode(DataFreshness.self, from: Data(json.utf8))
         XCTAssertEqual(status.status, .partial)
@@ -81,9 +81,9 @@ private actor RevisionProvider: StatcastProviding {
     func fetchCurrentPlayers() async throws -> [Player] {
         playerFetches += 1
         try await Task.sleep(for: .milliseconds(20))
-        return [Player(playerId: 1, name: "Fixture", team: "SEA", position: "QB", handedness: "",
+        return [Player(playerId: 1, name: "Fixture", team: "SEA", position: "C", handedness: "",
             updatedAt: Date(timeIntervalSince1970: 1000), season: StatScoutSeason.current,
-            playerType: "qb", metrics: [], standardStats: [], games: [])]
+            playerType: "f", metrics: [], standardStats: [], games: [])]
     }
     func fetchPlayers() async throws -> [Player] { try await fetchCurrentPlayers() }
     func fetchHistoricalPlayers() async throws -> [Player] { [] }

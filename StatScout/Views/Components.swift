@@ -121,6 +121,8 @@ struct MetricBar: View {
                 Text(metric.label)
                     .font(RinkType.bodyBold)
                     .foregroundStyle(RinkPalette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 if metric.isSmallSample, !metric.isUnranked {
                     Text("Small sample")
                         .font(.system(size: 9, weight: .semibold))
@@ -129,7 +131,7 @@ struct MetricBar: View {
                         .minimumScaleFactor(0.8)
                 }
             }
-            .frame(width: 70, alignment: .leading)
+            .frame(width: 78, alignment: .leading)
 
             if metric.isUnranked {
                 // A zero count has no honest rank (see `Metric.isUnranked`):
@@ -562,7 +564,7 @@ struct LeaderboardTableHeader: View {
                     }
                 } label: {
                     HStack(spacing: 3) {
-                        Text(sortLabel.uppercased())
+                        Text(sortLabel)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                         Image(systemName: "chevron.down")

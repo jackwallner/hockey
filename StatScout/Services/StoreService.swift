@@ -884,19 +884,19 @@ final class StoreService: NSObject, ObservableObject {
         // ones make every screenshot taken through this path a picture of copy
         // nobody will ever be shown.
         let monthly = TestStoreProduct(
-            localizedTitle: "Rink Pro Monthly", price: 1.99, currencyCode: "USD",
+            localizedTitle: "StatScout+ Monthly", price: 1.99, currencyCode: "USD",
             localizedPriceString: "$1.99", productIdentifier: StatScoutProduct.monthly,
-            productType: .autoRenewableSubscription, localizedDescription: "Rink Pro, billed monthly.",
+            productType: .autoRenewableSubscription, localizedDescription: "StatScout+, billed monthly.",
             subscriptionPeriod: .init(value: 1, unit: .month), introductoryDiscount: weekTrial(), locale: locale)
         let yearly = TestStoreProduct(
-            localizedTitle: "Rink Pro Yearly", price: 9.99, currencyCode: "USD",
+            localizedTitle: "StatScout+ Yearly", price: 9.99, currencyCode: "USD",
             localizedPriceString: "$9.99", productIdentifier: StatScoutProduct.yearly,
-            productType: .autoRenewableSubscription, localizedDescription: "Rink Pro, billed yearly.",
+            productType: .autoRenewableSubscription, localizedDescription: "StatScout+, billed yearly.",
             subscriptionPeriod: .init(value: 1, unit: .year), introductoryDiscount: weekTrial(), locale: locale)
         let lifetime = TestStoreProduct(
-            localizedTitle: "Rink Pro Lifetime", price: 19.99, currencyCode: "USD",
+            localizedTitle: "StatScout+ Lifetime", price: 19.99, currencyCode: "USD",
             localizedPriceString: "$19.99", productIdentifier: StatScoutProduct.lifetime,
-            productType: .nonConsumable, localizedDescription: "Rink Pro, one-time purchase.",
+            productType: .nonConsumable, localizedDescription: "StatScout+, one-time purchase.",
             subscriptionPeriod: nil, introductoryDiscount: nil, locale: locale)
         products = [
             Package(identifier: "$rc_annual", packageType: .annual,

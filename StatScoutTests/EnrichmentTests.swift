@@ -1,5 +1,5 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 final class EnrichmentTests: XCTestCase {
     override func setUp() {
@@ -9,13 +9,14 @@ final class EnrichmentTests: XCTestCase {
 
     private func player(
         _ id: Int,
-        type: String = "wr",
+        type: String = "f",
         team: String = "SEA",
         metrics: [Metric],
         stats: [StandardStat] = []
     ) -> Player {
         Player(
-            playerId: id, name: "P\(id)", team: team, position: type.uppercased(), handedness: "",
+            playerId: id, name: "P\(id)", team: team,
+            position: type == "g" ? "G" : type == "d" ? "D" : "C", handedness: "",
             updatedAt: Date(), season: StatScoutSeason.current, playerType: type,
             metrics: metrics, standardStats: stats, games: []
         )
@@ -28,187 +29,176 @@ final class EnrichmentTests: XCTestCase {
     // MARK: Unranked zero counts
 
     func testZeroCountingStatIsUnrankedButRatesAndNonZeroCountsAreNot() {
-        XCTAssertTrue(metric("INT", "0", 47, .defense).isUnranked)
-        XCTAssertTrue(metric("Sacks", "0.0", 41, .defense).isUnranked)
-        XCTAssertFalse(metric("Sacks", "1.5", 80, .defense).isUnranked)
-        XCTAssertFalse(metric("EPA/Rush", "0.00", 50, .rushing).isUnranked, "a rate at zero is a real rank")
-        XCTAssertFalse(metric("Rush EPA", "0.0", 50, .rushing).isUnranked, "advanced totals keep their rank")
-        var standard = metric("DEF INT", "0", 47, .defense)
+        XCTAssertTrue(metric("G", "0", 47, .scoring).isUnranked)
+        XCTAssertTrue(metric("Takeaways", "0", 41, .playDriving).isUnranked)
+        XCTAssertTrue(metric("SO", "0", 41, .goaltending).isUnranked)
+        XCTAssertFalse(metric("G", "12", 80, .scoring).isUnranked)
+        XCTAssertFalse(metric("P/60", "0.00", 50, .scoring).isUnranked, "a rate at zero is a real rank")
+        XCTAssertFalse(metric("Sh%", "0.0%", 50, .scoring).isUnranked, "a percentage at zero is a real rank")
+        XCTAssertFalse(metric("ixG", "0.0", 50, .shotQuality).isUnranked, "advanced totals keep their rank")
+        var standard = metric("PIM", "0", 47, .playDriving)
         standard.rankable = false
         XCTAssertTrue(standard.isUnranked)
     }
 
     func testOverallPercentileLeavesUnrankedZerosOut() {
-        let defender = player(1, type: "def", metrics: [
-            metric("Tackles", "4", 20, .defense),
-            metric("INT", "0", 47, .defense),
-            metric("Sacks", "0.0", 41, .defense),
+        let defenseman = player(1, type: "d", metrics: [
+            metric("Blocks", "40", 20, .playDriving),
+            metric("Hits", "0", 47, .playDriving),
+            metric("Takeaways", "0", 41, .playDriving),
         ])
-        XCTAssertEqual(defender.overallPercentile, 20)
-        XCTAssertEqual(defender.headlineMetric?.label, "Tackles")
-    }
-
-    // MARK: Contract value
-
-    func testContractValueIsProductionMinusPayWithinThePosition() {
-        // Five receivers: pay ascending by id, production descending.
-        let players = (1...5).map { id in
-            player(id, metrics: [metric("EPA/Tgt", "0.\(id)", 100 - id * 15, .receiving, qualified: true)])
-        }
-        var profiles: [Int: PlayerProfile] = [:]
-        for id in 1...5 {
-            var profile = PlayerProfile(playerId: id, season: StatScoutSeason.current)
-            profile.contractCapShare = Double(id) / 100
-            profile.contractAPY = Double(id * 5)
-            profiles[id] = profile
-        }
-        let values = ContractValue.compute(players: players, profiles: profiles) { _ in true }
-        XCTAssertEqual(values.count, 5)
-        XCTAssertEqual(values[1]?.payPercentile, 10)
-        XCTAssertEqual(values[1]?.productionPercentile, 90)
-        XCTAssertEqual(values[1]?.score, 80)
-        XCTAssertEqual(values[1]?.verdict, .bargain)
-        XCTAssertEqual(values[5]?.verdict, .overpaid)
-        XCTAssertEqual(values[3]?.verdict, .fair)
-        XCTAssertEqual(values[1]?.poolSize, 5)
-    }
-
-    func testContractValueNeedsFiveQualifiedPlayersAndSkipsDefense() {
-        let players = (1...4).map { id in
-            player(id, metrics: [metric("EPA/Tgt", "0.1", 50, .receiving, qualified: true)])
-        } + (5...10).map { id in
-            player(id, type: "def", metrics: [metric("Tackles", "\(id)", id * 9, .defense)])
-        }
-        var profiles: [Int: PlayerProfile] = [:]
-        for id in 1...10 {
-            var profile = PlayerProfile(playerId: id, season: StatScoutSeason.current)
-            profile.contractCapShare = 0.01 * Double(id)
-            profiles[id] = profile
-        }
-        XCTAssertTrue(ContractValue.compute(players: players, profiles: profiles) { _ in true }.isEmpty)
-    }
-
-    func testProductionIgnoresSmallSamplesAndUnrankedZeros() {
-        let receiver = player(1, metrics: [
-            metric("EPA/Tgt", "0.5", 90, .receiving, qualified: true),
-            metric("Separation", "3.1", 20, .receiving, qualified: false),
-            metric("Rec TD", "0", 30, .receiving, qualified: true),
-            metric("Rush Yds", "40", 99, .rushing, qualified: true),
-        ])
-        XCTAssertEqual(ContractValue.production(for: receiver), 90)
+        XCTAssertEqual(defenseman.overallPercentile, 20)
+        XCTAssertEqual(defenseman.headlineMetric?.label, "Blocks")
     }
 
     // MARK: Standings
 
-    func testStandingsCountRecordsDifferentialAndStreak() {
-        func final(_ id: String, _ week: Int, _ away: String, _ home: String, _ a: Int, _ h: Int) -> Game {
-            Game(id: id, season: 2026, week: week,
-                 kickoff: Date(timeIntervalSince1970: TimeInterval(1_789_000_000 + week * 604_800)),
-                 awayTeam: away, homeTeam: home, awayScore: a, homeScore: h)
-        }
-        let games = [
-            final("1", 1, "SEA", "SF", 20, 17),
-            final("2", 2, "LA", "SEA", 10, 10),
-            final("3", 3, "SEA", "ARI", 7, 21),
-            Game(id: "4", season: 2026, week: 4, kickoff: nil, awayTeam: "SF", homeTeam: "SEA"),
-        ]
-        let table = StandingsRow.build(from: games, teams: ["SEA", "SF", "LA", "ARI"])
-        let seattle = table["SEA"]!
-        XCTAssertEqual(seattle.record, "1-1-1")
-        XCTAssertEqual(seattle.differential, 37 - 48)
-        XCTAssertEqual(seattle.streak, "L1")
-        XCTAssertEqual(table["ARI"]!.record, "1-0")
-        XCTAssertEqual(table["ARI"]!.streak, "W1")
-        XCTAssertEqual(StandingsRow.ordered(Array(table.values)).map(\.team), ["ARI", "LA", "SEA", "SF"])
+    private func final(_ id: String, _ day: Int, _ away: String, _ home: String, _ a: Int, _ h: Int, overtime: Bool = false) -> Game {
+        Game(id: id, season: 2026, week: 1,
+             kickoff: Date(timeIntervalSince1970: TimeInterval(1_791_000_000 + day * 86_400)),
+             awayTeam: away, homeTeam: home, awayScore: a, homeScore: h, overtime: overtime)
     }
 
-    // MARK: Profiles, injuries, projections
+    func testStandingsCountRecordsPointsDifferentialAndStreak() {
+        let games = [
+            final("1", 1, "SEA", "VAN", 4, 2),
+            final("2", 2, "EDM", "SEA", 3, 2, overtime: true),
+            final("3", 3, "SEA", "CGY", 1, 4),
+            Game(id: "4", season: 2026, week: 1, kickoff: nil, awayTeam: "VAN", homeTeam: "SEA"),
+        ]
+        let table = StandingsRow.build(from: games, teams: ["SEA", "VAN", "EDM", "CGY"])
+        let seattle = table["SEA"]!
+        XCTAssertEqual(seattle.record, "1-1-1", "wins, losses, then overtime losses")
+        XCTAssertEqual(seattle.otLosses, 1)
+        XCTAssertEqual(seattle.points, 3, "two for a win, one for an overtime loss")
+        XCTAssertEqual(seattle.games, 3)
+        XCTAssertEqual(seattle.goalsFor, 7)
+        XCTAssertEqual(seattle.goalsAgainst, 9)
+        XCTAssertEqual(seattle.differential, -2)
+        XCTAssertEqual(seattle.streak, "L2", "an overtime loss is a loss in the streak")
+        XCTAssertEqual(table["CGY"]!.record, "1-0-0")
+        XCTAssertEqual(table["CGY"]!.streak, "W1")
+        XCTAssertEqual(table["EDM"]!.points, 2)
+        XCTAssertEqual(table["VAN"]!.points, 0)
+        XCTAssertEqual(table["VAN"]!.record, "0-1-0")
+        XCTAssertEqual(
+            StandingsRow.ordered(Array(table.values)).map(\.team),
+            ["SEA", "CGY", "EDM", "VAN"],
+            "points, then points percentage, then goal differential"
+        )
+    }
+
+    func testStandingsLeavePlayoffGamesAndUnknownClubsOut() {
+        let playoff = Game(id: "p", season: 2026, seasonPhase: .playoffs, gameType: "R1", week: 28,
+                           kickoff: Date(timeIntervalSince1970: 1_791_000_000), awayTeam: "SEA", homeTeam: "EDM",
+                           awayScore: 1, homeScore: 0)
+        let table = StandingsRow.build(from: [playoff, final("x", 1, "SEA", "ZZZ", 2, 1)], teams: ["SEA", "EDM"])
+        XCTAssertEqual(table["SEA"]!.record, "1-0-0")
+        XCTAssertEqual(table["EDM"]!.games, 0)
+        XCTAssertEqual(table["EDM"]!.winPercentage, 0)
+        XCTAssertNil(table["ZZZ"])
+        XCTAssertEqual(table["SEA"]!.winPercentage, 1.0, accuracy: 0.0001)
+    }
+
+    // MARK: Profiles, projections, ratings
 
     func testProfileDecodesTheFeedRow() throws {
         let json = #"""
-        [{"player_id":38543,"season":2026,"jersey":11,"birth_date":"2002-02-14","height_in":73,"weight_lb":196,
-          "college":"Ohio State","years_exp":3,"draft_year":2023,"draft_round":1,"draft_pick":20,"draft_team":"SEA",
-          "contract_apy":42.15,"contract_cap_pct":0.14,"contract_years":4,"contract_year_signed":2026,
-          "off_snaps":150,"def_snaps":0,"off_snap_pct":0.91,"def_snap_pct":null,
-          "injury_week":3,"injury_status":"Questionable","injury":"Ankle","practice_status":"Limited",
-          "updated_at":"2026-09-26T18:54:32.1+00:00","unknown_column":1}]
+        [{"player_id":8000001,"season":2026,"jersey":97,"birth_date":"1997-01-13","height_in":73,"weight_lb":194,
+          "birthplace":"Fictionville, ON, CAN","years_exp":11,"rookie_season":2015,"draft_year":2015,"draft_round":1,
+          "draft_pick":1,"draft_team":"EDM","toi_seconds":126200,"toi_per_gp":1262,"pp_toi_seconds":20000,
+          "pk_toi_seconds":2000,"toi_share":0.123,"updated_at":"2026-10-08T18:54:32.1+00:00","unknown_column":1}]
         """#
         let profile = try XCTUnwrap(try JSONDecoder.statScout.decode([PlayerProfile].self, from: Data(json.utf8)).first)
-        XCTAssertEqual(profile.sizeLabel, "6-1, 196")
-        XCTAssertEqual(profile.draftLabel, "2023 R1 #20")
-        XCTAssertEqual(profile.contractLabel, "$42.1M/yr")
-        let september = ISO8601DateFormatter().date(from: "2026-09-26T00:00:00Z")!
-        XCTAssertEqual(profile.age(on: september), 24)
-        XCTAssertNil(profile.defenseSnapShare)
+        XCTAssertEqual(profile.jersey, 97)
+        XCTAssertEqual(profile.sizeLabel, "6-1, 194")
+        XCTAssertEqual(profile.birthplace, "Fictionville, ON, CAN")
+        XCTAssertEqual(profile.draftLabel, "2015 R1 #1")
+        XCTAssertEqual(profile.toiPerGameLabel, "21:02")
+        XCTAssertEqual(profile.toiSeconds, 126_200)
+        XCTAssertEqual(try XCTUnwrap(profile.toiShare), 0.123, accuracy: 0.0001)
+        XCTAssertEqual(profile.specialTeamsLabel(games: 100), "3:20 PP · 0:20 PK")
+        XCTAssertNil(profile.specialTeamsLabel(games: 0))
+        let october = ISO8601DateFormatter().date(from: "2026-10-08T00:00:00Z")!
+        XCTAssertEqual(profile.age(on: october), 29)
     }
 
-    func testInjuryBadgeOnlyForAReportAboutAnUnplayedWeek() {
-        var profile = PlayerProfile(playerId: 1, season: 2026)
-        profile.injuryWeek = 3
-        profile.injuryStatus = "Out"
-        profile.injury = "Hamstring"
-        XCTAssertEqual(InjuryReport.current(from: profile, upcomingWeek: 3)?.status, "Out")
-        XCTAssertNil(InjuryReport.current(from: profile, upcomingWeek: 4), "last week's report")
-        profile.injuryStatus = nil
-        XCTAssertNil(InjuryReport.current(from: profile, upcomingWeek: 3), "practice-only line")
-        profile.injuryStatus = "Questionable"
-        XCTAssertEqual(InjuryReport.current(from: profile, upcomingWeek: 3)?.shortStatus, "Q")
+    func testProfileWithOnlyTheKeyColumnsDecodesAndHidesTheRest() throws {
+        let json = #"[{"player_id":8000002,"season":2026,"years_exp":2}]"#
+        let profile = try XCTUnwrap(try JSONDecoder.statScout.decode([PlayerProfile].self, from: Data(json.utf8)).first)
+        XCTAssertNil(profile.sizeLabel)
+        XCTAssertNil(profile.toiPerGameLabel)
+        XCTAssertNil(profile.age())
+        XCTAssertEqual(profile.draftLabel, "Undrafted")
+        XCTAssertNil(PlayerProfile(playerId: 1, season: 2026).draftLabel)
     }
 
     func testProjectionLabelsTheFavourite() throws {
-        let json = #"[{"game_id":"g","home_margin":-10.8,"home_win_prob":0.211},{"game_id":"h","home_margin":0.4,"home_win_prob":0.51}]"#
+        let json = #"[{"game_id":"g","home_margin":-0.6,"home_win_prob":0.446},{"game_id":"h","home_margin":0.1,"home_win_prob":0.51}]"#
         let rows = try JSONDecoder.statScout.decode([GameProjection].self, from: Data(json.utf8))
-        XCTAssertEqual(rows[0].label(home: "WAS", away: "SEA"), "SEA by 11.0")
-        XCTAssertEqual(rows[0].winProbability(for: "SEA", home: "WAS"), 0.789, accuracy: 0.0001)
-        XCTAssertEqual(rows[1].label(home: "WAS", away: "SEA"), "Toss-up")
+        XCTAssertEqual(rows[0].label(home: "EDM", away: "SEA"), "SEA by 0.6")
+        XCTAssertEqual(rows[0].winProbability(for: "SEA", home: "EDM"), 0.554, accuracy: 0.0001)
+        XCTAssertEqual(rows[0].winProbability(for: "EDM", home: "EDM"), 0.446, accuracy: 0.0001)
+        XCTAssertEqual(rows[1].label(home: "EDM", away: "SEA"), "Toss-up")
     }
 
     func testTeamRatingDecodesAndSigns() throws {
-        let json = #"[{"season":2026,"team":"SEA","rank":1,"games":2,"through_week":3,"rating":8.71,"offense":3.09,"defense":5.62,"schedule":-0.08,"prior_weight":0.714,"wins":2,"losses":0,"ties":0,"points_for":44,"points_against":17,"updated_at":"2026-09-26T18:54:32+00:00"}]"#
+        let json = #"[{"season":2026,"team":"SEA","rank":1,"games":6,"through_week":2,"rating":0.71,"offense":0.39,"defense":0.32,"schedule":-0.08,"wins":4,"losses":1,"ties":1,"points_for":22,"points_against":14,"updated_at":"2026-10-08T18:54:32+00:00"}]"#
         let rating = try XCTUnwrap(try JSONDecoder.statScout.decode([TeamRating].self, from: Data(json.utf8)).first)
-        XCTAssertEqual(TeamRating.signed(rating.rating), "+8.7")
+        XCTAssertEqual(rating.ties, 1, "the ties column holds overtime losses")
+        XCTAssertEqual(TeamRating.signed(rating.rating), "+0.7")
         XCTAssertEqual(TeamRating.signed(-0.04), "0.0")
-        XCTAssertEqual(TeamRating.signed(-2.37), "-2.4")
+        XCTAssertEqual(TeamRating.signed(-0.37), "-0.4")
     }
 
     // MARK: View model wiring
 
     @MainActor
-    func testDefendersQualifyOnSnapShareAndBoardsCarryVolume() async {
-        let regular = player(1, type: "def", metrics: [metric("Tackles", "12", 90, .defense, qualified: true)],
-                             stats: [StandardStat(id: "g", label: "G", value: "3")])
-        let gunner = player(2, type: "def", metrics: [metric("Tackles", "2", 30, .defense, qualified: true)])
-        var regularProfile = PlayerProfile(playerId: 1, season: StatScoutSeason.current)
-        regularProfile.defenseSnapShare = 0.94
-        regularProfile.defenseSnaps = 180
-        var gunnerProfile = PlayerProfile(playerId: 2, season: StatScoutSeason.current)
-        gunnerProfile.defenseSnapShare = 0.05
-        gunnerProfile.defenseSnaps = 9
-        let provider = EnrichedProvider(players: [regular, gunner], profiles: [regularProfile, gunnerProfile])
+    func testQualifiedBoardsHideSmallSamplesAndCarryVolume() async {
+        let regular = player(1, type: "d", metrics: [metric("xGF%", "52.0%", 70, .playDriving, qualified: true)],
+                             stats: [StandardStat(id: "gp", label: "GP", value: "10"),
+                                     StandardStat(id: "toi", label: "TOI/GP", value: "22:00")])
+        let cameo = player(2, type: "d", metrics: [metric("xGF%", "70.0%", 99, .playDriving, qualified: false)])
+        let provider = EnrichedProvider(players: [regular, cameo], profiles: [])
         let vm = DashboardViewModel(provider: provider)
         await vm.load()
         vm.selectedPosition = .defense
         vm.qualifierLevel = .qualified
 
         XCTAssertEqual(vm.leaderboard.map(\.playerId), [1])
-        XCTAssertEqual(vm.volumeCaption(for: regular, category: .defense), "180 snaps")
+        XCTAssertEqual(vm.volumeCaption(for: regular, category: .playDriving), "220 min")
         vm.qualifierLevel = .all
-        XCTAssertEqual(vm.leaderboard.map(\.playerId), [1, 2])
+        XCTAssertEqual(vm.leaderboard.map(\.playerId), [1, 2], "the small sample sinks below the qualified player")
+    }
+
+    @MainActor
+    func testProfilesLoadForTheLiveSeasonOnly() async {
+        let skater = player(1, metrics: [metric("ixG", "5.0", 70, .shotQuality, qualified: true)])
+        var live = PlayerProfile(playerId: 1, season: StatScoutSeason.current)
+        live.toiPerGame = 1_200
+        let stale = PlayerProfile(playerId: 1, season: StatScoutSeason.current - 1)
+        let vm = DashboardViewModel(provider: EnrichedProvider(players: [skater], profiles: [live]))
+        await vm.load()
+        XCTAssertEqual(vm.profile(for: skater)?.toiPerGameLabel, "20:00")
+
+        let staleVM = DashboardViewModel(provider: EnrichedProvider(players: [skater], profiles: [stale]))
+        await staleVM.load()
+        XCTAssertNil(staleVM.profile(for: skater), "a profile from another season is not this player's")
     }
 
     @MainActor
     func testQualificationIsPerMetric() async {
-        let receiver = player(1, metrics: [
-            metric("EPA/Tgt", "0.5", 90, .receiving, qualified: true),
-            metric("Separation", "3.1", 99, .receiving, qualified: false),
+        let winger = player(1, metrics: [
+            metric("P/60", "3.1", 90, .scoring, qualified: true),
+            metric("ixG/60", "1.1", 99, .shotQuality, qualified: false),
         ])
-        let vm = DashboardViewModel(provider: MockProvider(players: [receiver]))
+        let vm = DashboardViewModel(provider: MockProvider(players: [winger]))
         await vm.load()
-        vm.selectedPosition = .wr
+        vm.selectedPosition = .forward
         vm.qualifierLevel = .qualified
-        vm.setUserSortMetric("Separation")
-        XCTAssertTrue(vm.leaderboard.isEmpty, "qualified for EPA/Tgt is not qualified for Separation")
-        vm.setUserSortMetric("EPA/Tgt")
+        vm.setUserSortMetric("ixG/60")
+        XCTAssertTrue(vm.leaderboard.isEmpty, "qualified for P/60 is not qualified for ixG/60")
+        vm.setUserSortMetric("P/60")
         XCTAssertEqual(vm.leaderboard.map(\.playerId), [1])
     }
 }

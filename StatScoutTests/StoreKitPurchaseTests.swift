@@ -2,7 +2,7 @@ import RevenueCat
 import StoreKit
 import StoreKitTest
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 /// The purchase flow, run against a real StoreKit implementation.
 ///

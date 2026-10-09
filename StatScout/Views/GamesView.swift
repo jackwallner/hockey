@@ -284,7 +284,9 @@ struct GameRow: View {
                 .font(RinkType.bodyBold)
                 .foregroundStyle(dim ? RinkPalette.inkTertiary : RinkPalette.ink)
                 .frame(width: 40, alignment: .leading)
-            Text(teamFullName(team))
+            // The nickname, not the full name: "Seattle Kra..." and "Pittsburgh
+            // Pen..." were cut off beside the record in a row this narrow.
+            Text(teamNickname(team))
                 .font(RinkType.small)
                 .foregroundStyle(RinkPalette.inkTertiary)
                 .lineLimit(1)

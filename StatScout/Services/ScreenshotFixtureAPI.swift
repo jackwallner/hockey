@@ -25,12 +25,20 @@ struct ScreenshotFixtureAPI: StatcastProviding {
         UserDefaults.standard.removeObject(forKey: "statcast.displayedDataRevision")
     }
 
-    private static let season = StatScoutSeason.current
+    static let season = StatScoutSeason.current
     private static let priorSeason = season - 1
-    // Oct 21 is a coherent fictional capture date for the 2026-27 season, two
-    // weeks after opening night. It keeps the current-season windows honest
-    // and repeatable.
-    private static let asOf = makeDate("2026-10-21T20:00:00Z")
+    /// Yesterday at noon, in the phone's own calendar: the fixture data runs
+    /// through it, two weeks after a fictional opening night. Anchored to the
+    /// capture day rather than to a fixed date, and to the local calendar rather
+    /// than UTC, so "Today", "Yesterday" and the current game day on the Games
+    /// tab and the team game card resolve the same way on every run, at any
+    /// hour.
+    static let asOf: Date = {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
+        return yesterday.addingTimeInterval(12 * 3_600)
+    }()
     private static let playersBySeason: [Int: [Player]] = [
         season: makePlayers(season: season, prior: false),
         priorSeason: makePlayers(season: priorSeason, prior: true),
@@ -90,7 +98,24 @@ struct ScreenshotFixtureAPI: StatcastProviding {
 
     func fetchDataCoverage(season: Int) async throws -> DataCoverage? {
         guard season == Self.season else { return nil }
-        return DataCoverage(asOf: Self.asOf, week: 3, phase: .regular, gamesIncluded: 112)
+        return DataCoverage(asOf: Self.asOf, week: 3, phase: .regular, gamesIncluded: Self.games.count)
+    }
+
+    func fetchGames(season: Int) async throws -> [Game] {
+        season == Self.season ? Self.games : []
+    }
+
+    func fetchGameIdsWithStats(season: Int) async throws -> Set<String> {
+        season == Self.season ? Self.gameIds : []
+    }
+
+    func fetchGameDetail(gameId: String) async throws -> GameDetail? {
+        guard let game = Self.games.first(where: { $0.id == gameId }) else { return nil }
+        return Self.makeGameDetail(for: game)
+    }
+
+    func fetchPlayerProfiles(season: Int) async throws -> [PlayerProfile] {
+        season == Self.season ? Self.makeProfiles() : []
     }
 
     func fetchDataFreshness(season: Int) async throws -> DataFreshness? {
@@ -101,8 +126,8 @@ struct ScreenshotFixtureAPI: StatcastProviding {
             sourcePublishedAt: Self.asOf,
             publishedAt: Self.asOf,
             checkedAt: Self.asOf,
-            coverage: DataCoverage(asOf: Self.asOf, week: 3, phase: .regular, gamesIncluded: 112),
-            message: "Fixture data through Oct 21",
+            coverage: DataCoverage(asOf: Self.asOf, week: 3, phase: .regular, gamesIncluded: Self.games.count),
+            message: "Fixture data through last night",
             isCached: false
         )
     }
@@ -137,7 +162,28 @@ extension ScreenshotFixtureAPI {
         .init(id: 12014, name: "Ilya Morozov", team: "FLA", position: "G", type: "g", percentile: 88, headline: 2.6),
         .init(id: 12015, name: "Samuel Whitaker", team: "WPG", position: "G", type: "g", percentile: 82, headline: 1.7),
         .init(id: 12016, name: "Teodor Lindahl", team: "NYR", position: "G", type: "g", percentile: 76, headline: 0.9),
+        .init(id: 12017, name: "Elias Rourke", team: "CGY", position: "R", type: "f", percentile: 71, headline: 2.0),
+        .init(id: 12018, name: "Viktor Halden", team: "OTT", position: "C", type: "f", percentile: 68, headline: 1.8),
+        .init(id: 12019, name: "Casimir Brandt", team: "STL", position: "L", type: "f", percentile: 64, headline: 1.6),
+        .init(id: 12020, name: "Noel Ferreira", team: "TBL", position: "C", type: "f", percentile: 60, headline: 1.4),
+        .init(id: 12021, name: "Axel Mortensen", team: "SEA", position: "L", type: "f", percentile: 83, headline: 2.9),
+        .init(id: 12022, name: "Leo Calloway", team: "SEA", position: "C", type: "f", percentile: 66, headline: 1.7),
+        .init(id: 12023, name: "Finn Aldercott", team: "SEA", position: "D", type: "d", percentile: 77, headline: 52.4),
+        .init(id: 12024, name: "Rowan Teague", team: "SEA", position: "D", type: "d", percentile: 58, headline: 49.7),
+        .init(id: 12025, name: "Marek Soukup", team: "SEA", position: "G", type: "g", percentile: 61, headline: -0.4),
     ]
+
+    /// Goals, assists and shots on goal for a skater, from how good the player
+    /// is plus a little noise per player so two stars never post the same line.
+    /// Shared by the metric rows and the standard stat line so they agree.
+    static func counting(for seed: PlayerSeed, season: Double) -> (goals: Int, assists: Int, shots: Int) {
+        let strength = Double(seed.percentile - 50) / 50
+        func noise(_ salt: Int) -> Double { unit("std-\(seed.id)", salt) - 0.5 }
+        let goals = max(0, Int(((1 + 7 * strength + 3 * noise(1)) * (seed.type == "d" ? 0.4 : 1) * season).rounded()))
+        let assists = max(0, Int(((2 + 8 * strength + 3 * noise(2)) * (seed.type == "d" ? 0.9 : 1) * season).rounded()))
+        let shots = max(1, Int(((14 + 26 * strength + 6 * noise(3)) * season).rounded()))
+        return (goals, assists, shots)
+    }
 
     static func makePlayers(season: Int, prior: Bool) -> [Player] {
         seeds.map { seed in
@@ -176,12 +222,18 @@ extension ScreenshotFixtureAPI {
         func count(_ label: String, _ base: Double, _ offset: Int, _ category: MetricCategory) -> Metric {
             metric(label, base * rank * scale * volume, max(50, percentile - offset), category)
         }
+        let counts = counting(for: seed, season: scale * volume)
+        func exact(_ label: String, _ value: Int, _ offset: Int, _ category: MetricCategory) -> Metric {
+            metric(label, Double(value), max(50, percentile - offset), category)
+        }
         switch seed.type {
         case "f":
             return [
-                rate("P/60", 3.6, 0, .scoring), count("Primary P", 8, 2, .scoring),
-                count("G", 5, 3, .scoring), count("A", 6, 4, .scoring), count("P", 11, 1, .scoring),
-                count("SOG", 28, 6, .scoring), rate("Sh%", 16, 8, .scoring),
+                rate("P/60", 3.6, 0, .scoring), exact("Primary P", counts.goals + counts.assists * 2 / 3, 2, .scoring),
+                exact("G", counts.goals, 3, .scoring), exact("A", counts.assists, 4, .scoring),
+                exact("P", counts.goals + counts.assists, 1, .scoring),
+                exact("SOG", counts.shots, 6, .scoring),
+                metric("Sh%", Double(counts.goals) / Double(counts.shots) * 100, max(50, percentile - 8), .scoring),
                 metric("ixG", seed.headline * scale * volume, percentile, .shotQuality),
                 metric("GAx", 1.2 * scale * volume, max(50, percentile - 9), .shotQuality),
                 rate("ixG/60", 1.3, 2, .shotQuality), rate("Shots/60", 12.4, 5, .shotQuality),
@@ -195,7 +247,8 @@ extension ScreenshotFixtureAPI {
                 metric("Rel xGF%", 4.6 * scale, max(50, percentile - 3), .playDriving),
                 metric("xGA/60", 2.1 / scale, max(50, percentile - 5), .playDriving),
                 count("Blocks", 14, 8, .playDriving), count("Hits", 11, 20, .playDriving),
-                rate("P/60", 1.9, 6, .scoring), count("P", 6, 5, .scoring), count("A", 5, 6, .scoring),
+                rate("P/60", 1.9, 6, .scoring), exact("P", counts.goals + counts.assists, 5, .scoring),
+                exact("A", counts.assists, 6, .scoring),
                 metric("ixG", 1.4 * scale * volume, max(50, percentile - 10), .shotQuality),
             ]
         default:
@@ -269,12 +322,14 @@ extension ScreenshotFixtureAPI {
                 stat("SA", "\(shots)"), stat("SV", "\(saves)"),
             ]
         }
-        let goals = Int((5 * rank * scale * volume).rounded())
-        let assists = Int((6 * rank * scale * volume).rounded())
-        let shots = Int((27 * rank * scale * volume).rounded())
+        let counts = counting(for: seed, season: scale * volume)
+        let goals = counts.goals, assists = counts.assists, shots = counts.shots
+        let season = scale * volume
+        let strength = Double(seed.percentile - 50) / 50
+        func noise(_ salt: Int) -> Double { unit("std-\(seed.id)", salt) - 0.5 }
         var stats = [
             stat("GP", "\(games)"), stat("G", "\(goals)"), stat("A", "\(assists)"),
-            stat("P", "\(goals + assists)"), stat("+/-", "+\(Int((4 * rank * scale * volume).rounded()))"),
+            stat("P", "\(goals + assists)"), stat("+/-", String(format: "%+d", Int(((1 + 5 * strength + 4 * noise(4)) * season).rounded()))),
             stat("PIM", total(4)), stat("PPG", total(1.5)), stat("PPP", total(3.5)),
             stat("SHG", "0"), stat("GWG", total(1)), stat("SOG", "\(shots)"),
             stat("Sh%", String(format: "%.1f%%", shots > 0 ? Double(goals) / Double(shots) * 100 : 0)),
@@ -364,7 +419,7 @@ extension ScreenshotFixtureAPI {
 
     static func makeRecentForm(for player: Player, windowWeeks: Int) -> RecentForm {
         let type = player.playerType ?? "f"
-        let seed = Double(player.playerId % 7) / 10
+        let seed = Double(fnv("recent-\(player.playerId)") % 9) / 10
         let games = type == "g" ? max(2, windowWeeks) : min(windowWeeks * 3, 8)
         let metrics: [String: Double]
         let delta: [String: Double]
@@ -386,7 +441,11 @@ extension ScreenshotFixtureAPI {
                      "gax": 0.9 - seed / 2, "shooting_pct": 4.2 - seed * 3, "shots_per_60": 1.1,
                      "hd_shots_per_60": 0.6, "blocks_per_60": 0.1, "hits_per_60": 0.2]
         }
-        let priorMetrics = metrics.merging(delta) { now, change in now - change }
+        // Every player moved by a different amount, so the board does not read
+        // as one number repeated down the page.
+        let wobble = 0.6 + unit("wobble-\(player.playerId)", windowWeeks) * 0.9
+        let moved = delta.mapValues { $0 * wobble }
+        let priorMetrics = metrics.merging(moved) { now, change in now - change }
         return RecentForm(
             fixturePlayerId: player.playerId,
             season: season,
@@ -402,7 +461,7 @@ extension ScreenshotFixtureAPI {
             touches: touches(for: type) * games,
             metrics: metrics,
             priorMetrics: priorMetrics,
-            delta: delta
+            delta: moved
         )
     }
 

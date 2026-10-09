@@ -8,13 +8,13 @@
       "internalID": "C62590B4",
       "localizations": [
         {
-          "description": "Gridiron Pro, one-time purchase.",
-          "displayName": "Gridiron Pro Lifetime",
+          "description": "StatScout+, one-time purchase.",
+          "displayName": "StatScout+ Lifetime",
           "locale": "en_US"
         }
       ],
       "productID": "com.jackwallner.hockey.pro",
-      "referenceName": "Gridiron Pro Lifetime",
+      "referenceName": "StatScout+ Lifetime",
       "type": "NonConsumable"
     }
   ],
@@ -23,7 +23,7 @@
     {
       "id": "59F6E36A",
       "localizations": [],
-      "name": "Gridiron Pro",
+      "name": "StatScout Plus",
       "subscriptions": [
         {
           "adHocOffers": [],
@@ -38,14 +38,14 @@
           },
           "localizations": [
             {
-              "description": "Gridiron Pro, billed yearly.",
-              "displayName": "Gridiron Pro Yearly",
+              "description": "StatScout+, billed yearly.",
+              "displayName": "StatScout+ Yearly",
               "locale": "en_US"
             }
           ],
           "productID": "com.jackwallner.hockey.pro.yearly",
           "recurringSubscriptionPeriod": "P1Y",
-          "referenceName": "Gridiron Pro Yearly",
+          "referenceName": "StatScout+ Yearly",
           "subscriptionGroupID": "59F6E36A",
           "type": "RecurringSubscription"
         },
@@ -62,14 +62,14 @@
           },
           "localizations": [
             {
-              "description": "Gridiron Pro, billed monthly.",
-              "displayName": "Gridiron Pro Monthly",
+              "description": "StatScout+, billed monthly.",
+              "displayName": "StatScout+ Monthly",
               "locale": "en_US"
             }
           ],
           "productID": "com.jackwallner.hockey.pro.monthly",
           "recurringSubscriptionPeriod": "P1M",
-          "referenceName": "Gridiron Pro Monthly",
+          "referenceName": "StatScout+ Monthly",
           "subscriptionGroupID": "59F6E36A",
           "type": "RecurringSubscription"
         }

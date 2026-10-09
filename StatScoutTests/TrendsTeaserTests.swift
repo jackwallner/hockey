@@ -1,5 +1,5 @@
 import XCTest
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 
 /// The blurred board behind the Trends paywall has to redraw when the controls
 /// move.
@@ -11,16 +11,16 @@ import XCTest
 /// eighteen identical rows underneath, which advertises that they are fake.
 ///
 /// That is exactly what shipped: `stableSeed` was a rolling `h * 31 + c`, and
-/// the seed sat at the end of the hashed string, so switching the window from 3
-/// games to 5 added the same +2 to every player's hash and the sort order came
+/// the seed sat at the end of the hashed string, so switching the window from 2
+/// weeks to 4 added the same +2 to every player's hash and the sort order came
 /// out untouched. These pin both halves of the fix, the seed's position and the
 /// hash's avalanche, because either one silently reverting brings the tell back.
 final class TrendsTeaserTests: XCTestCase {
 
-    /// Stand-ins for the roster the teaser draws from. nflverse ids are close to
+    /// Stand-ins for the roster the teaser draws from. NHL player ids are close to
     /// sequential within a draft class, which is what made the old affine hash
     /// look plausible in isolation and fail on real data.
-    private let playerIds = (0..<60).map { "00-00\(34000 + $0 * 37)" }
+    private let playerIds = (0..<60).map { "80\(78000 + $0 * 37)" }
 
     private func teaserOrder(seed: String, count: Int = 18) -> [String] {
         playerIds
@@ -31,10 +31,10 @@ final class TrendsTeaserTests: XCTestCase {
     }
 
     /// The window is the last component of the seed and the one that reproduced
-    /// the bug: 3 / 5 / 8 differ by a single digit in the final position.
+    /// the bug: 2 / 4 / 8 differ by a single digit in the final position.
     func testChangingTheWindowRedrawsTheBoardUnderTheBlur() {
-        let orders = ["3", "5", "8"].map {
-            teaserOrder(seed: "epa_per_play-false-\($0)-2025-REG")
+        let orders = ["2", "4", "8"].map {
+            teaserOrder(seed: "points_per_60-false-\($0)-2026-REG")
         }
         for (a, b) in [(0, 1), (1, 2), (0, 2)] {
             XCTAssertNotEqual(orders[a], orders[b], "The window changed and the teaser did not")
@@ -48,12 +48,12 @@ final class TrendsTeaserTests: XCTestCase {
 
     /// Every other control on the screen feeds the same seed.
     func testEveryTrendsControlRedrawsTheBoard() {
-        let base = "epa_per_play-false-3-2025-REG"
+        let base = "points_per_60-false-2-2026-REG"
         let variants = [
-            "cpoe-false-3-2025-REG",          // metric
-            "epa_per_play-true-3-2025-REG",   // cooling off
-            "epa_per_play-false-3-2024-REG",  // season
-            "epa_per_play-false-3-2025-POST",     // phase
+            "ixg_per_60-false-2-2026-REG",          // metric
+            "points_per_60-true-2-2026-REG",   // cooling off
+            "points_per_60-false-2-2025-REG",  // season
+            "points_per_60-false-2-2026-POST",     // phase
         ]
         let baseline = teaserOrder(seed: base)
         for variant in variants {
@@ -64,8 +64,8 @@ final class TrendsTeaserTests: XCTestCase {
     /// A one-character change anywhere in the string has to move the hash, not
     /// nudge it. This is the property the old `h * 31 + c` lacked at the tail.
     func testOneCharacterChangesTheWholeSeed() {
-        let a = HotColdView.stableSeed("epa_per_play-false-3-2025-REG-00-0034796")
-        let b = HotColdView.stableSeed("epa_per_play-false-5-2025-REG-00-0034796")
+        let a = HotColdView.stableSeed("points_per_60-false-2-2026-REG-8078000")
+        let b = HotColdView.stableSeed("points_per_60-false-4-2026-REG-8078000")
         XCTAssertNotEqual(a, b)
         XCTAssertGreaterThan(
             abs(a - b), 1_000,
@@ -76,15 +76,15 @@ final class TrendsTeaserTests: XCTestCase {
     /// Deterministic across launches: the teaser must not reshuffle on a redraw,
     /// which is why this is not `hashValue`.
     func testTheSameSeedAlwaysProducesTheSameBoard() {
-        let seed = "epa_per_play-false-3-2025-REG"
+        let seed = "points_per_60-false-2-2026-REG"
         XCTAssertEqual(teaserOrder(seed: seed), teaserOrder(seed: seed))
-        XCTAssertEqual(HotColdView.stableSeed("00-0034796"), HotColdView.stableSeed("00-0034796"))
+        XCTAssertEqual(HotColdView.stableSeed("8078000"), HotColdView.stableSeed("8078000"))
     }
 
     /// Used as an array index and a modulus, so it can never be negative.
     func testSeedsAreAlwaysUsableAsAnIndex() {
         for id in playerIds {
-            let seed = HotColdView.stableSeed("epa_per_play-false-3-2025-REG-\(id)")
+            let seed = HotColdView.stableSeed("points_per_60-false-2-2026-REG-\(id)")
             XCTAssertGreaterThanOrEqual(seed, 0)
             XCTAssertLessThan(seed, 100_003)
         }

@@ -1,6 +1,6 @@
 import XCTest
 import Foundation
-@testable import Rink_StatScout
+@testable import Hockey_StatScout
 /// The fleet paywall record, checked in this app's own build.
 ///
 /// The `rc-funnel-probe` run proves an impression reaches RevenueCat. These
