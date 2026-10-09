@@ -206,20 +206,28 @@ extension ScreenshotFixtureAPI {
 
         // Team table.
         func teamStats(xg: Double, sog: Int, goals: Int, salt: Int, xgShare: Double) -> [String: Any] {
-            func rated(_ value: Double, _ key: String) -> [String: Any] { ["value": value, "pct": pct(key, salt)] }
+            // Percentiles follow the value through a plausible league spread,
+            // so a 4.1 xG night reads hot and a 41% share reads cold, the way
+            // the real table does.
+            func rated(_ value: Double, mean: Double, sd: Double) -> [String: Any] {
+                let z = (value - mean) / sd
+                let cdf = 0.5 * (1 + erf(z / 2.0.squareRoot()))
+                return ["value": value, "pct": max(1, min(99, Int((cdf * 100).rounded())))]
+            }
+            let attempts = Double(sog + 14 + Int(unit(seed, salt + 40) * 14))
             return [
-                "xg": rated(xg, "xg"),
-                "xg_5v5": rated(xg * 0.82, "xg5"),
-                "xgf_pct_5v5": rated(xgShare, "xgf"),
-                "cf_pct_5v5": rated(0.42 + unit(seed, salt + 20) * 0.16, "cf"),
-                "hd_chances": rated(Double(6 + Int(unit(seed, salt + 30) * 9)), "hd"),
+                "xg": rated(xg, mean: 2.8, sd: 0.9),
+                "xg_5v5": rated(xg * 0.82, mean: 2.1, sd: 0.7),
+                "xgf_pct_5v5": rated(xgShare, mean: 0.5, sd: 0.08),
+                "cf_pct_5v5": rated(0.42 + unit(seed, salt + 20) * 0.16, mean: 0.5, sd: 0.07),
+                "hd_chances": rated(Double(6 + Int(unit(seed, salt + 30) * 9)), mean: 10, sd: 3.5),
                 "sog": Double(sog),
-                "shot_attempts": rated(Double(sog + 14 + Int(unit(seed, salt + 40) * 14)), "att"),
+                "shot_attempts": rated(attempts, mean: 55, sd: 10),
                 "goals": Double(goals),
-                "gax": rated(Double(goals) - xg, "gax"),
+                "gax": rated(Double(goals) - xg, mean: 0, sd: 1.3),
                 "pp_goals": Double(Int(unit(seed, salt + 50) * 2.4)),
                 "pp_opportunities": Double(2 + Int(unit(seed, salt + 60) * 3)),
-                "faceoff_pct": rated(0.44 + unit(seed, salt + 70) * 0.12, "fo"),
+                "faceoff_pct": rated(0.44 + unit(seed, salt + 70) * 0.12, mean: 0.5, sd: 0.06),
                 "hits": Double(14 + Int(unit(seed, salt + 80) * 20)),
                 "blocks": Double(8 + Int(unit(seed, salt + 90) * 14)),
                 "pim": Double(Int(unit(seed, salt + 95) * 4) * 2),

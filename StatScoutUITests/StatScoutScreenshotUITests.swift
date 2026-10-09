@@ -66,11 +66,10 @@ final class StatScoutScreenshotUITests: XCTestCase {
             NSPredicate(format: "label ==[c] %@", "xG race")
         ).firstMatch
         XCTAssertTrue(race.waitForExistence(timeout: 90), "The xG race card should load")
-        // Bring the chart to the top third of the screen, with the first rows
-        // of the chances list under it.
-        scroll(app, until: race, isNear: 200)
+        // The race card sits right under the score header, so the frame holds
+        // both: who won, and how the chances ran. No scrolling.
         XCTAssertGreaterThan(race.frame.minY, 110, "The xG race card scrolled under the nav bar: \(race.frame)")
-        XCTAssertLessThan(race.frame.minY, 330, "The xG race card should be near the top: \(race.frame)")
+        XCTAssertLessThan(race.frame.minY, 460, "The xG race card should be near the top: \(race.frame)")
         capture(app, name: "05_game_detail")
     }
 
