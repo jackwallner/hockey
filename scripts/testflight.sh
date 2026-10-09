@@ -21,15 +21,15 @@ if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
   echo "       Set them in the environment or that file before shipping." >&2
   exit 1
 fi
-# Gridiron has its own Supabase account, separate from the other StatScout apps.
+# Hockey has its own Supabase account, separate from the other StatScout apps.
 # A stale `source ~/.hockey_credentials` in the shell would otherwise bake the
 # wrong project into the archive and ship an app pointed at baseball data, which
 # fails silently (valid host, valid key, zero NFL rows). Pin the project ref.
-FOOTBALL_PROJECT_REF="qwkmpwnhrejsuplcwxrb"
+FOOTBALL_PROJECT_REF="swlalptdamfccgjmpbyb"
 case "$SUPABASE_URL" in
   *"$FOOTBALL_PROJECT_REF"*) ;;
   *)
-    echo "error: SUPABASE_URL does not point at the Gridiron project ($FOOTBALL_PROJECT_REF)." >&2
+    echo "error: SUPABASE_URL does not point at the Hockey project ($FOOTBALL_PROJECT_REF)." >&2
     echo "       Got: $SUPABASE_URL" >&2
     echo "       Run: source ~/.hockey_credentials && bash scripts/testflight.sh" >&2
     exit 1
