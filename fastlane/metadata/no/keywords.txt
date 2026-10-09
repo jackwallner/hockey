@@ -1,1 +1,1 @@
-spillere,målvakt,sammenlign,rangering,sporing,resultater,xg,expected,gsax,tabell,kamper,sesong,lag
+ishockey,spillere,målvakt,sammenlign,rangering,mål,poeng,resultater,tabell,kamper,sesong,lag,skudd

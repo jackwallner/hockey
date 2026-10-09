@@ -1,1 +1,1 @@
-joueurs,gardien,comparer,classement,suivi,scores,xg,attendus,buts,gsax,profil,saison,équipes,arrêts
+joueurs,gardien,comparer,classement,suivi,scores,attendus,buts,gsax,profil,saison,équipes,arrêts,sv

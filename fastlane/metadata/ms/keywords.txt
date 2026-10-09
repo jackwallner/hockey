@@ -1,1 +1,1 @@
-pemain,penjaga,perbandingan,kedudukan,penjejak,skor,xg,expected,gsax,jadual,perlawanan,musim,pasukan
+pemain,penjaga,perbandingan,kedudukan,penjejak,skor,expected,gsax,jadual,perlawanan,musim,pasukan,sv

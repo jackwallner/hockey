@@ -1,1 +1,1 @@
-oyuncular,kaleci,karşılaştır,sıralama,takip,skorlar,xg,expected,gsax,tablo,maçlar,sezon,takımlar
+oyuncular,kaleci,karşılaştır,sıralama,takip,skorlar,expected,gsax,tablo,maçlar,sezon,takımlar,corsi

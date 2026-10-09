@@ -1,1 +1,1 @@
-spelers,keeper,vergelijken,ranglijst,tracker,scores,xg,expected,gsax,stand,wedstrijden,seizoen,teams
+spelers,keeper,vergelijken,ranglijst,tracker,scores,expected,gsax,stand,wedstrijden,seizoen,teams,sv

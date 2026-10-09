@@ -7,7 +7,7 @@ PERCENTILES VISUELS
 Chaque indicateur s'affiche sous forme de barre horizontale de percentiles avec un repère coloré, la même lecture que sur NHL EDGE : le bleu est froid, le rouge est chaud et l'élite de la ligue ressort immédiatement. Les attaquants se comparent aux attaquants, les défenseurs aux défenseurs et les gardiens aux gardiens.
 
 PROFILS JOUEURS COMPLETS
-Touchez un joueur pour voir le portrait complet : classements en percentiles pour la production, la qualité de tir, le contrôle du jeu et la gardiennage, un basculement entre indicateurs avancés et statistiques de saison standard, et la forme récente match après match.
+Touchez un joueur pour voir le portrait complet : classements en percentiles pour la production, la qualité de tir, le contrôle du jeu et le gardiennage, un basculement entre indicateurs avancés et statistiques de saison standard, et la forme récente match après match.
 
 DES STATISTIQUES À JOUR CHAQUE SOIR
 Pendant la saison, StatScout vérifie les nouveaux chiffres publiés après les matchs de chaque soir et les met à jour dès leur arrivée. Chaque écran indique les matchs pris en compte.

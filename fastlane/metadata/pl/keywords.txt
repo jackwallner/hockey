@@ -1,1 +1,1 @@
-zawodnicy,bramkarz,porównanie,ranking,śledzenie,wyniki,xg,expected,gsax,tabela,mecze,sezon,drużyny
+hokej,zawodnicy,bramkarz,porównanie,ranking,gole,punkty,wyniki,tabela,mecze,sezon,drużyny,strzały,sv

@@ -1,1 +1,1 @@
-hráči,brankár,porovnanie,rebríček,sledovanie,výsledky,xg,expected,gsax,tabuľka,zápasy,sezóna,tímy
+hokej,hráči,brankár,porovnanie,rebríček,góly,asistencie,body,skóre,tabuľka,zápasy,sezóna,tracker,sv

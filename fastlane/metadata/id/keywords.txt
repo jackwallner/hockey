@@ -1,1 +1,1 @@
-pemain,kiper,perbandingan,peringkat,pelacak,skor,xg,expected,gsax,klasemen,pertandingan,musim,tim
+pemain,kiper,perbandingan,peringkat,pelacak,skor,expected,gsax,klasemen,pertandingan,musim,tim,corsi

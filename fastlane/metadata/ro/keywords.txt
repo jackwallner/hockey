@@ -1,1 +1,1 @@
-jucători,portar,comparație,ranking,urmărire,scoruri,xg,expected,gsax,tabel,meciuri,sezon,echipe
+jucători,portar,comparație,ranking,urmărire,scoruri,expected,gsax,tabel,meciuri,sezon,echipe,corsi

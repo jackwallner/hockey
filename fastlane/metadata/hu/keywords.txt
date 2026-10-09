@@ -1,1 +1,1 @@
-játékosok,kapus,összehasonlítás,rangsor,követés,eredmények,xg,expected,gsax,tabella,mérkőzések
+jégkorong,hoki,játékosok,kapus,összehasonlítás,rangsor,gólok,pontok,eredmények,tabella,meccsek,gsax
