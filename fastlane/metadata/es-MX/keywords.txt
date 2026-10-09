@@ -1,0 +1,1 @@
+jugadores,porteros,comparar,ranking,rastreador,marcadores,xg,esperados,goles,gsax,perfil,temporada

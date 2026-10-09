@@ -1,0 +1,1 @@
+Oferta de lanzamiento: todos los jugadores NHL ordenados por goles esperados, con el perfil de percentiles y el tablero de tendencias que el box score nunca muestra.

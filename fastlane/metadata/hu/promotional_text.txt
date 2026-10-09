@@ -1,0 +1,1 @@
+Rangsorolja az összes NHL-játékost a várható gólok alapján, percentilis-profillal és a forró és hideg formát mutató trendtáblával, amelyet a box score sosem mutat.

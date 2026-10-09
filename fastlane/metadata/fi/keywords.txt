@@ -1,0 +1,1 @@
+pelaajat,maalivahti,vertailu,sijoitus,seuranta,tulokset,xg,expected,gsax,taulukko,ottelut,kausi

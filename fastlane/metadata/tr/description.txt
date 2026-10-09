@@ -1,0 +1,40 @@
+Box score'un ötesinde gerçekte kimin önde olduğunu görün.
+NHL oyuncularını beklenen gollere göre sıralayın, tek dokunuşla tam yüzdelik profilini açın ve şu an kimin formda, kimin soğuduğunu takip edin.
+
+StatScout; ixG, beklentinin üzerindeki goller, xGF%, Corsi, yüksek tehlikeli fırsatlar, beklentinin üzerindeki kurtarışlar ve tanıdık box score rakamlarını tek bir hızlı iPhone uygulamasında bir araya getirir.
+
+GÖRSEL YÜZDELİKLER
+Her metrik, renkli bir işaretçili yatay yüzdelik çubuğu olarak görünür. NHL EDGE'deki gibi okunur: mavi soğuk, kırmızı sıcaktır ve ligin elit oyuncuları hemen öne çıkar. Forvetler forvetlerle, defansçılar defansçılarla, kaleciler kalecilerle karşılaştırılır.
+
+EKSİKSİZ OYUNCU PROFİLLERİ
+Tam tabloyu görmek için herhangi bir oyuncuya dokunun: gol katkısı, şut kalitesi, oyun yönetimi ve kalecilik için yüzdelik sıralamalar, gelişmiş metrikler ile standart sezon istatistikleri arasında geçiş ve maç maç son form.
+
+MAÇ GÜNÜNE AYAK UYDURAN İSTATİSTİKLER
+Sezon boyunca StatScout, her gece maçlarından sonra yayımlanan yeni rakamları kontrol eder ve geldikleri anda günceller. Her ekran hangi maçların dahil olduğunu gösterir, böylece neye baktığınızı her zaman bilirsiniz.
+
+MAÇLAR VE TAKIMLAR
+Her gecenin final skorlarıyla birlikte fikstürü, her maç için gelişmiş box score (beklenen goller, şut denemeleri, yüksek tehlikeli fırsatlar ve birikimli xG yarışı), puan durumları, takım güç derecelendirmeleri ve öngörülen gol farkları.
+
+LİSTELER VE TAKİP
+Gol ve puan gibi tanıdık liderlerle başlayın veya gelişmiş sıralamalara geçin. Forvet, defansçı ya da kaleciye göre filtreleyin ve ligdeki sıranızı kaybetmeden her aktif oyuncuyu arayın. Following bölümünde takımınızı ve favori oyuncularınızı ücretsiz olarak bir arada tutun. Tam profili açmak için bir satıra dokunun.
+
+STATSCOUT+
+StatScout+ ile uygulamanın geri kalanının kilidini açın:
+- Trendler: tüm lig, kimin yükseldiğine ve kimin düştüğüne göre sıralanır
+- Son form: herhangi bir oyuncu, takım veya liste için son 2 / 4 / 8 hafta
+- Oyuncu karşılaştırmaları: iki oyuncu yan yana ya da bir oyuncu sezondan sezona
+- Takım analizi: 32 kulübün tümü için gelişmiş ve standart istatistikler
+- Geçmiş sezonlar: 2008-09'a kadar her sezon ve tüm zamanların kariyer yüzdelikleri
+
+Aylık, yıllık (ücretsiz deneme süreli) veya ömür boyu planı seçin. Tek bir satın alma her şeyi kapsar.
+
+ÖNCE GİZLİLİK
+Hesap yok. Kayıt yok. Reklam yok. Üçüncü taraf takibi yok. Uygulama yalnızca NHL istatistikleri ve isteğe bağlı satın alma doğrulaması için gereken ağ isteklerini gönderir.
+
+Abonelik ayrıntıları
+StatScout+, otomatik yenilenen bir abonelik olarak (aylık veya yıllık, ikisinde de 7 günlük ücretsiz deneme) ya da tek seferlik ömür boyu satın alma olarak sunulur. Fiyatlar satın almadan önce uygulamada gösterilir ve bölgeye göre değişir. Ödeme onaylandığında Apple Kimliğinize yansıtılır. Abonelikler, geçerli dönemin bitiminden en az 24 saat önce iptal edilmediği sürece otomatik olarak yenilenir. Ayarlar → Apple Kimliği → Abonelikler bölümünden istediğiniz zaman yönetebilir veya iptal edebilirsiniz.
+
+Gizlilik Politikası: https://jackwallner.github.io/hockey/privacy-policy.html
+Kullanım Koşulları (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Beklenen gol ve şut verileri MoneyPuck.com kaynaklıdır. Fikstür, box score ve oyuncu biyografileri NHL'in herkese açık verileridir. StatScout; National Hockey League (NHL), herhangi bir NHL takımı, NHLPA veya MoneyPuck ile bağlantılı değildir ve bunlar tarafından onaylanmaz, desteklenmez veya sponsorluk almaz. Oyuncu adları, takım adları ve istatistikler yalnızca tanımlama ve bilgilendirme amacıyla kullanılır.

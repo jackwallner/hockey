@@ -1,0 +1,1 @@
+giocatori,portiere,confronto,classifica,tracker,punteggi,xg,attesi,gol,gsax,profilo,stagione,squadre

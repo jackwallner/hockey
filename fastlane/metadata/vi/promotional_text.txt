@@ -1,0 +1,1 @@
+Xếp hạng mọi cầu thủ NHL theo bàn thắng kỳ vọng, kèm hồ sơ phân vị và bảng xu hướng nóng lạnh mà box score không bao giờ hiển thị.

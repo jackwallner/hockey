@@ -1,0 +1,40 @@
+Selvitä, kuka johtaa todellisuudessa pistetaulukon ulkopuolella.
+Järjestä NHL-pelaajat maalien odotusarvon mukaan, avaa koko prosenttiprofiili yhdellä napautuksella ja seuraa, kuka on nyt vauhdissa ja kuka jäähtyy.
+
+StatScout yhdistää ixG:n, odotusarvon ylittävät maalit, xGF%:n, Corsin, korkean vaaran paikat, odotusarvon ylittävät torjunnat ja tutut pistetaulukon luvut yhteen nopeaan iPhone-sovellukseen.
+
+VISUAALISET PROSENTTIILIT
+Jokainen mittari näkyy vaakasuuntaisena prosenttipalkkina, jossa on värillinen merkki. Luku on sama kuin NHL EDGE:ssä: sininen on kylmä, punainen on kuuma ja liigan eliitti erottuu heti. Hyökkääjiä verrataan hyökkääjiin, puolustajia puolustajiin ja maalivahteja maalivahteihin.
+
+KOKO PELAAJAPROFIILIT
+Napauta mitä tahansa pelaajaa nähdäksesi kokonaiskuvan: prosenttisijoitukset pisteiden, laukausten laadun, pelin hallinnan ja maalivahdin suorituksen osalta, vaihto edistyneiden mittarien ja tavanomaisten kausitilastojen välillä sekä viimeaikainen vire ottelu ottelulta.
+
+TILASTOT, JOTKA PYSYVÄT PELIPÄIVÄN TAHDISSA
+Kauden aikana StatScout tarkistaa jokaisen illan otteluiden jälkeen julkaistut uudet luvut ja päivittää ne heti, kun ne saapuvat. Jokainen näkymä kertoo, mitkä ottelut lukuihin kuuluvat, joten tiedät aina, mitä katsot.
+
+OTTELUT JA JOUKKUEET
+Jokaisen illan ohjelma lopputuloksineen, edistynyt pistetaulukko jokaisesta ottelusta (odotusarvomaalit, laukausyritykset, korkean vaaran paikat ja kumuloitu xG-kilpailu), sarjataulukot, joukkueiden vahvuusarviot ja ennustetut maaliero-marginaalit.
+
+LISTAT JA SEURANTA
+Aloita tutuista johtajista, kuten pisteistä ja maaleista, tai siirry edistyneisiin sijoituksiin. Suodata hyökkääjien, puolustajien tai maalivahtien mukaan ja hae mitä tahansa aktiivista pelaajaa menettämättä liigasijoitusta. Following-välilehdellä pidät oman joukkueesi ja suosikkipelaajasi yhdessä maksutta. Napauta riviä avataksesi koko profiilin.
+
+STATSCOUT+
+Avaa loput sovelluksesta StatScout+:lla:
+- Trendit: koko liiga järjestettynä sen mukaan, kuka nousee ja kuka laskee
+- Viimeaikainen vire: viimeiset 2 / 4 / 8 viikkoa mille tahansa pelaajalle, joukkueelle tai listalle
+- Pelaajavertailut: kaksi pelaajaa rinnakkain tai yksi pelaaja vuodesta toiseen
+- Joukkueiden skouttaus: edistyneet ja tavanomaiset tilastot kaikille 32 joukkueelle
+- Historialliset kaudet: jokainen kausi aina vuoteen 2008-09 asti sekä uran prosenttisijoitukset kaikkien aikojen ajalta
+
+Valitse kuukausitilaus, vuositilaus (ilmainen kokeilujakso) tai Lifetime. Yksi osto kattaa kaiken.
+
+YKSITYISYYS ENSIN
+Ei tilejä. Ei rekisteröitymistä. Ei mainoksia. Ei kolmansien osapuolten seurantaa. Sovellus lähettää vain NHL-tilastoihin ja valinnaiseen ostojen vahvistukseen tarvittavat verkkopyynnöt.
+
+Tilauksen tiedot
+StatScout+ on saatavilla automaattisesti uusiutuvana tilauksena (kuukausi- tai vuositilaus, molemmissa 7 päivän ilmainen kokeilujakso) tai kertaostona Lifetime-tilauksena. Hinnat näkyvät sovelluksessa ennen ostamista ja vaihtelevat alueittain. Maksu veloitetaan Apple ID:stäsi vahvistuksen yhteydessä. Tilaukset uusiutuvat automaattisesti, ellei niitä peruuteta vähintään 24 tuntia ennen nykyisen jakson päättymistä. Voit hallita tai peruuttaa tilauksen milloin tahansa kohdassa Asetukset → Apple ID → Tilaukset.
+
+Tietosuojakäytäntö: https://jackwallner.github.io/hockey/privacy-policy.html
+Käyttöehdot (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Odotusarvomaali- ja laukausdata on peräisin MoneyPuck.comista. Ohjelma, pistetaulukot ja pelaajaprofiilit ovat julkista NHL-dataa. StatScout ei ole National Hockey Leaguen (NHL), minkään NHL-joukkueen, NHLPA:n tai MoneyPuckin kanssa yhteydessä, eivätkä ne hyväksy, tue tai sponsoroi sovellusta. Pelaajien ja joukkueiden nimiä sekä tilastoja käytetään vain tunnistamiseen ja tiedottamiseen.

@@ -1,0 +1,40 @@
+Erkenne, wer jenseits des Box Score wirklich führt.
+Ranke NHL-Spieler nach Expected Goals, öffne mit einem Tipp das vollständige Perzentil-Profil und verfolge, wer gerade heiß läuft oder abkühlt.
+
+StatScout vereint ixG, Tore über Erwartung, xGF%, Corsi, High-Danger-Chancen, gehaltene Tore über Erwartung und die vertrauten Box-Score-Werte in einer schnellen iPhone-App.
+
+VISUELLE PERZENTILE
+Jede Metrik erscheint als horizontaler Perzentil-Balken mit farbigem Marker, so wie man es von NHL EDGE kennt: Blau ist kalt, Rot ist heiß, und die Elite der Liga sticht sofort hervor. Stürmer werden mit Stürmern verglichen, Verteidiger mit Verteidigern, Torhüter mit Torhütern.
+
+VOLLSTÄNDIGE SPIELERPROFILE
+Tippe auf einen Spieler, um das ganze Bild zu sehen: Perzentil-Ränge für Scoring, Shot Quality, Play Driving und Goaltending, ein Wechsel zwischen fortgeschrittenen Metriken und klassischen Saisonstatistiken sowie die Form der letzten Spiele, Spiel für Spiel.
+
+STATISTIKEN, DIE MIT DEM SPIELTAG MITHALTEN
+In der Saison prüft StatScout nach jedem Spielabend auf neu veröffentlichte Zahlen und aktualisiert sie, sobald sie da sind. Jeder Bildschirm zeigt, welche Spiele enthalten sind, damit du immer weißt, was du gerade siehst.
+
+SPIELE UND TEAMS
+Der Spielplan jeder Nacht mit Endständen, ein fortgeschrittener Box Score für jedes Spiel (Expected Goals, Schussversuche, High-Danger-Chancen und der kumulative xG-Race-Verlauf), Tabellen, Teamstärke-Ratings und projizierte Tordifferenzen.
+
+BESTENLISTEN UND FOLLOWING
+Starte mit vertrauten Führenden wie Punkten und Toren oder wechsle zu fortgeschrittenen Rankings. Filtere nach Stürmern, Verteidigern oder Goalies, und suche jeden aktiven Spieler, ohne den Ligarang zu verlieren. In Following behältst du dein Team und deine Lieblingsspieler kostenlos zusammen. Tippe auf eine Zeile, um das vollständige Profil zu öffnen.
+
+STATSCOUT+
+Schalte den Rest der App mit StatScout+ frei:
+- Trends: die ganze Liga, sortiert danach, wer heiß läuft und wer abkühlt
+- Recent Form: die letzten 2 / 4 / 8 Wochen für jeden Spieler, jedes Team oder jede Bestenliste
+- Spielervergleich: zwei Spieler nebeneinander oder ein Spieler über mehrere Saisons
+- Team-Scouting: fortgeschrittene und Standardstatistiken für alle 32 Teams
+- Historische Saisons: jede Saison zurück bis 2008-09, plus Karriere-Perzentile aller Zeiten
+
+Wähle Monatlich, Jährlich (mit kostenloser Testphase) oder Lifetime. Ein Kauf deckt alles ab.
+
+DATENSCHUTZ ZUERST
+Keine Konten. Keine Anmeldung. Keine Werbung. Kein Tracking durch Dritte. Die App stellt nur die Netzwerkanfragen her, die für NHL-Statistiken und die optionale Kaufprüfung nötig sind.
+
+Abo-Details
+StatScout+ ist als automatisch verlängerndes Abo (monatlich oder jährlich, beide mit 7 Tagen kostenloser Testphase) oder als einmaliger Lifetime-Kauf erhältlich. Die Preise werden vor dem Kauf in der App angezeigt und unterscheiden sich je nach Region. Die Zahlung wird bei Bestätigung deiner Apple-ID belastet. Abos verlängern sich automatisch, sofern sie nicht mindestens 24 Stunden vor Ende des laufenden Zeitraums gekündigt werden. Du kannst sie jederzeit unter Einstellungen → Apple-ID → Abos verwalten oder kündigen.
+
+Datenschutzerklärung: https://jackwallner.github.io/hockey/privacy-policy.html
+Nutzungsbedingungen (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Expected-Goals- und Schussdaten stammen von MoneyPuck.com. Spielplan, Box Scores und Spielerbiografien sind öffentliche NHL-Daten. StatScout ist nicht mit der National Hockey League (NHL), einem NHL-Team, der NHLPA oder MoneyPuck verbunden und wird von diesen weder autorisiert, unterstützt noch gesponsert. Spieler- und Teamnamen sowie Statistiken dienen nur der Identifikation und Information.

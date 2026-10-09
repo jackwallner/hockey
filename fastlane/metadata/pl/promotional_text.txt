@@ -1,0 +1,1 @@
+Ranking wszystkich zawodników NHL według oczekiwanych goli, z profilem percentyli i tablicą trendów dla graczy na fali i w dołku, której box score nigdy nie pokazuje.

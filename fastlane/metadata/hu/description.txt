@@ -1,0 +1,40 @@
+Derítse ki, ki vezet valójában a box score mögött.
+Rangsorolja az NHL-játékosokat a várható gólok szerint, egy koppintással nyissa meg a teljes percentilis-profilt, és kövesse nyomon, ki van formában és ki hűl le most.
+
+A StatScout egyetlen gyors iPhone-alkalmazásban egyesíti az ixG-t, a várhatón felüli gólokat, az xGF%-ot, a Corsit, a nagy veszélyű helyzeteket, a várhatón felüli védéseket és a megszokott box score-adatokat.
+
+VIZUÁLIS PERCENTILISEK
+Minden mutató vízszintes percentilis-sávként jelenik meg színes jelölővel, ugyanúgy, ahogy az NHL EDGE-en: a kék a hideg, a piros a forró, és a liga elitje azonnal kiemelkedik. A csatárokat csatárokkal, a védőket védőkkel, a kapusokat kapusokkal hasonlítjuk össze.
+
+TELJES JÁTÉKOSPROFILOK
+Koppintson bármelyik játékosra a teljes kép megtekintéséhez: percentilis-rangsorok a pontszerzés, a lövésminőség, a játékirányítás és a kapusteljesítmény terén, váltás a haladó mutatók és a szokásos szezonstatisztikák között, valamint a legutóbbi forma meccsről meccsre.
+
+MINDIG AZ AKTUÁLIS MECCSEKHEZ IGAZÍTVA
+A szezon alatt a StatScout minden esti mérkőzés után ellenőrzi az újonnan közzétett adatokat, és amint megérkeznek, frissíti őket. Minden képernyő mutatja, mely mérkőzések szerepelnek benne, így mindig tudja, mit lát.
+
+MÉRKŐZÉSEK ÉS CSAPATOK
+Minden esti műsor a végeredményekkel, minden mérkőzés haladó box score-ja (várható gólok, lövési kísérletek, nagy veszélyű helyzetek és a halmozott xG-verseny), tabellák, csapaterő-értékelések és a várható gólkülönbségek.
+
+RANGLISTÁK ÉS KÖVETÉS
+Kezdje a megszokott vezetőkkel, például a pontokkal és a gólokkal, vagy váltson a haladó rangsorokra. Szűrjön csatárokra, védőkre vagy kapusokra, és keressen bármely aktív játékost úgy, hogy közben nem veszíti el a liga-helyezését. A Followingban ingyen tarthatja együtt a csapatát és a kedvenc játékosait. Koppintson egy sorra a teljes profil megnyitásához.
+
+STATSCOUT+
+Oldja fel az alkalmazás többi részét a StatScout+ segítségével:
+- Trendek: a teljes liga sorrendje aszerint, ki emelkedik és ki esik vissza
+- Friss forma: az utolsó 2 / 4 / 8 hét bármely játékosra, csapatra vagy listára
+- Játékos-összehasonlítás: két játékos egymás mellett, vagy egy játékos szezonról szezonra
+- Csapatfelderítés: haladó és szokásos statisztikák mind a 32 klubra
+- Történelmi szezonok: minden szezon egészen 2008-09-ig, plusz az összes idők karrier-percentilisei
+
+Válasszon havi, éves (ingyenes próbaidőszakkal) vagy élettartamra szóló csomagot. Egyetlen vásárlás mindent lefed.
+
+ELSŐSORBAN AZ ADATVÉDELEM
+Nincs fiók. Nincs regisztráció. Nincs hirdetés. Nincs harmadik féltől származó követés. Az alkalmazás csak az NHL-statisztikákhoz és az opcionális vásárlás-ellenőrzéshez szükséges hálózati kéréseket küldi.
+
+Előfizetési részletek
+A StatScout+ automatikusan megújuló előfizetésként (havi vagy éves, mindkettő 7 napos ingyenes próbaidőszakkal) vagy egyszeri élettartamra szóló vásárlásként érhető el. Az árak a vásárlás előtt jelennek meg az alkalmazásban, és régiónként eltérőek. A fizetés a megerősítéskor terheli az Apple ID-t. Az előfizetések automatikusan megújulnak, hacsak nem mondja le őket legalább 24 órával az aktuális időszak vége előtt. Bármikor kezelheti vagy lemondhatja a Beállítások → Apple ID → Előfizetések menüpontban.
+
+Adatvédelmi szabályzat: https://jackwallner.github.io/hockey/privacy-policy.html
+Felhasználási feltételek (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+A várható gól- és lövésadatok a MoneyPuck.com-tól származnak. A műsor, a box score-ok és a játékosprofilok nyilvános NHL-adatok. A StatScout nem áll kapcsolatban a National Hockey League-gel (NHL), egyetlen NHL-csapattal, az NHLPA-val vagy a MoneyPuck-kal, és ezek nem engedélyezik, nem támogatják és nem szponzorálják. A játékosnevek, a csapatnevek és a statisztikák kizárólag azonosítási és tájékoztatási célra szolgálnak.

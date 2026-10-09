@@ -1,0 +1,1 @@
+Rangering av alle NHL-spillere etter forventede mål, med persentilprofil og trendtavlen for spillere som er varme eller kalde, som boksscoren aldri viser.

@@ -1,0 +1,1 @@
+igrači,vratar,usporedba,poredak,praćenje,rezultati,xg,expected,gsax,tablica,utakmice,sezona,momčadi

@@ -1,0 +1,40 @@
+Xem ai thực sự dẫn đầu ngoài box score.
+Xếp hạng cầu thủ NHL theo bàn thắng kỳ vọng, chạm một lần để mở hồ sơ phân vị đầy đủ và theo dõi ai đang sung sức, ai đang sa sút.
+
+StatScout tập hợp ixG, bàn thắng vượt kỳ vọng, xGF%, Corsi, cơ hội nguy hiểm cao, pha cứu thua vượt kỳ vọng và các con số box score quen thuộc trong một ứng dụng iPhone nhanh gọn.
+
+PHÂN VỊ TRỰC QUAN
+Mỗi chỉ số hiển thị dưới dạng thanh phân vị ngang có điểm đánh dấu màu, cách đọc giống NHL EDGE: xanh là lạnh, đỏ là nóng, và tinh hoa của giải đấu nổi bật ngay. Tiền đạo được so với tiền đạo, hậu vệ với hậu vệ, thủ môn với thủ môn.
+
+HỒ SƠ CẦU THỦ ĐẦY ĐỦ
+Chạm vào bất kỳ cầu thủ nào để xem toàn cảnh: xếp hạng phân vị về ghi bàn, chất lượng cú sút, kiểm soát trận đấu và khả năng thủ môn, chuyển đổi giữa chỉ số nâng cao và thống kê mùa giải thông thường, cùng phong độ gần đây từng trận.
+
+SỐ LIỆU THEO KỊP NGÀY THI ĐẤU
+Trong mùa giải, StatScout kiểm tra số liệu mới được công bố sau trận đấu mỗi đêm và cập nhật ngay khi có. Mỗi màn hình đều cho biết những trận nào được tính, để bạn luôn biết mình đang xem gì.
+
+TRẬN ĐẤU VÀ ĐỘI BÓNG
+Lịch thi đấu mỗi đêm với tỷ số cuối cùng, box score nâng cao cho từng trận (bàn thắng kỳ vọng, số lần sút, cơ hội nguy hiểm cao và cuộc đua xG tích lũy), bảng xếp hạng, đánh giá sức mạnh đội và chênh lệch bàn thắng dự kiến.
+
+BẢNG XẾP HẠNG VÀ THEO DÕI
+Bắt đầu với các dẫn đầu quen thuộc như điểm và bàn thắng, hoặc chuyển sang bảng xếp hạng nâng cao. Lọc theo tiền đạo, hậu vệ hoặc thủ môn và tìm bất kỳ cầu thủ đang thi đấu nào mà không mất vị trí trong giải. Trong Following, bạn giữ đội bóng và cầu thủ yêu thích cùng nhau miễn phí. Chạm vào một dòng để mở hồ sơ đầy đủ.
+
+STATSCOUT+
+Mở khóa phần còn lại của ứng dụng với StatScout+:
+- Xu hướng: toàn giải được xếp theo ai đang tăng và ai đang giảm
+- Phong độ gần đây: 2 / 4 / 8 tuần gần nhất cho bất kỳ cầu thủ, đội bóng hay bảng xếp hạng nào
+- So sánh cầu thủ: hai cầu thủ song song, hoặc một cầu thủ qua từng mùa giải
+- Theo dõi đội bóng: thống kê nâng cao và thông thường của cả 32 câu lạc bộ
+- Mùa giải lịch sử: mọi mùa giải đến 2008-09, cùng phân vị sự nghiệp mọi thời đại
+
+Chọn gói Hàng tháng, Hàng năm (có dùng thử miễn phí) hoặc Trọn đời. Một lần mua bao gồm tất cả.
+
+QUYỀN RIÊNG TƯ LÀ TRÊN HẾT
+Không tài khoản. Không đăng ký. Không quảng cáo. Không theo dõi bên thứ ba. Ứng dụng chỉ gửi các yêu cầu mạng cần thiết cho thống kê NHL và xác minh mua hàng tùy chọn.
+
+Chi tiết đăng ký
+StatScout+ có dạng đăng ký tự động gia hạn (hàng tháng hoặc hàng năm, cả hai đều có dùng thử miễn phí 7 ngày) hoặc mua một lần trọn đời. Giá hiển thị trong ứng dụng trước khi mua và khác nhau theo khu vực. Thanh toán được tính vào Apple ID của bạn khi xác nhận. Gói đăng ký tự động gia hạn trừ khi bị hủy ít nhất 24 giờ trước khi kỳ hiện tại kết thúc. Bạn có thể quản lý hoặc hủy bất cứ lúc nào tại Cài đặt → Apple ID → Đăng ký.
+
+Chính sách quyền riêng tư: https://jackwallner.github.io/hockey/privacy-policy.html
+Điều khoản sử dụng (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Dữ liệu bàn thắng kỳ vọng và cú sút lấy từ MoneyPuck.com. Lịch thi đấu, box score và tiểu sử cầu thủ là dữ liệu công khai của NHL. StatScout không liên kết với, không được ủy quyền, chứng thực, tài trợ bởi National Hockey League (NHL), bất kỳ đội NHL nào, NHLPA hay MoneyPuck. Tên cầu thủ, tên đội và số liệu thống kê chỉ được dùng để nhận diện và cung cấp thông tin.

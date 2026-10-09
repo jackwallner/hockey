@@ -1,0 +1,1 @@
+Start-Aktion: Jeder NHL-Spieler nach expected goals, mit Perzentil-Profil und dem Trends-Board für heiß und kalt, das der Box Score nie zeigt.

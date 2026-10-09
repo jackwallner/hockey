@@ -1,0 +1,1 @@
+Rangordna alla NHL-spelare efter förväntade mål, med percentilprofil och trendtavlan för spelare som är heta eller kalla, som boxscoren aldrig visar.

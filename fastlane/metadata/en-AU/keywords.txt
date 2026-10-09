@@ -1,0 +1,1 @@
+xg,expected,goals,scores,edge,player,compare,goalie,tracker,analysis,rankings,fantasy,teams,sv

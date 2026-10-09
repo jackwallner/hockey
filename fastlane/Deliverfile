@@ -1,8 +1,46 @@
-# Only en-US ships at launch; the full locale list is in Deliverfile.all-locales
-# for the localization pass.
+# Locales supported by current Fastlane. Retired App Store locale entries are
+# updated through the `fill_deprecated_locales` lane.
 # Enables appInfo + version localizations on upload when missing in ASC.
 languages([
+  "ar-SA",
+  "ca",
+  "cs",
+  "da",
+  "de-DE",
+  "el",
+  "en-AU",
+  "en-CA",
+  "en-GB",
   "en-US",
+  "es-ES",
+  "es-MX",
+  "fi",
+  "fr-CA",
+  "fr-FR",
+  "he",
+  "hi",
+  "hr",
+  "hu",
+  "id",
+  "it",
+  "ja",
+  "ko",
+  "ms",
+  "nl-NL",
+  "no",
+  "pl",
+  "pt-BR",
+  "pt-PT",
+  "ro",
+  "ru",
+  "sk",
+  "sv",
+  "th",
+  "tr",
+  "uk",
+  "vi",
+  "zh-Hans",
+  "zh-Hant"
 ])
 
 # Draft version is set via Fastfile from ASC_APP_VERSION (see asc-ensure-draft-version).

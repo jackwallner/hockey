@@ -1,0 +1,40 @@
+Find ud af, hvem der virkelig fører ud over boxscoren.
+Rangér NHL-spillere efter forventede mål, åbn den fulde percentilprofil med ét tryk, og følg med i, hvem der er i form, og hvem der køler af.
+
+StatScout samler ixG, mål over forventning, xGF%, Corsi, chancer med høj fare, redninger over forventning og de velkendte boxscore-tal i én hurtig iPhone-app.
+
+VISUELLE PERCENTILER
+Hver metrik vises som en vandret percentilbjælke med en farvet markør, samme aflæsning som fra NHL EDGE: blå er kold, rød er varm, og ligaens elite springer i øjnene. Angribere sammenlignes med angribere, forsvarere med forsvarere og målmænd med målmænd.
+
+FULDE SPILLERPROFILER
+Tryk på en spiller for at se hele billedet: percentilrangeringer for scoring, skudkvalitet, spilkontrol og målmandsspil, skift mellem avancerede metrikker og standard sæsonstatistik og den seneste form kamp for kamp.
+
+STATISTIK DER HOLDER TRIT MED KAMPDAGEN
+I sæsonen tjekker StatScout efter nye tal efter hver aftens kampe og opdaterer, så snart de er klar. Hver skærm viser, hvilke kampe der er med, så du altid ved, hvad du kigger på.
+
+KAMPE OG HOLD
+Hver aftens program med slutresultater, en avanceret boxscore for hver kamp (forventede mål, skudforsøg, chancer med høj fare og det kumulative xG-løb), stillinger, holdstyrkeratings og forventede målforskelle.
+
+LISTER OG FØLGNING
+Start med de kendte ledere som point og mål, eller skift til avancerede rangeringer. Filtrér efter angribere, forsvarere eller målmænd, og søg efter enhver aktiv spiller uden at miste ligaplaceringen. Under Following holder du dit hold og dine yndlingsspillere samlet gratis. Tryk på en række for at åbne den fulde profil.
+
+STATSCOUT+
+Lås resten af appen op med StatScout+:
+- Trends: hele ligaen rangeret efter, hvem der er varm og kold
+- Recent Form: de seneste 2 / 4 / 8 uger for enhver spiller, ethvert hold eller enhver liste
+- Spillersammenligninger: to spillere side om side, eller én spiller år for år
+- Holdscouting: avancerede og standardstatistikker for alle 32 hold
+- Historiske sæsoner: hver sæson tilbage til 2008-09, plus karrierepercentiler for alle tiders
+
+Vælg Månedlig, Årlig (med gratis prøveperiode) eller Lifetime. Ét køb dækker alt.
+
+PRIVATLIV FØRST
+Ingen konti. Ingen tilmelding. Ingen reklamer. Ingen tracking fra tredjeparter. Appen sender kun de netværksforespørgsler, der er nødvendige for NHL-statistik og den valgfri købsbekræftelse.
+
+Abonnementsoplysninger
+StatScout+ fås som et automatisk fornyet abonnement (månedligt eller årligt, begge med 7 dages gratis prøveperiode) eller som et engangskøb med Lifetime. Priserne vises i appen før køb og varierer efter region. Betaling trækkes fra dit Apple-ID ved bekræftelse. Abonnementer fornyes automatisk, medmindre de annulleres mindst 24 timer før den aktuelle periode slutter. Du kan administrere eller annullere når som helst under Indstillinger → Apple-ID → Abonnementer.
+
+Privatlivspolitik: https://jackwallner.github.io/hockey/privacy-policy.html
+Brugsvilkår (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Data for forventede mål og skud stammer fra MoneyPuck.com. Program, boxscore og spillerbiografier er offentlige NHL-data. StatScout er ikke tilknyttet, autoriseret, godkendt eller sponsoreret af National Hockey League (NHL), et NHL-hold, NHLPA eller MoneyPuck. Spillernavne, holdnavne og statistik bruges kun til identifikation og oplysning.

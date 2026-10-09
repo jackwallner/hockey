@@ -1,0 +1,40 @@
+Scopri chi guida davvero oltre il box score.
+Ordina i giocatori NHL per gol attesi, apri con un tocco il profilo percentile completo e segui chi è in forma e chi si sta raffreddando.
+
+StatScout riunisce ixG, gol sopra l'atteso, xGF%, Corsi, occasioni ad alta pericolosità, parate sopra l'atteso e i numeri familiari del box score in un'unica app veloce per iPhone.
+
+PERCENTILI VISIVI
+Ogni metrica appare come una barra orizzontale di percentili con un indicatore colorato, la stessa lettura usata su NHL EDGE: il blu è freddo, il rosso è caldo e l'élite della lega risalta subito. Gli attaccanti si confrontano con gli attaccanti, i difensori con i difensori e i portieri con i portieri.
+
+PROFILI GIOCATORE COMPLETI
+Tocca un giocatore qualsiasi per vedere il quadro completo: classifiche percentili per realizzazione, qualità del tiro, gestione del gioco e portiere, un passaggio tra metriche avanzate e statistiche di stagione standard, e la forma recente partita per partita.
+
+STATISTICHE AL PASSO CON LE PARTITE
+Durante la stagione StatScout controlla i nuovi numeri pubblicati dopo le partite di ogni sera e li aggiorna appena arrivano. Ogni schermata mostra quali partite sono incluse, così sai sempre cosa stai guardando.
+
+PARTITE E SQUADRE
+Il calendario di ogni notte con i risultati finali, un box score avanzato per ogni partita (gol attesi, tentativi di tiro, occasioni ad alta pericolosità e la corsa xG cumulativa), classifiche, valutazioni della forza delle squadre e margini previsti.
+
+CLASSIFICHE E SEGUITI
+Parti dai leader noti, come punti e gol, oppure passa alle classifiche avanzate. Filtra per attaccanti, difensori o portieri e cerca qualsiasi giocatore attivo senza perdere la sua posizione in lega. In Following tieni insieme, gratis, la tua squadra e i giocatori preferiti. Tocca una riga per aprire il profilo completo.
+
+STATSCOUT+
+Sblocca il resto dell'app con StatScout+:
+- Tendenze: l'intera lega ordinata per chi sale e chi scende
+- Forma recente: le ultime 2 / 4 / 8 settimane per qualsiasi giocatore, squadra o classifica
+- Confronti tra giocatori: due giocatori affiancati, oppure un giocatore stagione dopo stagione
+- Scouting delle squadre: statistiche avanzate e standard per tutti i 32 club
+- Stagioni storiche: ogni stagione fino al 2008-09, più i percentili di carriera di tutti i tempi
+
+Scegli Mensile, Annuale (con prova gratuita) o A vita. Un solo acquisto copre tutto.
+
+PRIVACY PRIMA DI TUTTO
+Nessun account. Nessuna registrazione. Nessuna pubblicità. Nessun tracciamento di terze parti. L'app invia solo le richieste di rete necessarie per le statistiche NHL e per la verifica facoltativa dell'acquisto.
+
+Dettagli dell'abbonamento
+StatScout+ è disponibile come abbonamento a rinnovo automatico (mensile o annuale, entrambi con una prova gratuita di 7 giorni) oppure come acquisto unico a vita. I prezzi sono mostrati nell'app prima dell'acquisto e variano in base alla regione. Il pagamento viene addebitato sul tuo Apple ID alla conferma. Gli abbonamenti si rinnovano automaticamente a meno che non vengano annullati almeno 24 ore prima della fine del periodo in corso. Puoi gestirli o annullarli in qualsiasi momento in Impostazioni → Apple ID → Abbonamenti.
+
+Informativa sulla privacy: https://jackwallner.github.io/hockey/privacy-policy.html
+Termini d'uso (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+I dati su gol attesi e tiri provengono da MoneyPuck.com. Calendario, box score e biografie dei giocatori sono dati pubblici della NHL. StatScout non è affiliata, autorizzata, approvata o sponsorizzata dalla National Hockey League (NHL), da alcuna squadra NHL, dalla NHLPA o da MoneyPuck. I nomi dei giocatori, i nomi delle squadre e le statistiche sono usati solo a scopo di identificazione e informazione.

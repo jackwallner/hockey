@@ -1,0 +1,1 @@
+Ocijenite sve igrače NHL-a po očekivanim golovima, uz profil percentila i ploču trendova za igrače u usponu i padu koje box score nikad ne prikazuje.

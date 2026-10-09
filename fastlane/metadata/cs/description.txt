@@ -1,0 +1,40 @@
+Zjistěte, kdo opravdu vede za hranicemi boxscore.
+Seřaďte hráče NHL podle očekávaných gólů, jedním klepnutím otevřete kompletní profil percentilů a sledujte, kdo je zrovna v plamenech a kdo chladne.
+
+StatScout spojuje ixG, góly nad očekávání, xGF%, Corsi, šance s vysokým rizikem, zásahy nad očekávání a známé hodnoty z boxscore do jedné rychlé aplikace pro iPhone.
+
+VIZUÁLNÍ PERCENTILY
+Každá metrika se zobrazuje jako vodorovný pruh percentilů s barevným ukazatelem, stejně jako ho znáte z NHL EDGE: modrá znamená chladno, červená horko a elita ligy vyniká. Útočníci se srovnávají s útočníky, obránci s obránci a brankáři s brankáři.
+
+KOMPLETNÍ PROFILY HRÁČŮ
+Klepněte na kteréhokoli hráče a uvidíte celý obraz: žebříčky percentilů v bodování, kvalitě střel, řízení hry a brankářské práci, přepínání mezi pokročilými metrikami a běžnými sezónními statistikami a formu z posledních zápasů zápas po zápase.
+
+STATISTIKY, KTERÉ DRŽÍ KROK S ZÁPASY
+Během sezóny StatScout po každém zápasovém večeru kontroluje nově zveřejněná čísla a aktualizuje je, jakmile jsou k dispozici. Každá obrazovka ukazuje, které zápasy jsou zahrnuty, takže vždy víte, na co se díváte.
+
+ZÁPASY A TÝMY
+Program každé noci s konečnými výsledky, pokročilý boxscore pro každý zápas (očekávané góly, pokusy o střelu, šance s vysokým rizikem a kumulativní průběh xG), tabulky, hodnocení síly týmů a předpokládané rozdíly v počtu gólů.
+
+ŽEBŘÍČKY A SLEDOVÁNÍ
+Začněte u známých lídrů, jako jsou body a góly, nebo přejděte na pokročilé žebříčky. Filtrujte podle útočníků, obránců nebo brankářů a vyhledejte kteréhokoli aktivního hráče, aniž byste ztratili jeho pozici v lize. V sekci Following zdarma držte pohromadě svůj tým a oblíbené hráče. Klepnutím na řádek otevřete celý profil.
+
+STATSCOUT+
+Odemkněte zbytek aplikace s StatScout+:
+- Trendy: celá liga seřazená podle toho, kdo stoupá a kdo klesá
+- Nedávná forma: poslední 2 / 4 / 8 týdnů u kteréhokoli hráče, týmu nebo žebříčku
+- Porovnání hráčů: dva hráči vedle sebe, nebo jeden hráč napříč sezónami
+- Scouting týmů: pokročilé a běžné statistiky všech 32 klubů
+- Historické sezóny: každá sezóna zpět do 2008-09 a také kariérní percentily všech dob
+
+Vyberte měsíční, roční (s bezplatnou zkušební dobou) nebo doživotní předplatné. Jeden nákup pokryje všechno.
+
+NEJPRVE SOUKROMÍ
+Žádné účty. Žádná registrace. Žádné reklamy. Žádné sledování třetími stranami. Aplikace odesílá jen síťové požadavky nutné pro statistiky NHL a volitelné ověření nákupu.
+
+Podrobnosti o předplatném
+StatScout+ je k dispozici jako automaticky obnovované předplatné (měsíční nebo roční, obojí s 7denní bezplatnou zkušební dobou) nebo jako jednorázový doživotní nákup. Ceny se zobrazí v aplikaci před nákupem a liší se podle regionu. Platba se strhne z vašeho Apple ID po potvrzení. Předplatné se automaticky obnovuje, pokud ho nezrušíte nejméně 24 hodin před koncem aktuálního období. Spravovat nebo zrušit ho můžete kdykoli v Nastavení → Apple ID → Předplatné.
+
+Zásady ochrany osobních údajů: https://jackwallner.github.io/hockey/privacy-policy.html
+Smluvní podmínky (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Data o očekávaných gólech a střelách pochází z MoneyPuck.com. Rozpis, boxscore a životopisy hráčů jsou veřejná data NHL. StatScout není spojen s National Hockey League (NHL), žádným týmem NHL, NHLPA ani MoneyPuck, neschválila ho ani nepodporuje ani nesponzoruje žádný z nich. Jména hráčů, názvy týmů a statistiky slouží jen k identifikaci a informování.

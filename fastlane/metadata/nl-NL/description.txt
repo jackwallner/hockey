@@ -1,0 +1,40 @@
+Ontdek wie er echt voorop loopt, voorbij de wedstrijdstatistieken.
+Rangschik NHL-spelers op verwachte doelpunten, open met één tik het volledige percentielprofiel en volg wie op dreef is en wie afkoelt.
+
+StatScout brengt ixG, doelpunten boven verwachting, xGF%, Corsi, kansen met hoog gevaar, reddingen boven verwachting en de bekende wedstrijdcijfers samen in één snelle iPhone-app.
+
+VISUELE PERCENTIELEN
+Elke statistiek verschijnt als horizontale percentielbalk met een gekleurde markering, dezelfde leesbaarheid als bij NHL EDGE: blauw is koud, rood is heet en de elite van de competitie springt meteen in het oog. Aanvallers worden vergeleken met aanvallers, verdedigers met verdedigers en keepers met keepers.
+
+VOLLEDIGE SPELERSPROFIELEN
+Tik op elke speler om het hele plaatje te zien: percentielranglijsten voor scoren, schotkwaliteit, spelcontrole en doelverdediging, een schakelaar tussen geavanceerde statistieken en gewone seizoenscijfers, en de recente vorm wedstrijd na wedstrijd.
+
+STATISTIEKEN DIE MEEGAAN MET DE SPELDAG
+Tijdens het seizoen controleert StatScout na de wedstrijden van elke avond op nieuwe cijfers en werkt het die bij zodra ze binnen zijn. Elk scherm laat zien welke wedstrijden erin zitten, zodat je altijd weet wat je bekijkt.
+
+WEDSTRIJDEN EN TEAMS
+Het programma van elke avond met de eindstanden, een geavanceerde wedstrijdstatistiek voor elke wedstrijd (verwachte doelpunten, schotpogingen, kansen met hoog gevaar en de cumulatieve xG-race), standen, teamkrachtratings en verwachte doelsaldi.
+
+LIJSTEN EN VOLGEN
+Begin met bekende koplopers zoals punten en doelpunten, of schakel over naar geavanceerde ranglijsten. Filter op aanvallers, verdedigers of keepers en zoek elke actieve speler zonder je competitiepositie te verliezen. In Following houd je je team en favoriete spelers gratis bij elkaar. Tik op een rij om het volledige profiel te openen.
+
+STATSCOUT+
+Ontgrendel de rest van de app met StatScout+:
+- Trends: de hele competitie gerangschikt op wie stijgt en wie daalt
+- Recente vorm: de laatste 2 / 4 / 8 weken voor elke speler, elk team of elke lijst
+- Spelersvergelijkingen: twee spelers naast elkaar, of één speler over de seizoenen heen
+- Teamscouting: geavanceerde en standaardstatistieken voor alle 32 clubs
+- Historische seizoenen: elk seizoen terug tot 2008-09, plus carrièrepercentielen aller tijden
+
+Kies Maandelijks, Jaarlijks (met gratis proefperiode) of Levenslang. Eén aankoop dekt alles.
+
+PRIVACY EERST
+Geen accounts. Geen aanmelding. Geen advertenties. Geen tracking door derden. De app doet alleen de netwerkverzoeken die nodig zijn voor NHL-statistieken en de optionele aankoopverificatie.
+
+Abonnementsdetails
+StatScout+ is verkrijgbaar als automatisch verlengd abonnement (maandelijks of jaarlijks, beide met een gratis proefperiode van 7 dagen) of als eenmalige levenslange aankoop. Prijzen worden in de app getoond voordat je koopt en verschillen per regio. Betaling wordt bij bevestiging van je Apple ID afgeschreven. Abonnementen worden automatisch verlengd tenzij ze minstens 24 uur voor het einde van de huidige periode zijn opgezegd. Je kunt ze altijd beheren of opzeggen via Instellingen → Apple ID → Abonnementen.
+
+Privacybeleid: https://jackwallner.github.io/hockey/privacy-policy.html
+Gebruiksvoorwaarden (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Gegevens over verwachte doelpunten en schoten komen van MoneyPuck.com. Het schema, de wedstrijdstatistieken en spelersbiografieën zijn openbare NHL-gegevens. StatScout is niet gelieerd aan, geautoriseerd, goedgekeurd of gesponsord door de National Hockey League (NHL), een NHL-team, de NHLPA of MoneyPuck. Spelersnamen, teamnamen en statistieken worden alleen gebruikt voor identificatie en informatie.

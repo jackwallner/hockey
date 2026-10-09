@@ -1,0 +1,1 @@
+Tüm NHL oyuncularını beklenen gollere göre sıralayın; yüzdelik profilini ve box score'un hiçbir zaman göstermediği yükselen ve düşen form panosunu inceleyin.

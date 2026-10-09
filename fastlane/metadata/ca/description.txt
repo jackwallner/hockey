@@ -1,0 +1,40 @@
+Descobreix qui lidera de debò més enllà del box score.
+Ordena els jugadors de la NHL per gols esperats, obre el perfil complet de percentils amb un toc i segueix qui està en ratxa o qui es refreda ara mateix.
+
+StatScout reuneix ixG, gols per sobre de l'esperat, xGF%, Corsi, ocasions d'alt perill, estovades per sobre de l'esperat i les xifres habituals del box score en una aplicació ràpida per a iPhone.
+
+PERCENTILS VISUALS
+Cada mètrica es mostra com una barra horitzontal de percentils amb un marcador de color, la mateixa lectura que es fa a NHL EDGE: el blau és fred, el vermell és calent i l'elit de la lliga destaca a la pàgina. Els davanters es comparen amb davanters, els defensors amb defensors i els porters amb porters.
+
+PERFILS COMPLETS DE JUGADORS
+Toca qualsevol jugador per veure la imatge completa: rànquings de percentils en Puntuació, Qualitat de tir, Conducció del joc i Porteria, un canvi entre mètriques avançades i estadístiques de temporada habituals, i la forma recent partit a partit.
+
+ESTADÍSTIQUES AL DIA AMB LA JORNADA
+Durant la temporada, StatScout revisa les xifres noves publicades després de les partides de cada nit i s'actualitza en quant arriben. Cada pantalla mostra quins partits inclou, perquè sempre sàpigues què estàs mirant.
+
+PARTITS I EQUIPS
+La programació de cada nit amb els marcadors finals, un box score avançat per a cada partit (gols esperats, intents de tir, ocasions d'alt perill i la cursa xG acumulada), classificacions, valoracions de força dels equips i marges projectats.
+
+CLASSIFICACIONS I SEGUIMENT
+Comença amb els líders coneguts, com els punts i els gols, o canvia a les classificacions avançades. Filtra per davanters, defensors o porters, i cerca qualsevol jugador actiu sense perdre la posició a la lliga. A Following, mantén el teu equip i els jugadors preferits junts, gratuïtament. Toca qualsevol fila per obrir el perfil complet.
+
+STATSCOUT+
+Desbloqueja la resta de l'aplicació amb StatScout+:
+- Tendències: tota la lliga ordenada per qui s'escalfa i qui es refreda
+- Forma recent: les últimes 2 / 4 / 8 setmanes de qualsevol jugador, equip o classificació
+- Comparacions de jugadors: dos jugadors un al costat de l'altre, o un jugador any rere any
+- Exploració d'equips: estadístiques avançades i habituals dels 32 clubs
+- Temporades històriques: cada any fins al 2008-09, més percentils de carrera de tots els temps
+
+Tria Mensual, Anual (amb prova gratuïta) o De per vida. Una sola compra ho cobreix tot.
+
+PRIVACITAT PRIMER
+Sense comptes. Sense registre. Sense anuncis. Sense seguiment de tercers. L'aplicació només fa les sol·licituds de xarxa necessàries per a les estadístiques de la NHL i per a la verificació opcional de la compra.
+
+Detalls de la subscripció
+StatScout+ està disponible com a subscripció de renovació automàtica (mensual o anual, totes dues amb una prova gratuïta de 7 dies) o com a compra única de por vida. Els preus es mostren a l'aplicació abans de comprar i varien segons la regió. El pagament es carrega al teu Apple ID en confirmar-lo. Les subscripcions es renoven automàticament tret que es cancel·lin almenys 24 hores abans que acabi el període actual. Pots gestionar-les o cancel·lar-les en qualsevol moment a Configuració → Apple ID → Subscripcions.
+
+Política de privacitat: https://jackwallner.github.io/hockey/privacy-policy.html
+Termes d'ús (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Les dades de gols esperats i de tirs són de MoneyPuck.com. El calendari, els box scores i les biografies de jugadors són dades públiques de la NHL. StatScout no està afiliat, autoritzat, avalat ni patrocinat per la National Hockey League (NHL), cap equip de la NHL, la NHLPA ni MoneyPuck. Els noms dels jugadors, els noms dels equips i les estadístiques s'utilitzen només per a identificació i amb finalitats informatives.

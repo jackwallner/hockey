@@ -1,0 +1,1 @@
+lliga,jugadors,porter,comparar,rànquing,tracker,marcadors,xg,expected,gsax,perfil,gols,punts,dades

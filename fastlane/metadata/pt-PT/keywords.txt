@@ -1,0 +1,1 @@
+jogadores,guarda-redes,comparar,ranking,rastreador,resultados,xg,esperados,golos,gsax,perfil,época

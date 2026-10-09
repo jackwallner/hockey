@@ -1,0 +1,1 @@
+hráči,brankář,porovnání,žebříček,tracker,skóre,xg,expected,gsax,tabulka,zápasy,sezóna,tým,góly,sv

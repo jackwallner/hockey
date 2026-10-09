@@ -1,0 +1,40 @@
+Lihat siapa yang sebenarnya memimpin di luar box score.
+Susun pemain NHL mengikut expected goals, buka profil persentil lengkap dengan satu ketukan, dan pantau siapa yang sedang panas dan siapa yang menyejuk.
+
+StatScout menggabungkan ixG, gol melebihi jangkaan, xGF%, Corsi, peluang bahaya tinggi, penyelamatan melebihi jangkaan dan angka box score yang biasa dalam satu aplikasi iPhone yang pantas.
+
+PERSENTIL VISUAL
+Setiap metrik dipaparkan sebagai bar persentil mendatar dengan penanda berwarna, bacaan yang sama seperti di NHL EDGE: biru bermaksud sejuk, merah bermaksud panas, dan elit liga cepat menonjol. Penyerang dibandingkan dengan penyerang, pemain pertahanan dengan pemain pertahanan dan penjaga gol dengan penjaga gol.
+
+PROFIL PEMAIN LENGKAP
+Ketik mana-mana pemain untuk melihat gambaran penuh: kedudukan persentil bagi Scoring, Shot Quality, Play Driving dan Goaltending, suis antara metrik lanjutan dan statistik musim standard, serta prestasi terkini perlawanan demi perlawanan.
+
+STATISTIK YANG MENGIKUTI MALAM PERLAWANAN
+Semasa musim, StatScout menyemak nombor baharu yang diterbitkan selepas perlawanan setiap malam dan mengemas kininya sebaik sahaja tiba. Setiap skrin menunjukkan perlawanan yang termasuk, supaya anda sentiasa tahu apa yang sedang dilihat.
+
+PERLAWANAN DAN PASUKAN
+Jadual setiap malam dengan keputusan akhir, box score lanjutan bagi setiap perlawanan (expected goals, percubaan rembatan, peluang bahaya tinggi dan perlumbaan xG terkumpul), jadual kedudukan, penilaian kekuatan pasukan dan margin jangkaan.
+
+PAPAN KEDUDUKAN DAN IKUTAN
+Mulakan dengan pemimpin biasa seperti mata dan gol, atau beralih kepada kedudukan lanjutan. Tapis mengikut penyerang, pemain pertahanan atau penjaga gol dan cari mana-mana pemain aktif tanpa kehilangan kedudukan liga. Dalam Following, simpan pasukan dan pemain kegemaran anda bersama secara percuma. Ketik mana-mana baris untuk membuka profil penuh.
+
+STATSCOUT+
+Buka kunci bahagian lain aplikasi dengan StatScout+:
+- Trend: seluruh liga disusun mengikut siapa yang naik dan siapa yang jatuh
+- Prestasi terkini: 2 / 4 / 8 minggu terakhir untuk mana-mana pemain, kelab atau papan kedudukan
+- Perbandingan pemain: dua pemain bersebelahan, atau seorang pemain merentas musim
+- Tinjauan pasukan: statistik lanjutan dan standard untuk semua 32 kelab
+- Musim sejarah: setiap musim sehingga 2008-09, serta persentil kerjaya sepanjang masa
+
+Pilih Bulanan, Tahunan (dengan percubaan percuma) atau Lifetime. Satu pembelian meliputi semuanya.
+
+PRIVASI DI UTAMA
+Tiada akaun. Tiada pendaftaran. Tiada iklan. Tiada penjejakan pihak ketiga. Aplikasi hanya membuat permintaan rangkaian yang diperlukan untuk statistik NHL dan pengesahan pembelian pilihan.
+
+Butiran langganan
+StatScout+ tersedia sebagai langganan yang diperbaharui automatik (bulanan atau tahunan, kedua-duanya dengan percubaan percuma 7 hari) atau pembelian Lifetime sekali bayar. Harga dipaparkan dalam aplikasi sebelum anda membeli dan berbeza mengikut rantau. Bayaran dikenakan pada Apple ID anda semasa pengesahan. Langganan diperbaharui secara automatik melainkan dibatalkan sekurang-kurangnya 24 jam sebelum tempoh semasa tamat. Anda boleh mengurus atau membatalkannya pada bila-bila masa dalam Tetapan → Apple ID → Langganan.
+
+Dasar privasi: https://jackwallner.github.io/hockey/privacy-policy.html
+Terma penggunaan (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Data expected goals dan rembatan datang daripada MoneyPuck.com. Jadual, box score dan biodata pemain ialah data awam NHL. StatScout tidak bergabung dengan, tidak diberi kuasa, diluluskan, atau ditaja oleh National Hockey League (NHL), mana-mana pasukan NHL, NHLPA atau MoneyPuck. Nama pemain, nama pasukan dan statistik hanya digunakan untuk pengenalan dan maklumat.

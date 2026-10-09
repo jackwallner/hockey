@@ -1,0 +1,1 @@
+spillere,målmand,sammenlign,rangering,tracker,resultater,xg,expected,gsax,stilling,kampe,sæson,hold
