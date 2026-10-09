@@ -22,7 +22,7 @@ if [[ ! -d "$ARCHIVE" ]]; then
   echo "error: archive not found: $ARCHIVE" >&2
   echo "Create one first, e.g.:" >&2
   cat >&2 <<'EOF'
-  cd football && bash scripts/testflight.sh
+  cd hockey && bash scripts/testflight.sh
 EOF
   exit 1
 fi
