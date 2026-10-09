@@ -156,7 +156,7 @@ struct Player: Identifiable, Codable, Hashable, Sendable {
             let valueText = metric.value.isEmpty ? "\(metric.percentile.ordinal) percentile" : "\(metric.value), \(metric.percentile.ordinal) percentile"
             return "\(metric.label) \(valueText)"
         } ?? "\(overallPercentile.ordinal) overall percentile"
-        return "\(name) · \(team) \(displayPosition)\nOverall: \(overallPercentile.ordinal) percentile\nTop stat: \(headline)\nHockey Next: StatScout"
+        return "\(name) · \(team) \(displayPosition)\nOverall: \(overallPercentile.ordinal) percentile\nTop stat: \(headline)\nHockey Next: xG StatScout"
     }
 
     func percentile(for category: MetricCategory) -> Int? {

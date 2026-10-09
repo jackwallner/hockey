@@ -102,7 +102,7 @@ platform :ios do
         demo_user: "N/A - no login or account system",
         demo_password: "",
         notes: <<~NOTES
-          The App Store name is Hockey Next: StatScout. The app is named Hockey StatScout in-app and StatScout on the Home Screen. It is a read-only NHL statistics viewer with no accounts or sign-in.
+          The App Store name is Hockey Next: xG StatScout. The app is named Hockey StatScout in-app and StatScout on the Home Screen. It is a read-only NHL statistics viewer with no accounts or sign-in.
 
           Core flow:
           1. Launch the app and open the Stats tab for current-season player rankings.

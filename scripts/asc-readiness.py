@@ -32,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import asc_lib as A  # noqa: E402
 
 BUNDLE_ID = "com.jackwallner.hockey"
-EXPECTED_NAME = "Hockey Next: StatScout"
+EXPECTED_NAME = "Hockey Next: xG StatScout"
 EXPECTED_CATEGORY = "SPORTS"
 EXPECTED_SCREENSHOTS_BY_TYPE = {
     "APP_IPHONE_67": 8,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Configure the nonlocalized Hockey Next: StatScout App Store listing fields."""
+"""Configure the nonlocalized Hockey Next: xG StatScout App Store listing fields."""
 from __future__ import annotations
 
 import os
@@ -11,13 +11,13 @@ import asc_lib as A  # noqa: E402
 
 
 BUNDLE_ID = "com.jackwallner.hockey"
-APP_NAME = "Hockey Next: StatScout"
+APP_NAME = "Hockey Next: xG StatScout"
 # Age-rating answers are copied from the live football sibling, whose record
 # answers every question the same way this app does.
 AGE_TEMPLATE_BUNDLE_ID = os.environ.get(
     "ASC_AGE_TEMPLATE_BUNDLE_ID", "com.jackwallner.football"
 )
-REVIEW_NOTES = """The App Store name is Hockey Next: StatScout. The app is named Hockey StatScout in-app and StatScout on the Home Screen. It is a read-only NHL statistics viewer with no accounts or sign-in.
+REVIEW_NOTES = """The App Store name is Hockey Next: xG StatScout. The app is named Hockey StatScout in-app and StatScout on the Home Screen. It is a read-only NHL statistics viewer with no accounts or sign-in.
 
 Core flow:
 1. Launch the app and open the Stats tab for current-season player rankings.

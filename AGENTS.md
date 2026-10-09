@@ -1,11 +1,11 @@
-# Hockey Next: StatScout Project Guide
+# Hockey Next: xG StatScout Project Guide
 
-Hockey Next: StatScout: NHL expected-goals percentiles / player-comparison app
+Hockey Next: xG StatScout: NHL expected-goals percentiles / player-comparison app
 (iOS). XcodeGen project/scheme: `StatScout` (kept from the football fork to
 minimize churn), sim lease owner `hockey`. Bundle id `com.jackwallner.hockey`,
 product name "Hockey StatScout", home-screen `StatScout`, paid tier `StatScout+`.
 
-**App Store name:** **"Hockey Next: StatScout"** (ASC app `6820644691`), subtitle
+**App Store name:** **"Hockey Next: xG StatScout"** (ASC app `6820644691`), subtitle
 "Advanced NHL Stats & Analytics". Feedback `jackwallner+bb@gmail.com`.
 RevenueCat project `proj5c659dbc`, app `app5504632e55`, entitlement `pro`.
 
