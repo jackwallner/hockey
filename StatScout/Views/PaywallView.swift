@@ -45,7 +45,7 @@ enum PaywallTrigger: Identifiable, Hashable {
         case .playerScouting:    return "binoculars.fill"
         case .recentForm:        return "flame.fill"
         case .bestWorst:         return "arrow.up.arrow.down"
-        case .advancedBoxScore:  return "sportscourt.fill"
+        case .advancedBoxScore:  return "hockey.puck.fill"
         }
     }
 
@@ -130,7 +130,7 @@ enum PaywallTrigger: Identifiable, Hashable {
         ("chart.bar.fill", "Last 2 / 4 / 8 week form on any player, team or leaderboard"),
         ("person.2.fill", "Head-to-head: any two players, every metric"),
         ("shield.lefthalf.filled", "Team scouting: advanced and standard, season or recent"),
-        ("sportscourt.fill", "Advanced box scores: expected goals, high-danger chances and the xG race for every game"),
+        ("hockey.puck.fill", "Advanced box scores: expected goals, high-danger chances and the xG race for every game"),
         ("calendar.badge.clock", "Every season back to 2008-09 + year-over-year trends")
     ]
 

@@ -34,7 +34,7 @@ struct TrialPitchSheet: View {
         switch trigger {
         case .advancedBoxScore:
             return [
-                Benefit(icon: "sportscourt.fill",
+                Benefit(icon: "hockey.puck.fill",
                         title: "Advanced box scores",
                         detail: "Expected goals, high-danger chances and the xG race for every game."),
                 Benefit(icon: "flame.fill",

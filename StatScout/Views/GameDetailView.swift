@@ -181,10 +181,12 @@ struct GameDetailView: View {
     @ViewBuilder
     private func finalDetail(_ game: Game) -> some View {
         if let detail {
-            teamCard(detail, game: game)
+            // The race chart leads: it is the one picture that says how the
+            // game went, and the table under it is the detail behind it.
             if detail.xgRace.count > 2 {
                 xgRaceCard(detail, game: game)
             }
+            teamCard(detail, game: game)
             if !detail.bigPlays.isEmpty {
                 bigPlaysCard(detail, game: game)
             }
