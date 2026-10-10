@@ -71,9 +71,11 @@ struct TeamRankingsCard: View {
                 trailing: store.isPro ? nil : AnyView(proBadge)
             )
 
-            RinkPickerRow {
-                sidePicker.segmentCount(PlayerPositionGroup.allCases.count)
-                modePicker.segmentCount(Mode.allCases.count)
+            // Six capsules on one line squeezed "Forwards" against its own edges,
+            // so the position and the mode each get a full-width row.
+            VStack(spacing: 8) {
+                sidePicker
+                modePicker
             }
             .padding(.horizontal, RinkGeo.padInline)
             .padding(.vertical, 8)

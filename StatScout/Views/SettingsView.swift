@@ -227,7 +227,7 @@ struct AboutView: View {
                 row(
                     icon: "star.fill",
                     title: "Rate or Send Feedback",
-                    subtitle: "Help StatScout grow - or tell us what to improve."
+                    subtitle: "Help StatScout grow, or tell us what to improve."
                 )
             }
             .buttonStyle(.plain)
@@ -353,7 +353,7 @@ struct StatGlossaryView: View {
     private let supplemental: [GlossaryEntry] = [
         .init(id: "general-gp", label: "GP", category: "General", description: "Games played."),
         .init(id: "general-toi", label: "TOI/GP", category: "General", description: "Average ice time per game played, in minutes and seconds."),
-        .init(id: "general-plus-minus", label: "+/-", category: "General", description: "Even-strength goals for minus goals against while the player was on the ice."),
+        .init(id: "general-plus-minus", label: "+/-", category: "General", description: "Goals for minus goals against while the player was on the ice, at even strength or shorthanded. Power-play goals do not count."),
         .init(id: "general-ppp", label: "PPP", category: "General", description: "Power-play points: goals and assists scored with the team a man up. PPG is the goals alone."),
         .init(id: "general-power", label: "Power Rating", category: "General", description: "Goals per game better or worse than an average team on neutral ice, from expected goals and actual goals for, minus against, adjusted for schedule. Early in the season last year's rating counts as extra games of evidence. Two ratings read like a puck line, with about 0.2 goals for home ice."),
         .init(id: "general-small-sample", label: "Small sample", category: "General", description: "Below the playing-time minimum for that stat, prorated by how much of the season the typical team has played. Skaters need 200 minutes over a full season, goalies 600."),
@@ -436,6 +436,9 @@ struct StatGlossaryView: View {
         .background(RinkPalette.canvas.ignoresSafeArea())
         .navigationTitle("Stat Glossary")
         .navigationBarTitleDisplayMode(.inline)
+        // Same midnight bar as the screen it was opened from; the default bar
+        // left the status bar's white clock on a pale background.
+        .modifier(RinkNavBarPublic())
     }
 
     private func categoryCard(_ category: String) -> some View {

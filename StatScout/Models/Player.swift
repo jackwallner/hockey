@@ -468,10 +468,10 @@ enum SeasonLabel {
         return String(format: "%d-%02d", season, end)
     }
 
-    /// "2026-27 regular season" style captions.
+    /// "2026-27 Regular Season" style captions, worded like the season menu.
     static func display(_ season: Int, phase: SeasonPhase) -> String {
         guard season != allTime else { return "All Time" }
-        return "\(display(season)) \(phase == .regular ? "regular season" : "playoffs")"
+        return "\(display(season)) \(phase.label)"
     }
 }
 

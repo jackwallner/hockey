@@ -536,7 +536,7 @@ final class DashboardViewModelTests: XCTestCase {
             SeasonLabel.display(StatScoutSeason.allTime, phase: .regular),
             "All Time"
         )
-        XCTAssertEqual(SeasonLabel.display(2024, phase: .playoffs), "2024-25 playoffs")
+        XCTAssertEqual(SeasonLabel.display(2024, phase: .playoffs), "2024-25 Playoffs")
     }
 
     /// One name for the phase everywhere. The nav pill used to get a bare

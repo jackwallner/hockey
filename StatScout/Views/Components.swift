@@ -101,6 +101,19 @@ func displayTeamAbbr(_ abbr: String) -> String {
 
 // MARK: - Module 2: Percentile Bar Row (MetricBar) - hockey analytics Style
 
+extension String {
+    /// The few traditional stats the standard rows carry in capitals for
+    /// matching, back in their published spelling: "Sh%", "Hits", "Blk".
+    var statDisplayLabel: String {
+        switch self {
+        case "SH%": return "Sh%"
+        case "HITS": return "Hits"
+        case "BLK": return "Blk"
+        default: return self
+        }
+    }
+}
+
 struct MetricBar: View {
     let metric: Metric
     var showValue: Bool = true
@@ -118,7 +131,7 @@ struct MetricBar: View {
         HStack(spacing: 12) {
             // Label column - left aligned
             VStack(alignment: .leading, spacing: 1) {
-                Text(metric.label)
+                Text(metric.label.statDisplayLabel)
                     .font(RinkType.bodyBold)
                     .foregroundStyle(RinkPalette.ink)
                     .lineLimit(1)
@@ -238,7 +251,7 @@ struct DualMetricBar: View {
                     // denominator for them, and averaging their per-game
                     // averages would be a different number wearing this
                     // one's label.
-                    Text("Not available per game")
+                    Text("Season figure only")
                         .font(RinkType.micro)
                         .foregroundStyle(RinkPalette.inkTertiary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -719,10 +732,12 @@ struct LeaderboardTableRow: View {
                     // number's rank, which it is not.
                     if valueOverride == nil {
                         if displayMetric?.isUnranked == true {
-                            Color.clear.frame(width: 40, height: 7)
+                            Color.clear.frame(width: 36, height: 7)
                         } else {
+                            // 36 + 8 + 48 fills the 92pt group exactly; at 40 the
+                            // bar ran 4pt into the team column.
                             PercentileBarMini(percentile: displayPercentile)
-                                .frame(width: 40)
+                                .frame(width: 36)
                                 .opacity(isSmallSample ? 0.35 : 1)
                         }
                     }

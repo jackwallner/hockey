@@ -854,6 +854,12 @@ struct PlayerProfileView: View {
                 set: { recentWindowWeeks = $0.rawValue }
             )
         )
+        // Same inset and shade as the Season / Recent / Both row above it, so the
+        // two controls read as one block rather than the second running edge to
+        // edge.
+        .padding(.horizontal, RinkGeo.padInline)
+        .padding(.bottom, 10)
+        .background(RinkPalette.surfaceAlt)
     }
 
     /// Recent mode shows every season bar: metrics with window data render the

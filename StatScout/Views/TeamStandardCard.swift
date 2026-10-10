@@ -227,7 +227,7 @@ struct TeamStandardCard: View {
                         let now = rates[label] ?? 0
                         let then = seasonLine[label]
                         HStack(spacing: 10) {
-                            Text(label)
+                            Text(label.statDisplayLabel)
                                 .font(RinkType.bodyBold)
                                 .foregroundStyle(RinkPalette.ink)
                                 .frame(width: 68, alignment: .leading)
@@ -278,7 +278,7 @@ struct TeamStandardCard: View {
                 let counts = countingWindowKeys.filter { totals[$0.label] != nil }
                 ForEach(Array(counts.enumerated()), id: \.element.label) { index, entry in
                     HStack {
-                        Text(entry.label)
+                        Text(entry.label.statDisplayLabel)
                             .font(RinkType.bodyBold)
                             .foregroundStyle(RinkPalette.ink)
                         Spacer()

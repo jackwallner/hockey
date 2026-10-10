@@ -32,9 +32,80 @@ extension ScreenshotFixtureAPI {
     /// Fourteen days before the last slot, which is last night (see `asOf`).
     private static let openingNight = Calendar.current.date(byAdding: .day, value: -14, to: asOf.addingTimeInterval(3 * 3_600)) ?? asOf
 
-    static let games: [Game] = makeGames()
+    /// `-FixtureSlate` adds a live night (two games under way, the rest of
+    /// tonight's card to come) and the next two days, so the Games tab has a
+    /// Today and a future day to show. Captures leave it off: it would change
+    /// which game the team page leads with.
+    static let slateArgument = "-FixtureSlate"
 
-    static var gameIds: Set<String> { Set(games.map(\.id)) }
+    static let games: [Game] = {
+        let finals = makeGames()
+        return ProcessInfo.processInfo.arguments.contains(slateArgument) ? finals + makeSlate() : finals
+    }()
+
+    static var gameIds: Set<String> { Set(games.filter(\.isFinal).map(\.id)) }
+
+    /// Sixteen clubs tonight and eight on each of the two days after. Seattle
+    /// plays tomorrow, not tonight, so its team page keeps its last result.
+    private static func makeSlate() -> [Game] {
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfToday = calendar.startOfDay(for: now)
+        let endOfToday = calendar.date(byAdding: .day, value: 1, to: startOfToday)!.addingTimeInterval(-60)
+        let teams = leagueTeamAbbreviations.sorted().filter { $0 != "SEA" }
+        var result: [Game] = []
+        func add(_ index: Int, away: String, home: String, kickoff: Date) {
+            result.append(Game(
+                id: String(format: "20260300%02d", index), season: season, week: 3,
+                kickoff: kickoff, awayTeam: away, homeTeam: home
+            ))
+        }
+        for index in 0..<8 {
+            let kickoff = index < 2
+                ? max(startOfToday.addingTimeInterval(60), now.addingTimeInterval(-3_600))
+                : min(endOfToday, now.addingTimeInterval(TimeInterval(index * 1_200)))
+            add(index, away: teams[index], home: teams[30 - index], kickoff: kickoff)
+        }
+        for day in 1...2 {
+            let base = calendar.date(byAdding: .day, value: day, to: startOfToday)!.addingTimeInterval(19 * 3_600)
+            // Sixteen consecutive clubs from a rotating start, so no club plays
+            // twice in a day.
+            let pool = (0..<16).map { teams[(day * 7 + 3 + $0) % teams.count] }
+            for index in 0..<8 {
+                let away = day == 1 && index == 0 ? "SEA" : pool[index]
+                add(day * 10 + index, away: away, home: pool[8 + index], kickoff: base.addingTimeInterval(TimeInterval(index % 4 * 1_800)))
+            }
+        }
+        return result
+    }
+
+    // MARK: - Power ratings and projections
+
+    /// A rating per club from the invented finals: goal difference per game,
+    /// split into an offense and a defense half, ranked best first.
+    static func makeTeamRatings() -> [TeamRating] {
+        let finals = games.filter(\.isFinal)
+        let table = StandingsRow.build(from: finals, teams: leagueTeamAbbreviations)
+        let rows: [(row: StandingsRow, rating: Double)] = table.values
+            .filter { $0.games > 0 }
+            .map { ($0, Double($0.differential) / Double($0.games)) }
+            .sorted { $0.rating != $1.rating ? $0.rating > $1.rating : $0.row.team < $1.row.team }
+        return rows.enumerated().map { index, entry in
+            let row = entry.row
+            let json: [String: Any] = [
+                "season": season, "team": row.team, "rank": index + 1, "games": row.games,
+                "through_week": 3, "rating": entry.rating,
+                "offense": Double(row.goalsFor) / Double(row.games) - 3.0,
+                "defense": 3.0 - Double(row.goalsAgainst) / Double(row.games),
+                "schedule": unit(row.team, 11) - 0.5,
+                "wins": row.wins, "losses": row.losses, "ties": row.otLosses,
+                "points_for": row.goalsFor, "points_against": row.goalsAgainst,
+            ]
+            // Built through the decoder: the model has no memberwise initializer.
+            let data = (try? JSONSerialization.data(withJSONObject: json)) ?? Data()
+            return (try? JSONDecoder().decode(TeamRating.self, from: data))
+        }.compactMap { $0 }
+    }
 
     private static func makeGames() -> [Game] {
         var order = leagueTeamAbbreviations.sorted()

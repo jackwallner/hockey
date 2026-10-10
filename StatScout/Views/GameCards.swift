@@ -87,7 +87,8 @@ struct TeamGameCard: View {
         }
     }
 
-    /// "TONIGHT · 3-1-0", "LAST GAME · 3-1-0" or "NEXT GAME · 3-1-0".
+    /// "TONIGHT · 3-1-0 · 2ND PACIFIC", "LAST GAME · ..." or "NEXT GAME · ...": the
+    /// club's record, then its place in its division.
     private func heading(_ game: Game) -> String {
         let day = GameDay(date: GameDay.day(of: game), phase: game.seasonPhase)
         let when: String
@@ -96,7 +97,8 @@ struct TeamGameCard: View {
         } else {
             when = game.isFinal ? "Last game" : "Next game"
         }
-        return ([when] + [viewModel.record(forTeam: team)].compactMap { $0 }).joined(separator: " · ").uppercased()
+        let parts = [when, viewModel.record(forTeam: team), viewModel.divisionStanding(forTeam: team)]
+        return parts.compactMap { $0 }.joined(separator: " · ").uppercased()
     }
 
     private func shell<Content: View>(game: Game, @ViewBuilder content: () -> Content) -> some View {
@@ -429,7 +431,7 @@ struct PlayerGameLogCard: View {
     @ViewBuilder
     private func row(_ entry: Entry) -> some View {
         let game = entry.gameId.flatMap { viewModel.game(id: $0) }
-        let content = HStack(alignment: .top, spacing: 10) {
+        let content = HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text(entry.gameDate.formatted(.dateTime.month(.abbreviated).day()))
                 .font(RinkType.statSmall)
                 .foregroundStyle(RinkPalette.inkTertiary)
@@ -446,9 +448,6 @@ struct PlayerGameLogCard: View {
                             .foregroundStyle(game?.result(for: entry.team) == "W" ? RinkPalette.performanceHigh : RinkPalette.performanceLow)
                     }
                     Spacer(minLength: 0)
-                    Text(entry.gameDate.formatted(DataCoverage.gameDayStyle))
-                        .font(RinkType.micro)
-                        .foregroundStyle(RinkPalette.inkTertiary)
                 }
                 Text(entry.summary.isEmpty ? "No box score line" : entry.summary)
                     .font(RinkType.small)

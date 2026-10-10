@@ -25,7 +25,7 @@ struct PlayerIdentityStrip: View {
     /// Bio from `player_profiles`; nil keeps the strip to team and position.
     var profile: PlayerProfile? = nil
 
-    /// "#97 · C · 28 yrs · 6-1, 196".
+    /// `#97 · C · 28 yrs · 6'1", 196 lb`.
     private var bioLine: String {
         guard let profile else { return positionAndHandedness(player) }
         return [
@@ -130,9 +130,14 @@ struct RinkSectionBar: View {
     let title: String
     var trailing: AnyView? = nil
 
+    /// Capitals, except the stat's own spelling: "xG RACE", not "XG RACE".
+    static func caps(_ title: String) -> String {
+        title.uppercased().replacingOccurrences(of: #"\bXG\b"#, with: "xG", options: .regularExpression)
+    }
+
     var body: some View {
         HStack(spacing: 0) {
-            Text(title.uppercased())
+            Text(Self.caps(title))
                 .font(RinkType.sectionTitle)
                 .foregroundStyle(RinkPalette.ink)
                 .padding(.leading, RinkGeo.padCard)

@@ -97,7 +97,8 @@ struct GameDetailView: View {
                 teamColumn(game.homeTeam, game: game, label: "Home")
             }
 
-            Text([game.roundLabel, game.dayLabel, game.stadium].compactMap { $0 }.joined(separator: " · "))
+            // An upcoming game already shows its date under the start time.
+            Text([game.roundLabel, status == .upcoming ? nil : game.dayLabel, game.stadium].compactMap { $0 }.joined(separator: " · "))
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkTertiary)
                 .multilineTextAlignment(.center)
@@ -531,7 +532,7 @@ struct GameDetailView: View {
             let skaters = Array(detail.players(.skater, team: team).prefix(20))
             if !skaters.isEmpty {
                 card(title: "Skaters") {
-                    lineHeader([("TOI", 40), ("G", 22), ("A", 22), ("P", 22), ("SOG", 30), ("ixG", 40), ("GAx", 40)])
+                    lineHeader([("TOI", 40), ("G", 22), ("A", 22), ("P", 24), ("SOG", 38), ("ixG", 40), ("GAx", 40)])
                     ForEach(Array(skaters.enumerated()), id: \.element.id) { index, line in
                         skaterRow(line, index: index)
                     }
@@ -609,8 +610,8 @@ struct GameDetailView: View {
             (line.toiLabel ?? "-", nil, 40),
             (count(line.goals), nil, 22),
             (count(line.assists), nil, 22),
-            (count(line.points), nil, 22),
-            (count(line.sog), nil, 30),
+            (count(line.points), nil, 24),
+            (count(line.sog), nil, 38),
             rated(line.ixg, .decimal, width: 40),
             rated(line.gax, .signedDecimal, width: 40),
         ])

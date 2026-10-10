@@ -263,7 +263,10 @@ struct StandardStatsLeadersView: View {
                 Text("\(rank)")
                     .font(RinkType.statSmall)
                     .foregroundStyle(RinkPalette.inkSecondary)
-                    .frame(width: 36, alignment: .leading)
+                    // Same 42 as the header's RANK slot and the Advanced board,
+                    // so names sit under their header and do not shift when the
+                    // board changes.
+                    .frame(width: 42, alignment: .leading)
 
                 HStack(spacing: 10) {
                     PlayerHeadshot(

@@ -132,7 +132,11 @@ struct HotColdView: View {
                 }
                 .safeAreaInset(edge: .top, spacing: 0) {
                     header
+                        .padding(.bottom, 8)
                         .background(RinkPalette.canvas)
+                        // Rows scroll under this block; the rule says where it ends
+                        // instead of leaving a half-cut row against bare canvas.
+                        .overlay(Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline), alignment: .bottom)
                 }
             } else {
                 VStack(spacing: 0) {

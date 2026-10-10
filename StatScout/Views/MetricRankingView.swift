@@ -48,8 +48,11 @@ struct MetricRankingView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
+                // The bar draws its title in capitals, which would turn "ixG" into
+                // "IXG". The metric already leads the navigation title and heads
+                // the column, so the bar carries only the category.
                 RinkSectionBar(
-                    title: "\(metricLabel) · \(metricCategory.rawValue)",
+                    title: metricCategory.rawValue,
                     trailing: AnyView(
                         HStack(spacing: 12) {
                             if let season {

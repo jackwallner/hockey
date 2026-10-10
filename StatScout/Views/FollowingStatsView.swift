@@ -49,7 +49,7 @@ struct FollowingStatsView: View {
                     ContentUnavailableView {
                         Label("Keep your players close", systemImage: "star")
                     } description: {
-                        Text("Follow your favorites for their season stats and a shortcut to every profile. Following is free.")
+                        Text("Follow your favorites for their season stats and a shortcut to every profile. Following is\u{00A0}free.")
                     } actions: {
                         Button("Choose players") { showingPlayers = true }
                             .buttonStyle(.borderedProminent)
@@ -109,6 +109,11 @@ struct FollowingStatsView: View {
                                 .foregroundStyle(RinkPalette.inkSecondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    // Three-stat lines (goalies) keep the same four columns as
+                    // skaters, so the numbers line up from card to card.
+                    ForEach(0..<max(0, 4 - stats.count), id: \.self) { _ in
+                        Color.clear.frame(maxWidth: .infinity, maxHeight: 1)
                     }
                 }
             } else {

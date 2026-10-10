@@ -7,6 +7,7 @@ struct DashboardView: View {
     @State private var showingAbout = false
     @State private var paywallTrigger: PaywallTrigger?
     @State private var isSearching = false
+    private static let topAnchor = "dashboard-top"
 
     var body: some View {
         ZStack {
@@ -19,8 +20,10 @@ struct DashboardView: View {
                     }
                 }
 
+                ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 0) {
+                        Color.clear.frame(height: 0).id(Self.topAnchor)
                         if !viewModel.players.isEmpty,
                            isSearching || !viewModel.searchText.isEmpty {
                             teamResults
@@ -39,6 +42,12 @@ struct DashboardView: View {
                 .scrollDismissesKeyboard(.interactively)
                 .refreshable {
                     await viewModel.load()
+                }
+                // A new query shrinks the list; without this the board kept its
+                // old scroll offset and the first matches sat behind the search row.
+                .onChange(of: viewModel.searchText) { _, _ in
+                    proxy.scrollTo(Self.topAnchor, anchor: .top)
+                }
                 }
             }
 

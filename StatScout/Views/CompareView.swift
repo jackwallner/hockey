@@ -806,13 +806,19 @@ struct CompareView: View {
                 ZStack {
                     Circle()
                         .fill(team.map(TeamColor.color) ?? RinkPalette.surfaceAlt)
-                        .frame(width: 48, height: 48)
-                    Text(team.map(displayTeamAbbr) ?? "+")
-                        .font(RinkType.smallBold)
-                        .foregroundStyle(team == nil ? RinkPalette.inkTertiary : .white)
+                        .frame(width: 44, height: 44)
+                    if let team {
+                        Text(displayTeamAbbr(team))
+                            .font(RinkType.smallBold)
+                            .foregroundStyle(.white)
+                    } else {
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(RinkPalette.inkTertiary)
+                    }
                 }
                 Text(team.map(teamFullName) ?? placeholder)
-                    .font(RinkType.smallBold)
+                    .font(team == nil ? RinkType.small : RinkType.smallBold)
                     .foregroundStyle(team == nil ? RinkPalette.inkTertiary : RinkPalette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -1121,7 +1127,7 @@ struct ComparePlayerPicker: View {
                 }
             }
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search players")
-            .navigationTitle(season.map { "Select Player · " + String($0) } ?? "Select Player")
+            .navigationTitle(season.map { "Select Player · " + SeasonLabel.display($0) } ?? "Select Player")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

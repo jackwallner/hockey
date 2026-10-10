@@ -87,12 +87,12 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         return Calendar(identifier: .gregorian).dateComponents([.year], from: birthDate, to: date).year
     }
 
-    /// "6-1, 196".
+    /// `6'1", 196 lb`.
     var sizeLabel: String? {
         guard let heightInches, heightInches > 0 else { return nil }
-        let height = "\(heightInches / 12)-\(heightInches % 12)"
+        let height = "\(heightInches / 12)'\(heightInches % 12)\""
         guard let weightPounds, weightPounds > 0 else { return height }
-        return "\(height), \(weightPounds)"
+        return "\(height), \(weightPounds) lb"
     }
 
     /// "2015 R1 #1", or "Undrafted" for a player who came in without a pick.
@@ -259,5 +259,30 @@ struct StandingsRow: Hashable, Sendable, Identifiable {
             if $0.differential != $1.differential { return $0.differential > $1.differential }
             return $0.team < $1.team
         }
+    }
+
+    /// A club's place inside its division, by the same ordering the Standings
+    /// screen draws. Nil before the club has played, or for a club outside the
+    /// four divisions.
+    static func divisionPlace(of team: String, in table: [String: StandingsRow]) -> (place: Int, division: LeagueDivision)? {
+        let abbr = normalizedTeamAbbreviation(team)
+        guard let division = LeagueDivision.division(of: abbr),
+              let row = table[abbr], row.games > 0 else { return nil }
+        let rows = ordered(division.teams.compactMap { table[$0] })
+        guard let index = rows.firstIndex(where: { $0.team == abbr }) else { return nil }
+        return (index + 1, division)
+    }
+
+    /// "1ST", "2ND", "3RD", "4TH", "11TH", "22ND".
+    static func ordinal(_ number: Int) -> String {
+        let teens = (11...13).contains(number % 100)
+        let suffix: String
+        switch (teens, number % 10) {
+        case (false, 1): suffix = "ST"
+        case (false, 2): suffix = "ND"
+        case (false, 3): suffix = "RD"
+        default: suffix = "TH"
+        }
+        return "\(number)\(suffix)"
     }
 }

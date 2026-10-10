@@ -201,8 +201,8 @@ final class PlayerTests: XCTestCase {
         XCTAssertEqual(SeasonLabel.display(2008), "2008-09")
         XCTAssertEqual(SeasonLabel.display(2099), "2099-00")
         XCTAssertEqual(SeasonLabel.display(StatScoutSeason.allTime), "All Time")
-        XCTAssertEqual(SeasonLabel.display(2026, phase: .regular), "2026-27 regular season")
-        XCTAssertEqual(SeasonLabel.display(2025, phase: .playoffs), "2025-26 playoffs")
+        XCTAssertEqual(SeasonLabel.display(2026, phase: .regular), "2026-27 Regular Season")
+        XCTAssertEqual(SeasonLabel.display(2025, phase: .playoffs), "2025-26 Playoffs")
         XCTAssertEqual(SeasonLabel.display(StatScoutSeason.allTime, phase: .playoffs), "All Time")
     }
 }

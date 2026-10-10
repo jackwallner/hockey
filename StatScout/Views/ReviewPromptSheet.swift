@@ -177,6 +177,7 @@ struct ReviewPromptSheet: View {
                 .font(RinkType.body)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 16)
 
             TextEditor(text: $feedbackText)
                 .font(RinkType.body)

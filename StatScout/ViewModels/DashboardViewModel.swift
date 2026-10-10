@@ -437,6 +437,13 @@ final class DashboardViewModel {
         StandingsRow.build(from: games, teams: leagueTeamAbbreviations)
     }
 
+    /// "2ND PACIFIC": the club's place in its division from posted finals, or nil
+    /// before it has played.
+    func divisionStanding(forTeam team: String) -> String? {
+        guard let standing = StandingsRow.divisionPlace(of: team, in: standings) else { return nil }
+        return "\(StandingsRow.ordinal(standing.place)) \(standing.division.rawValue.uppercased())"
+    }
+
     /// Loads the schedule, at most once a minute unless forced. Failures keep
     /// whatever schedule is already on screen.
     func loadGames(force: Bool = false) async {

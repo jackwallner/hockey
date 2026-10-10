@@ -130,8 +130,8 @@ enum PaywallTrigger: Identifiable, Hashable {
         ("chart.bar.fill", "Last 2 / 4 / 8 week form on any player, team or leaderboard"),
         ("person.2.fill", "Head-to-head: any two players, every metric"),
         ("shield.lefthalf.filled", "Team scouting: advanced and standard, season or recent"),
-        ("hockey.puck.fill", "Advanced box scores: expected goals, high-danger chances and the xG race for every game"),
-        ("calendar.badge.clock", "Every season back to 2008-09 + year-over-year trends")
+        ("hockey.puck.fill", "Advanced box scores: expected goals, high\u{2011}danger chances and the xG race for every game"),
+        ("calendar.badge.clock", "Every season back to 2008-09 plus year\u{2011}over\u{2011}year trends")
     ]
 
     var features: [(icon: String, title: String)] {
@@ -169,6 +169,16 @@ struct PaywallView: View {
             } else {
                 content
             }
+
+            // The hero scrolls up under the status bar; this keeps the clock and
+            // battery on a solid midnight strip instead of over the headline.
+            VStack {
+                RinkPalette.midnight
+                    .frame(height: 0)
+                    .background(RinkPalette.midnight.ignoresSafeArea(edges: .top))
+                Spacer()
+            }
+            .allowsHitTesting(false)
 
             closeButton
         }

@@ -307,6 +307,9 @@ private struct TabBarButton: View {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .semibold))
+                    // Symbols differ in height; a fixed slot keeps the five
+                    // labels on one baseline.
+                    .frame(height: 24)
                 Text(label)
                     .font(RinkType.smallBold)
                     .lineLimit(1)

@@ -155,7 +155,7 @@ struct RinkChip: View {
                     .lineLimit(1)
                     // Shrink before truncating: "Regular Sea…" reads as broken,
                     // a slightly smaller "Regular Season" does not.
-                    .minimumScaleFactor(compressible ? 0.75 : 1)
+                    .minimumScaleFactor(compressible ? 0.6 : 1)
             }
             if isLocked {
                 Image(systemName: "crown.fill")

@@ -17,13 +17,30 @@ struct ScreenshotFixtureAPI: StatcastProviding {
     /// the Following board deterministic without teaching a product view about
     /// test data.
     static func prepareUserDefaults() {
-        UserDefaults.standard.set([12001, 12008, 12013], forKey: "favorites.playerIds")
-        UserDefaults.standard.set("SEA", forKey: "favoriteTeam")
-        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        // `-FixtureFresh` is the first-run look: no followed players or club and
+        // no onboarding flag, so the tour can show onboarding and the empty
+        // Following board. Captures leave it off. The keys are cleared rather
+        // than skipped because the device keeps what `capture-screenshots.sh`
+        // wrote with `defaults write`, and removing the app's domain does not
+        // reach it.
+        let defaults = UserDefaults.standard
+        if ProcessInfo.processInfo.arguments.contains(freshLaunchArgument) {
+            defaults.removeObject(forKey: "favorites.playerIds")
+            defaults.removeObject(forKey: "favoriteTeam")
+            defaults.set(false, forKey: "hasCompletedOnboarding")
+            // The shared store may have read the defaults before this ran.
+            MainActor.assumeIsolated { FavoritesStore.shared.setFavorite(team: nil) }
+        } else {
+            defaults.set([12001, 12008, 12013], forKey: "favorites.playerIds")
+            defaults.set("SEA", forKey: "favoriteTeam")
+            defaults.set(true, forKey: "hasCompletedOnboarding")
+        }
         UserDefaults.standard.set("standard", forKey: "stats.board")
         UserDefaults.standard.removeObject(forKey: "statcast.dataFreshness")
         UserDefaults.standard.removeObject(forKey: "statcast.displayedDataRevision")
     }
+
+    static let freshLaunchArgument = "-FixtureFresh"
 
     static let season = StatScoutSeason.current
     private static let priorSeason = season - 1
@@ -105,12 +122,16 @@ struct ScreenshotFixtureAPI: StatcastProviding {
         season == Self.season ? Self.games : []
     }
 
+    func fetchTeamRatings(season: Int) async throws -> [TeamRating] {
+        season == Self.season ? Self.makeTeamRatings() : []
+    }
+
     func fetchGameIdsWithStats(season: Int) async throws -> Set<String> {
         season == Self.season ? Self.gameIds : []
     }
 
     func fetchGameDetail(gameId: String) async throws -> GameDetail? {
-        guard let game = Self.games.first(where: { $0.id == gameId }) else { return nil }
+        guard let game = Self.games.first(where: { $0.id == gameId }), game.isFinal else { return nil }
         return Self.makeGameDetail(for: game)
     }
 
@@ -444,7 +465,9 @@ extension ScreenshotFixtureAPI {
         // Every player moved by a different amount, so the board does not read
         // as one number repeated down the page.
         let wobble = 0.6 + unit("wobble-\(player.playerId)", windowWeeks) * 0.9
-        let moved = delta.mapValues { $0 * wobble }
+        // Over half the players slid instead, so Cooling off has real decliners to show.
+        let direction = seed >= 0.4 ? -1.0 : 1.0
+        let moved = delta.mapValues { $0 * wobble * direction }
         let priorMetrics = metrics.merging(moved) { now, change in now - change }
         return RecentForm(
             fixturePlayerId: player.playerId,

@@ -208,6 +208,18 @@ struct OnboardingCards: View {
         ZStack {
             RinkPalette.canvas.ignoresSafeArea()
 
+            // The tab shell's dark navigation bar turns the status bar text
+            // white, which disappears on the pale canvas. A midnight strip under
+            // the status bar, the colour the app's own bar uses, gives it a
+            // ground.
+            VStack {
+                RinkPalette.midnight
+                    .frame(height: 0)
+                    .background(RinkPalette.midnight.ignoresSafeArea(edges: .top))
+                Spacer()
+            }
+            .allowsHitTesting(false)
+
             VStack(spacing: 0) {
                 HStack {
                     Spacer()
@@ -235,6 +247,13 @@ struct OnboardingCards: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
                 .indexViewStyle(.page(backgroundDisplayMode: .always))
+                .onAppear {
+                    // The default dots are white on gray, which vanish on the
+                    // pale canvas; the current page is the one that must show.
+                    let dots = UIPageControl.appearance(whenContainedInInstancesOf: [UIViewController.self])
+                    dots.currentPageIndicatorTintColor = UIColor(RinkPalette.turf)
+                    dots.pageIndicatorTintColor = UIColor(RinkPalette.inkTertiary).withAlphaComponent(0.35)
+                }
 
                 bottomButtons
                     .padding(.horizontal, 24)
@@ -554,6 +573,9 @@ struct OnboardingCard: View {
                         Image(systemName: bullet.icon)
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(bullet.color)
+                            // One width for every glyph, so the text of the four
+                            // bullets starts on one edge.
+                            .frame(width: 22)
                         Text(bullet.text)
                             .font(RinkType.body)
                             .foregroundStyle(RinkPalette.ink)

@@ -88,6 +88,32 @@ final class EnrichmentTests: XCTestCase {
         )
     }
 
+    func testDivisionPlaceUsesTheStandingsOrderWithinTheDivision() {
+        let pacific = LeagueDivision.pacific.teams
+        let games = [
+            final("1", 1, "SEA", "VAN", 4, 2),
+            final("2", 2, "EDM", "SEA", 3, 2, overtime: true),
+            final("3", 3, "CGY", "EDM", 1, 4),
+            final("4", 4, "BOS", "TOR", 3, 1),
+        ]
+        let table = StandingsRow.build(from: games, teams: leagueTeamAbbreviations)
+        let seattle = StandingsRow.divisionPlace(of: "SEA", in: table)
+        XCTAssertEqual(seattle?.place, 2, "EDM has 4 points, SEA 3, VAN and CGY none")
+        XCTAssertEqual(seattle?.division, .pacific)
+        XCTAssertEqual(StandingsRow.divisionPlace(of: "EDM", in: table)?.place, 1)
+        XCTAssertEqual(StandingsRow.divisionPlace(of: "BOS", in: table)?.division, .atlantic)
+        XCTAssertNil(StandingsRow.divisionPlace(of: "ANA", in: table), "a club that has not played has no place")
+        XCTAssertNil(StandingsRow.divisionPlace(of: "ZZZ", in: table))
+        XCTAssertTrue(pacific.contains("SEA"))
+    }
+
+    func testOrdinalsHandleTeensAndSuffixes() {
+        let cases = [(1, "1ST"), (2, "2ND"), (3, "3RD"), (4, "4TH"), (8, "8TH"), (11, "11TH"), (12, "12TH"), (21, "21ST"), (22, "22ND")]
+        for (number, text) in cases {
+            XCTAssertEqual(StandingsRow.ordinal(number), text)
+        }
+    }
+
     func testStandingsLeavePlayoffGamesAndUnknownClubsOut() {
         let playoff = Game(id: "p", season: 2026, seasonPhase: .playoffs, gameType: "R1", week: 28,
                            kickoff: Date(timeIntervalSince1970: 1_791_000_000), awayTeam: "SEA", homeTeam: "EDM",
@@ -111,7 +137,7 @@ final class EnrichmentTests: XCTestCase {
         """#
         let profile = try XCTUnwrap(try JSONDecoder.statScout.decode([PlayerProfile].self, from: Data(json.utf8)).first)
         XCTAssertEqual(profile.jersey, 97)
-        XCTAssertEqual(profile.sizeLabel, "6-1, 194")
+        XCTAssertEqual(profile.sizeLabel, "6'1\", 194 lb")
         XCTAssertEqual(profile.birthplace, "Fictionville, ON, CAN")
         XCTAssertEqual(profile.draftLabel, "2015 R1 #1")
         XCTAssertEqual(profile.toiPerGameLabel, "21:02")
