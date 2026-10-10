@@ -28,8 +28,7 @@ enum StatScoutProduct {
 }
 
 enum RevenueCatConfig {
-    // RevenueCat key still points at the football project until the hockey
-    // RevenueCat project exists; swap it with the hockey public SDK key.
+    // Hockey RevenueCat project proj5c659dbc, app app5504632e55.
     // Public SDK key (appl_...) - used only in device Release / TestFlight / App
     // Store builds; simulator runs skip Purchases.configure (see configureIfNeeded).
     static let apiKey = "appl_dasBLRrgkhHOPdqYKQMmsLLzEJI"
