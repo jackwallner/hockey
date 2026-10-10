@@ -1,1 +1,1 @@
-expected,gsax,goalie,player,compare,tracker,ranking,bàn,trận,mùa,đội,giải,tỷ,sv,xếp,sút,cứu,corsi
+expected,gsax,goalie,player,compare,tracker,ranking,bàn,trận,mùa,đội,giải,tỷ,sv,xếp,sút,cứu,corsi,xg

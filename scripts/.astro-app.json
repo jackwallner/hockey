@@ -1,12 +1,11 @@
 {
-  "appId": "119",
-  "astroAppName": "Football Next Play: StatScout",
-  "appName": "Football Next: StatScout",
-  "appStoreId": "6792930447",
-  "bundleId": "com.jackwallner.football",
+  "appId": "135",
+  "astroAppName": "Hockey StatScout",
+  "appName": "Hockey Edge: Puck StatScout",
+  "appStoreId": "6820644691",
+  "bundleId": "com.jackwallner.hockey",
   "store": "us",
   "temporary": true,
-  "keywordCount": 84,
-  "syncedAt": "2026-07-29",
-  "note": "ASC draft 1.0 exists but has never been released, so Astro cannot resolve ID 6792930447. Keep temporary tracking under app 119 (its Astro name is still the old 'Football Next Play' string) until Astro indexes the live listing, then migrate keywords and tags across."
+  "syncedAt": "2026-10-10",
+  "note": "1.0 is not live yet, so Astro cannot resolve ID 6820644691. Keep temporary tracking under app 135 until Astro indexes the live listing, then migrate keywords and tags across."
 }

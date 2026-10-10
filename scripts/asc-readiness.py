@@ -13,7 +13,7 @@ Two things this script cannot see, because Apple does not expose them in the
 App Store Connect API at all:
 
   * the **Regulated Medical Device** declaration (App Review 1.4.1), which is
-    web-UI only. Hockey Next answers No: it is a statistics reference and
+    web-UI only. Hockey Edge answers No: it is a statistics reference and
     their clinician set and makes no diagnostic or treatment claim.
   * whether the privacy/support/marketing URLs actually resolve. This script
     fetches them, because App Review rejects on a dead privacy URL and the
@@ -32,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import asc_lib as A  # noqa: E402
 
 BUNDLE_ID = "com.jackwallner.hockey"
-EXPECTED_NAME = "Hockey Next: xG StatScout"
+EXPECTED_NAME = "Hockey Edge: Puck StatScout"
 EXPECTED_CATEGORY = "SPORTS"
 EXPECTED_SCREENSHOTS_BY_TYPE = {
     "APP_IPHONE_67": 8,
