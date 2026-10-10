@@ -221,7 +221,7 @@ struct YearComparisonView: View {
             yearValueColumn(
                 percentile: item.percentileB,
                 value: item.valueB,
-                isWinner: item.percentileB > item.percentileA
+                isWinner: item.percentileB > item.percentileA && !item.isShownTie
             )
             .frame(width: 72)
 
@@ -229,7 +229,7 @@ struct YearComparisonView: View {
             yearValueColumn(
                 percentile: item.percentileA,
                 value: item.valueA,
-                isWinner: item.percentileA > item.percentileB
+                isWinner: item.percentileA > item.percentileB && !item.isShownTie
             )
             .frame(width: 72)
         }
@@ -264,11 +264,12 @@ struct YearComparisonView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
-            if value.isEmpty {
-                Text("PCTL")
-                    .font(RinkType.micro)
-                    .foregroundStyle(RinkPalette.inkTertiary)
-            }
+            // The trophy goes to the higher percentile, not the bigger number,
+            // so a partial season can beat a full one. Show the percentile it
+            // was judged on.
+            Text(value.isEmpty ? "PCTL" : percentile.ordinalString)
+                .font(RinkType.micro)
+                .foregroundStyle(RinkPalette.inkTertiary)
         }
     }
 
@@ -418,6 +419,9 @@ private struct MetricComparison {
     let percentileB: Int
     let valueA: String
     let valueB: String
+
+    /// Both seasons show the same number, so neither gets the trophy.
+    var isShownTie: Bool { !valueA.isEmpty && valueA == valueB }
 }
 
 private extension Sequence where Element: Hashable {

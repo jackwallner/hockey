@@ -8,26 +8,47 @@ struct MetricRankingView: View {
     /// Supplies qualification and volume; nil in previews.
     var viewModel: DashboardViewModel? = nil
     @State private var sortDescending: Bool
+    @State private var position: PlayerPositionGroup?
 
-    init(metricLabel: String, metricCategory: MetricCategory, players: [Player], season: Int?, viewModel: DashboardViewModel? = nil) {
+    init(
+        metricLabel: String,
+        metricCategory: MetricCategory,
+        players: [Player],
+        season: Int?,
+        position: PlayerPositionGroup? = nil,
+        viewModel: DashboardViewModel? = nil
+    ) {
         self.metricLabel = metricLabel
         self.metricCategory = metricCategory
         self.players = players
         self.season = season
         self.viewModel = viewModel
+        _position = State(initialValue: position)
         // Default to "best first" for the active metric (descending for
         // higher-is-better, ascending for pitcher xwOBA / ERA / WHIP / etc.).
         // User can still flip via the header chevron.
         _sortDescending = State(initialValue: DashboardViewModel.defaultSortDescending(label: metricLabel, category: metricCategory))
     }
 
+    private func hasMetric(_ player: Player) -> Bool {
+        player.metrics.contains { $0.label == metricLabel && $0.category == metricCategory }
+    }
+
+    /// The cohorts that carry this metric, in Forwards / Defensemen / Goalies order.
+    private var cohorts: [PlayerPositionGroup] {
+        let groups = Set(players.filter(hasMetric).map(\.positionGroup))
+        return PlayerPositionGroup.allCases.filter(groups.contains)
+    }
+
+    /// Percentiles only compare within a cohort, so the board ranks one at a time.
+    private var activeCohort: PlayerPositionGroup? {
+        if let position, cohorts.contains(position) { return position }
+        return cohorts.first
+    }
+
     private var rankedPlayers: [Player] {
         let sorted = players
-            .filter { player in
-                player.metrics.contains {
-                    $0.label == metricLabel && $0.category == metricCategory
-                }
-            }
+            .filter { hasMetric($0) && $0.positionGroup == activeCohort }
             .sorted(
                 by: DashboardViewModel.metricComparator(
                     label: metricLabel,
@@ -75,6 +96,15 @@ struct MetricRankingView: View {
                         }
                     )
                 )
+
+                if cohorts.count > 1 {
+                    RinkSegmented(
+                        segments: cohorts.map { .init(value: Optional($0), label: $0.displayName) },
+                        selection: Binding(get: { activeCohort }, set: { position = $0 })
+                    )
+                    .padding(.horizontal, RinkGeo.padInline)
+                    .padding(.vertical, 10)
+                }
 
                 if rankedPlayers.isEmpty {
                     ContentUnavailableView {

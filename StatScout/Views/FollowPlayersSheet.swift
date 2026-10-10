@@ -175,7 +175,7 @@ struct FollowPlayersSheet: View {
                         .font(RinkType.bodyBold)
                         .foregroundStyle(RinkPalette.ink)
                         .lineLimit(1)
-                    Text("\(player.team) · \(player.position)")
+                    Text("\(player.team) · \(player.displayPosition)")
                         .font(RinkType.micro)
                         .tracking(0.3)
                         .foregroundStyle(RinkPalette.inkTertiary)

@@ -651,7 +651,8 @@ struct GameDetailView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 if let position = line.position {
-                    Text(position)
+                    // The feed sends wingers as "L" / "R"; every other screen says LW / RW.
+                    Text(position == "L" ? "LW" : position == "R" ? "RW" : position)
                         .font(RinkType.micro)
                         .foregroundStyle(RinkPalette.inkTertiary)
                 }

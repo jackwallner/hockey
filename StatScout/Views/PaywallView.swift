@@ -130,7 +130,7 @@ enum PaywallTrigger: Identifiable, Hashable {
         ("chart.bar.fill", "Last 2 / 4 / 8 week form on any player, team or leaderboard"),
         ("person.2.fill", "Head-to-head: any two players, every metric"),
         ("shield.lefthalf.filled", "Team scouting: advanced and standard, season or recent"),
-        ("hockey.puck.fill", "Advanced box scores: expected goals, high\u{2011}danger chances and the xG race for every game"),
+        ("hockey.puck.fill", "Every player's line in every box score: ixG, GAx and goalie GSAx"),
         ("calendar.badge.clock", "Every season back to 2008-09 plus year\u{2011}over\u{2011}year trends")
     ]
 
@@ -439,7 +439,7 @@ struct PaywallView: View {
                 Button { dismissOnce() } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 28))
-                        .foregroundStyle(.white, .black.opacity(0.28))
+                        .foregroundStyle(.white, .black.opacity(0.55))
                         .padding(16)
                 }
                 .buttonStyle(.plain)

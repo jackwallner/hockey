@@ -711,7 +711,7 @@ enum HockeyMetricRegistry {
         definition("GAA", .goaltending, .traditional, .goaltending, [.goalie], 120, "Goals against per 60 minutes. Lower is better.", higherIsBetter: false),
         definition("W", .goaltending, .traditional, .production, [.goalie], 130, "Wins."),
         definition("SO", .goaltending, .traditional, .production, [.goalie], 140, "Shutouts."),
-        definition("Saves", .goaltending, .traditional, .workload, [.goalie], 150, "Saves."),
+        definition("Saves", .goaltending, .traditional, .workload, [.goalie], 150, "Shots on goal stopped."),
         definition("GA", .goaltending, .traditional, .goaltending, [.goalie], 160, "Goals against. Lower is better.", higherIsBetter: false)
     ]
 

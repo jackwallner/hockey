@@ -509,7 +509,7 @@ struct TeamRankingsCard: View {
     }
 
     private var weightedCaption: some View {
-        Text("Season to date, averaged across the \(side.displayName.lowercased()) on the roster")
+        Text("\(season >= StatScoutSeason.current ? "Season to date" : "Full season"), averaged across the \(side.displayName.lowercased()) on the roster")
             .font(RinkType.micro)
             .foregroundStyle(RinkPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)

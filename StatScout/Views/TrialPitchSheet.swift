@@ -35,8 +35,8 @@ struct TrialPitchSheet: View {
         case .advancedBoxScore:
             return [
                 Benefit(icon: "hockey.puck.fill",
-                        title: "Advanced box scores",
-                        detail: "Expected goals, high-danger chances and the xG race for every game."),
+                        title: "Every player's line",
+                        detail: "ixG and GAx for every skater, GSAx for every goalie, every game."),
                 Benefit(icon: "flame.fill",
                         title: "The Trends board",
                         detail: "The whole league ranked by who's moving, right now."),

@@ -90,10 +90,14 @@ struct HotColdView: View {
 
     /// Ranked by improvement, hot first or cold first. Small samples are
     /// excluded outright: two shifts in a blowout produce enormous deltas
-    /// that would crowd out every real riser.
+    /// that would crowd out every real riser. Only movement in the board's
+    /// direction is listed, so Heating up never ends in a run of fallers.
     private var ranked: [RecentForm] {
         forms
-            .filter { !$0.isSmallSample && improvement($0) != nil }
+            .filter { form in
+                guard !form.isSmallSample, let change = improvement(form) else { return false }
+                return showingCold ? change < 0 : change > 0
+            }
             .sorted {
                 let a = improvement($0) ?? 0
                 let b = improvement($1) ?? 0
@@ -347,7 +351,9 @@ struct HotColdView: View {
             ContentUnavailableView {
                 Label("No movement to rank yet", systemImage: "chart.line.flattrend.xyaxis")
             } description: {
-                Text("\(metric.label) doesn't have a prior window to compare against yet. Try another stat or a shorter window.")
+                Text(forms.contains { $0.priorMetrics[metric.key] != nil }
+                    ? "Nobody's \(metric.label) is \(showingCold ? "falling" : "rising") over this window. Try another stat or window."
+                    : "\(metric.label) doesn't have a prior window to compare against yet. Try another stat or a shorter window.")
             }
             .padding(.vertical, 32)
         } else {

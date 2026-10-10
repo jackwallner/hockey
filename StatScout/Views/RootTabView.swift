@@ -18,6 +18,10 @@ struct MetricRoute: Hashable {
     /// against whatever the tab's phase happened to be, which landed a playoff
     /// drill-down on the regular-season board under a playoff heading.
     var phase: SeasonPhase? = nil
+    /// Which cohort to rank. Percentiles are computed within forwards,
+    /// defensemen or goalies, so a board that mixes them sorts a defenseman's
+    /// 1.4 ixG above a forward's 2.9.
+    var position: PlayerPositionGroup? = nil
 }
 
 /// Drill-down from a traditional stat row to its league leaderboard.
@@ -550,6 +554,7 @@ private struct StandardDestinations: ViewModifier {
                     metricCategory: route.category,
                     players: viewModel.players(forSeason: season, phase: phase),
                     season: season,
+                    position: route.position,
                     viewModel: viewModel
                 )
                     .modifier(RinkNavBar())

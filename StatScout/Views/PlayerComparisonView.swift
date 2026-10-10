@@ -584,7 +584,9 @@ struct PlayerComparisonView: View {
             if let m = metric, m.percentile > 0 || !m.value.isEmpty {
                 let hasValue = !m.value.isEmpty
                 let comparable = other.map { $0.percentile > 0 || !$0.value.isEmpty } ?? false
-                let isWinner = comparable && (other.map { m.percentile > $0.percentile } ?? false)
+                // A tie on the number shown is a tie, whatever the percentiles say.
+                let sameShown = hasValue && other?.value == m.value
+                let isWinner = comparable && !sameShown && (other.map { m.percentile > $0.percentile } ?? false)
                 let pctTextColor = RinkPalette.textColor(forPercentile: m.percentile)
                 VStack(spacing: 4) {
                     HStack(spacing: 4) {

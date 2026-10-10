@@ -66,10 +66,10 @@ struct AboutView: View {
                     .font(.title2)
                     .foregroundStyle(RinkPalette.turf)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Percentile Rankings")
+                    Text("Hockey StatScout")
                         .font(RinkType.cardTitle)
                         .foregroundStyle(RinkPalette.ink)
-                    Text("Mobile-first percentile rankings and leaderboards for fans and media.")
+                    Text("Every NHL skater and goalie ranked by expected goals, against their own position.")
                         .font(RinkType.small)
                         .foregroundStyle(RinkPalette.inkSecondary)
                 }
