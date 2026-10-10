@@ -1,0 +1,1 @@
+Razvrstitev vseh igralcev NHL po pričakovanih golih, s percentilnim profilom in lestvico trendov, ki je osnovna statistika nikoli ne pokaže.

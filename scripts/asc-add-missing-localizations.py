@@ -118,8 +118,17 @@ def read_meta(locale: str, field: str) -> str:
 
 
 def template_for_locale(locale: str, source: str) -> dict:
-    """Build ASC attributes from fastlane files (fallback source locale)."""
-    src = source if (META / source).is_dir() else "en-US"
+    """Build ASC attributes from fastlane files.
+
+    A locale with its own translated folder uploads that copy; the source
+    locale is only the fallback for locales that have none yet.
+    """
+    if (META / locale).is_dir():
+        src = locale
+    elif (META / source).is_dir():
+        src = source
+    else:
+        src = "en-US"
     return {
         "name": read_meta(src, "name") or read_meta("en-US", "name"),
         "subtitle": read_meta(src, "subtitle") or read_meta("en-US", "subtitle"),

@@ -31,6 +31,13 @@ paths:
   `6820648105`, lifetime `6820649135`, PPP via `~/ios/pricing/plan_hockey.py`.
   RevenueCat `proj5c659dbc` has the fleet IAP key K968FW2N5M and ASC key
   27M3333KDW (set over the RC v2 API, `rc api POST /projects/<p>/apps/<a>`).
+- Eleven locales the fleet's other apps carry (bn-BD gu-IN kn-IN ml-IN mr-IN
+  or-IN pa-IN sl-SI ta-IN te-IN ur-PK) are translated in `fastlane/metadata/`
+  but not in ASC yet: 1.0 was in review when they were written. Add them on
+  the 1.0.1 draft with
+  `ASC_APP_VERSION=1.0.1 scripts/asc-add-missing-localizations.py --locales <the 11> --draft-only`;
+  Fastlane's `languages` list does not accept them, so the regular metadata
+  upload skips them.
 - Later products submit standalone over the API now that the first IAPs rode
   with a version.
 

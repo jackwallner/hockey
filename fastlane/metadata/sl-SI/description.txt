@@ -1,0 +1,40 @@
+Poglejte, kdo zares izstopa onkraj osnovne statistike.
+Razvrstite igralce NHL po pričakovanih golih, z enim dotikom odprite celoten percentilni profil in spremljajte, kdo je trenutno v vzponu in kdo v padcu.
+
+StatScout v eni hitri aplikaciji za iPhone združuje ixG, gole nad pričakovanimi, xGF%, Corsi, priložnosti iz nevarnega območja, obranjene gole nad pričakovanimi in znano osnovno statistiko.
+
+VIZUALNI PERCENTILI
+Vsaka metrika je prikazana kot vodoravna percentilna vrstica z barvno oznako, tako kot jo ljubitelji hokeja poznajo iz NHL EDGE: modra pomeni hladno, rdeča vroče, elita lige pa takoj izstopa. Napadalci se primerjajo z napadalci, branilci z branilci, vratarji z vratarji.
+
+CELOTNI PROFILI IGRALCEV
+Dotaknite se katerega koli igralca za celotno sliko: percentilne uvrstitve v kategorijah Zadetki, Kakovost strelov, Nadzor igre in Vratarstvo, preklop med naprednimi metrikami in običajno sezonsko statistiko ter nedavna forma tekmo za tekmo.
+
+STATISTIKA, KI DOHAJA TEKME
+Med sezono StatScout po vsakem večeru tekem preveri, ali so objavljene nove številke, in se posodobi takoj, ko so na voljo. Vsak zaslon pokaže, katere tekme so vključene, zato vedno veste, kaj gledate.
+
+TEKME IN EKIPE
+Spored vsakega večera s končnimi rezultati, napredna statistika vsake tekme (pričakovani goli, poskusi strelov, priložnosti iz nevarnega območja in kumulativna dirka xG), lestvice, ocene moči ekip in napovedane razlike.
+
+LESTVICE IN SPREMLJANJE
+Začnite z znanimi vodilnimi, kot so točke in goli, ali preklopite na napredne lestvice. Filtrirajte po napadalcih, branilcih ali vratarjih in poiščite vsakega aktivnega igralca, ne da bi izgubili njegovo uvrstitev v ligi. Svojo ekipo in priljubljene igralce brezplačno zberite v razdelku Following. Dotaknite se katere koli vrstice za celoten profil.
+
+STATSCOUT+
+S StatScout+ odklenete preostanek aplikacije:
+- Trendi: celotna liga, razvrščena po tem, kdo je v vzponu in kdo v padcu
+- Nedavna forma: zadnjih 2 / 4 / 8 tednov za katerega koli igralca, klub ali lestvico
+- Primerjave igralcev: poljubna dva igralca drug ob drugem ali en igralec iz sezone v sezono
+- Analiza ekip: napredna in običajna statistika za vseh 32 klubov
+- Pretekle sezone: vse sezone od 2008-09 naprej ter percentili celotne kariere
+
+Izberite mesečno, letno (z brezplačnim preizkusom) ali doživljenjsko možnost. En nakup zajema vse.
+
+ZASEBNOST NA PRVEM MESTU
+Brez računov. Brez registracije. Brez oglasov. Brez sledenja tretjih oseb. Aplikacija pošilja le omrežne zahteve, potrebne za statistiko NHL in neobvezno preverjanje nakupov.
+
+Podrobnosti naročnine
+StatScout+ je na voljo kot samodejno obnovljiva naročnina (mesečna ali letna, obe s 7-dnevnim brezplačnim preizkusom) ali kot enkraten doživljenjski nakup. Cene so prikazane v aplikaciji pred nakupom in se razlikujejo glede na regijo. Plačilo se ob potrditvi zaračuna vašemu računu Apple ID. Naročnina se samodejno obnovi, razen če jo prekličete vsaj 24 ur pred koncem trenutnega obdobja. Upravljate ali prekličete jo lahko kadar koli v Nastavitve → Apple ID → Naročnine.
+
+Pravilnik o zasebnosti: https://jackwallner.github.io/hockey/privacy-policy.html
+Pogoji uporabe (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+Podatki o pričakovanih golih in strelih so z MoneyPuck.com. Spored, statistika tekem in biografije igralcev so javni podatki NHL. StatScout ni povezan z ligo National Hockey League (NHL), nobeno ekipo NHL, NHLPA ali MoneyPuck, niti ga ti ne pooblaščajo, podpirajo ali sponzorirajo. Imena igralcev, imena ekip in statistika se uporabljajo le za prepoznavanje in v informativne namene.
