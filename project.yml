@@ -29,7 +29,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.jackwallner.hockey
         PRODUCT_NAME: "Hockey StatScout"
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "3"
+        CURRENT_PROJECT_VERSION: "4"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: StatScout/Info.plist
         CODE_SIGN_ENTITLEMENTS: StatScout/StatScout.entitlements
