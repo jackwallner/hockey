@@ -10,24 +10,26 @@ paths:
 
 # App Store release workflow
 
-## Current state, 2026-10-08
+## Current state, 2026-10-10
 
-- ASC app `6820644691` created 2026-10-08 with version 1.0 in
-  `PREPARE_FOR_SUBMISSION`. No build uploaded yet.
+- Version 1.0 (build 3, iPhone-only) submitted for review 2026-10-10 with
+  release type MANUAL, together with the subscription group, both
+  subscriptions and the lifetime IAP (review submission
+  `00b6f7b9-26e8-461f-9b59-840908a96cd4`, five items). Release it manually
+  once approved.
+- Store name "Hockey Next: xG StatScout", 39 locales, 8 screenshots, price
+  Free in 175 territories, App Privacy "Data Not Collected" (published).
 - Products: `com.jackwallner.hockey.pro.yearly` ($9.99/yr, 1-week trial),
   `com.jackwallner.hockey.pro.monthly` ($1.99/mo, 1-week trial),
-  `com.jackwallner.hockey.pro` ($19.99 lifetime). Created in RevenueCat
-  (`proj5c659dbc`) and in ASC on 2026-10-08 (subs `6820647519` monthly,
-  `6820648105` yearly, with 1-week FREE_TRIAL intros; lifetime at $19.99 in
-  175 territories). PPP ladders applied 2026-10-08 with `~/ios/pricing/plan_hockey.py`
-  (348 sub rows, 23 lifetime territories). Products sit at `MISSING_METADATA`
-  until `scripts/asc-finish-products.py --screenshot <paywall.png>` adds the
-  availability records and review screenshot.
-- The first IAP submission must ride with the version (Guideline 2.1(b)),
-  and the "Add for Review" step is UI-only: see the `ios-dev` skill.
+  `com.jackwallner.hockey.pro` ($19.99 lifetime), subs `6820647519` /
+  `6820648105`, lifetime `6820649135`, PPP via `~/ios/pricing/plan_hockey.py`.
+  RevenueCat `proj5c659dbc` has the fleet IAP key K968FW2N5M and ASC key
+  27M3333KDW (set over the RC v2 API, `rc api POST /projects/<p>/apps/<a>`).
+- Later products submit standalone over the API now that the first IAPs rode
+  with a version.
 
 The `submit_review` lane uses `automatic_release: false`. `Deliverfile` lists
-the locales currently accepted by Fastlane; only en-US metadata exists so far.
+the locales currently accepted by Fastlane; all 39 locales are listed.
 
 ## Draft version helper
 

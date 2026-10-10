@@ -109,7 +109,7 @@ def main() -> int:
             )
             print("added the version to the submission")
         except RuntimeError as error:
-            if "DUPLICATE" not in str(error):
+            if "DUPLICATE" not in str(error) and "already added" not in str(error):
                 raise
             print("version was already queued")
 
