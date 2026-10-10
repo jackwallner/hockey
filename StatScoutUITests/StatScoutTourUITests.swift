@@ -731,7 +731,11 @@ final class StatScoutTourUITests: XCTestCase {
     /// their own copy of a control, and the hidden ones are not tappable.
     private func button(_ label: String, in app: XCUIApplication) -> XCUIElement {
         let matches = app.buttons.matching(NSPredicate(format: "label ==[c] %@", label))
-        return onScreen(matches, in: app).first ?? matches.firstMatch
+        // Every tab stays in the tree at full-screen frames, so Trends' "Stat"
+        // menu and Stats' "Defensemen" tab both count as on screen from the
+        // other tab. Only the visible tab's copy is hittable.
+        let visible = onScreen(matches, in: app)
+        return visible.first(where: \.isHittable) ?? visible.first ?? matches.firstMatch
     }
 
     /// The matches whose frame sits inside the screen, in query order. A
