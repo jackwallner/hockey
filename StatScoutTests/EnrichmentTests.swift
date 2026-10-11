@@ -75,7 +75,9 @@ final class EnrichmentTests: XCTestCase {
         XCTAssertEqual(seattle.goalsFor, 7)
         XCTAssertEqual(seattle.goalsAgainst, 9)
         XCTAssertEqual(seattle.differential, -2)
-        XCTAssertEqual(seattle.streak, "L2", "an overtime loss is a loss in the streak")
+        XCTAssertEqual(seattle.streak, "L1", "an overtime loss is its own streak code, as the NHL writes it")
+        let afterOvertime = StandingsRow.build(from: Array(games.prefix(2)), teams: ["SEA"])
+        XCTAssertEqual(afterOvertime["SEA"]!.streak, "OT1")
         XCTAssertEqual(table["CGY"]!.record, "1-0-0")
         XCTAssertEqual(table["CGY"]!.streak, "W1")
         XCTAssertEqual(table["EDM"]!.points, 2)
@@ -132,16 +134,18 @@ final class EnrichmentTests: XCTestCase {
         let json = #"""
         [{"player_id":8000001,"season":2026,"jersey":97,"birth_date":"1997-01-13","height_in":73,"weight_lb":194,
           "birthplace":"Fictionville, ON, CAN","years_exp":11,"rookie_season":2015,"draft_year":2015,"draft_round":1,
-          "draft_pick":1,"draft_team":"EDM","toi_seconds":126200,"toi_per_gp":1262,"pp_toi_seconds":20000,
-          "pk_toi_seconds":2000,"toi_share":0.123,"updated_at":"2026-10-08T18:54:32.1+00:00","unknown_column":1}]
+          "draft_pick":1,"draft_team":"EDM","toi_seconds":126200,"toi_per_gp":1262.4,"pp_toi_seconds":20000,
+          "pk_toi_seconds":2000,"toi_share":0.123,"is_rookie":true,"updated_at":"2026-10-08T18:54:32.1+00:00","unknown_column":1}]
         """#
         let profile = try XCTUnwrap(try JSONDecoder.statScout.decode([PlayerProfile].self, from: Data(json.utf8)).first)
         XCTAssertEqual(profile.jersey, 97)
         XCTAssertEqual(profile.sizeLabel, "6'1\", 194 lb")
         XCTAssertEqual(profile.birthplace, "Fictionville, ON, CAN")
-        XCTAssertEqual(profile.draftLabel, "2015 R1 #1")
+        XCTAssertEqual(profile.draftLabel, "2015 Rd 1, #1 overall")
         XCTAssertEqual(profile.toiPerGameLabel, "21:02")
         XCTAssertEqual(profile.toiSeconds, 126_200)
+        XCTAssertEqual(profile.toiPerGame, 1262, "a fractional average must not drop the row")
+        XCTAssertEqual(profile.isRookie, true)
         XCTAssertEqual(try XCTUnwrap(profile.toiShare), 0.123, accuracy: 0.0001)
         XCTAssertEqual(profile.specialTeamsLabel(games: 100), "3:20 PP · 0:20 PK")
         XCTAssertNil(profile.specialTeamsLabel(games: 0))
@@ -162,7 +166,7 @@ final class EnrichmentTests: XCTestCase {
     func testProjectionLabelsTheFavourite() throws {
         let json = #"[{"game_id":"g","home_margin":-0.6,"home_win_prob":0.446},{"game_id":"h","home_margin":0.1,"home_win_prob":0.51}]"#
         let rows = try JSONDecoder.statScout.decode([GameProjection].self, from: Data(json.utf8))
-        XCTAssertEqual(rows[0].label(home: "EDM", away: "SEA"), "SEA by 0.6")
+        XCTAssertEqual(rows[0].label(home: "EDM", away: "SEA"), "SEA 55%")
         XCTAssertEqual(rows[0].winProbability(for: "SEA", home: "EDM"), 0.554, accuracy: 0.0001)
         XCTAssertEqual(rows[0].winProbability(for: "EDM", home: "EDM"), 0.446, accuracy: 0.0001)
         XCTAssertEqual(rows[1].label(home: "EDM", away: "SEA"), "Toss-up")
@@ -172,9 +176,9 @@ final class EnrichmentTests: XCTestCase {
         let json = #"[{"season":2026,"team":"SEA","rank":1,"games":6,"through_week":2,"rating":0.71,"offense":0.39,"defense":0.32,"schedule":-0.08,"wins":4,"losses":1,"ties":1,"points_for":22,"points_against":14,"updated_at":"2026-10-08T18:54:32+00:00"}]"#
         let rating = try XCTUnwrap(try JSONDecoder.statScout.decode([TeamRating].self, from: Data(json.utf8)).first)
         XCTAssertEqual(rating.ties, 1, "the ties column holds overtime losses")
-        XCTAssertEqual(TeamRating.signed(rating.rating), "+0.7")
-        XCTAssertEqual(TeamRating.signed(-0.04), "0.0")
-        XCTAssertEqual(TeamRating.signed(-0.37), "-0.4")
+        XCTAssertEqual(TeamRating.signed(rating.rating), "+0.71")
+        XCTAssertEqual(TeamRating.signed(-0.004), "0.00")
+        XCTAssertEqual(TeamRating.signed(-0.37), "-0.37")
     }
 
     // MARK: View model wiring

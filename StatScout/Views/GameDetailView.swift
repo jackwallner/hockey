@@ -41,11 +41,21 @@ struct GameDetailView: View {
             await loadDetail()
         }
         .task { await viewModel.loadGames() }
+        .task(id: gameId) { await pollLiveScore() }
         .sheet(item: $paywallTrigger) { trigger in
             TrialPitchSheet(trigger: trigger)
         }
         .task(id: "\(gameId)-\(game.map(viewModel.hasStats) ?? false)-\(viewModel.freshnessRevision ?? "none")") {
             await loadDetail()
+        }
+    }
+
+    /// Keeps the running score fresh while the game is under way.
+    private func pollLiveScore() async {
+        while !Task.isCancelled {
+            guard let game, [.inProgress, .awaitingScore].contains(game.status()) else { return }
+            await viewModel.refreshLiveScores()
+            try? await Task.sleep(for: .seconds(30))
         }
     }
 
@@ -72,6 +82,7 @@ struct GameDetailView: View {
 
     private func header(_ game: Game) -> some View {
         let status = game.status()
+        let live = viewModel.liveScore(for: game)
         return VStack(spacing: 10) {
             HStack(alignment: .center, spacing: 8) {
                 teamColumn(game.awayTeam, game: game, label: "Away")
@@ -84,14 +95,33 @@ struct GameDetailView: View {
                                 .foregroundStyle(RinkPalette.inkTertiary)
                             scoreText(game.homeScore, winner: game.result(for: game.homeTeam) == "W")
                         }
+                    } else if let live {
+                        HStack(spacing: 10) {
+                            scoreText(live.awayScore, winner: true)
+                            Text("-")
+                                .font(RinkType.statLarge)
+                                .foregroundStyle(RinkPalette.inkTertiary)
+                            scoreText(live.homeScore, winner: true)
+                        }
                     } else {
                         Text(status == .upcoming ? game.kickoffLabel : "In progress")
                             .font(RinkType.cardTitle)
                             .foregroundStyle(status == .upcoming ? RinkPalette.ink : RinkPalette.performanceLow)
                     }
-                    Text(statusLine(game, status: status))
-                        .font(RinkType.micro)
-                        .foregroundStyle(RinkPalette.inkTertiary)
+                    if let live {
+                        Text(live.clockLabel)
+                            .font(RinkType.smallBold)
+                            .foregroundStyle(live.isFinal ? RinkPalette.ink : RinkPalette.performanceLow)
+                        if let away = live.awayShots, let home = live.homeShots {
+                            Text("Shots \(away)-\(home)")
+                                .font(RinkType.micro)
+                                .foregroundStyle(RinkPalette.inkTertiary)
+                        }
+                    } else {
+                        Text(statusLine(game, status: status))
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
+                    }
                 }
                 .frame(minWidth: 110)
                 teamColumn(game.homeTeam, game: game, label: "Home")
@@ -152,7 +182,7 @@ struct GameDetailView: View {
 
     private func statusLine(_ game: Game, status: GameStatus) -> String {
         switch status {
-        case .final: return game.overtime ? "Final/OT" : "Final"
+        case .final: return game.finalLabel
         case .inProgress, .awaitingScore: return "Score posts at the final"
         case .upcoming: return game.kickoff.map { $0.formatted(.dateTime.month(.abbreviated).day()) } ?? ""
         }
@@ -172,7 +202,9 @@ struct GameDetailView: View {
             notice(
                 icon: "hockey.puck",
                 title: "Game in progress",
-                text: "The score and the shot breakdown post when the game goes final."
+                text: viewModel.liveScore(for: game) == nil
+                    ? "The score and the shot breakdown post when the game goes final."
+                    : "Expected goals, the xG race and every player's line post after the final, usually by the next morning."
             )
         case .final, .awaitingScore:
             finalDetail(game)
@@ -428,11 +460,11 @@ struct GameDetailView: View {
                 .chartYScale(domain: 0...top)
                 .chartXScale(domain: 0...end)
                 .chartXAxis {
-                    AxisMarks(values: [0, 1200, 2400] + (end > 3600 ? [3600] : [])) { value in
+                    AxisMarks(values: Array(stride(from: 0.0, to: end, by: 1200))) { value in
                         AxisGridLine().foregroundStyle(RinkPalette.divider)
                         AxisValueLabel(anchor: .topLeading) {
-                            let seconds = value.as(Double.self) ?? 0
-                            Text(seconds >= 3600 ? "OT" : "P\(Int(seconds / 1200) + 1)")
+                            let period = Int((value.as(Double.self) ?? 0) / 1200) + 1
+                            Text(period <= 3 ? "P\(period)" : period == 4 ? "OT" : "\(period - 3)OT")
                                 .font(RinkType.micro)
                                 .foregroundStyle(RinkPalette.inkTertiary)
                         }
@@ -462,24 +494,34 @@ struct GameDetailView: View {
 
     // MARK: - Chances
 
-    /// "P2 12:34", "OT 3:05".
-    private func periodLabel(_ play: GameDetail.BigPlay) -> String {
+    /// "P2 12:34", "OT 3:05", "2OT 4:10" in the playoffs, where overtime keeps
+    /// going and there is no shootout.
+    private func periodLabel(_ play: GameDetail.BigPlay, game: Game) -> String {
         let period: String
         switch play.period {
         case ...3: period = "P\(play.period)"
         case 4: period = "OT"
-        default: period = "SO"
+        default: period = game.seasonPhase == .playoffs ? "\(play.period - 3)OT" : "SO"
         }
-        let clock = play.clock.hasPrefix("0") ? String(play.clock.dropFirst()) : play.clock
+        let clock = play.clock.hasPrefix("0") && play.clock.count > 4 ? String(play.clock.dropFirst()) : play.clock
         return "\(period) \(clock)"
     }
 
+    /// "EDM 2-1": the score after a goal, leader first, or "2-2" when tied.
+    private func scoreAfter(_ play: GameDetail.BigPlay, game: Game) -> String? {
+        guard let score = play.score, score.count == 2 else { return nil }
+        let (away, home) = (score[0], score[1])
+        if away == home { return "\(away)-\(home)" }
+        let leader = away > home ? game.awayTeam : game.homeTeam
+        return "\(displayTeamAbbr(leader)) \(max(away, home))-\(min(away, home))"
+    }
+
     private func bigPlaysCard(_ detail: GameDetail, game: Game) -> some View {
-        card(title: "Chances that decided it") {
+        card(title: "Goals and top chances") {
             ForEach(Array(detail.bigPlays.enumerated()), id: \.element.id) { index, play in
                 HStack(alignment: .top, spacing: 10) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(periodLabel(play))
+                        Text(periodLabel(play, game: game))
                             .lineLimit(1)
                             .font(RinkType.micro)
                             .foregroundStyle(RinkPalette.inkTertiary)
@@ -492,33 +534,59 @@ struct GameDetailView: View {
                     }
                     .frame(width: 58, alignment: .leading)
                     VStack(alignment: .leading, spacing: 2) {
-                        if let shooter = play.shooter {
-                            Text(shooter)
-                                .font(play.isGoal ? RinkType.bodyBold : RinkType.small)
-                                .foregroundStyle(RinkPalette.ink)
-                                .lineLimit(1)
+                        HStack(spacing: 6) {
+                            if let shooter = play.shooter {
+                                Text(shooter + (play.isGoal ? play.goalNumber.map { " (\($0))" } ?? "" : ""))
+                                    .font(play.isGoal ? RinkType.bodyBold : RinkType.small)
+                                    .foregroundStyle(RinkPalette.ink)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.85)
+                            }
+                            if let strength = play.strength {
+                                Text(strength)
+                                    .font(RinkType.micro)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(RinkPalette.inkSecondary)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .overlay(RoundedRectangle(cornerRadius: 3).stroke(RinkPalette.hairline, lineWidth: 1))
+                            }
                         }
-                        Text(play.description)
-                            .font(play.isGoal ? RinkType.smallBold : RinkType.small)
-                            .foregroundStyle(play.isGoal ? RinkPalette.ink : RinkPalette.inkSecondary)
+                        if let assists = play.assistLine {
+                            Text(assists)
+                                .font(RinkType.small)
+                                .foregroundStyle(RinkPalette.inkSecondary)
+                                .lineLimit(2)
+                        }
+                        Text(([play.resultLabel] + [play.description]).compactMap { $0 }.joined(separator: " · "))
+                            .font(RinkType.small)
+                            .foregroundStyle(play.isGoal ? RinkPalette.inkTertiary : RinkPalette.inkSecondary)
                             .lineLimit(3)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    if let xg = play.xg {
-                        Text(xg.formatted(.number.precision(.fractionLength(2))) + " xG")
-                            .font(RinkType.statSmall)
-                            .fontWeight(play.isGoal ? .bold : .regular)
-                            .foregroundStyle(play.isGoal ? RinkPalette.performanceHigh : RinkPalette.inkSecondary)
-                            .lineLimit(1)
-                            .frame(width: 62, alignment: .trailing)
+                    VStack(alignment: .trailing, spacing: 2) {
+                        if play.isGoal, let score = scoreAfter(play, game: game) {
+                            Text(score)
+                                .font(RinkType.smallBold)
+                                .foregroundStyle(RinkPalette.ink)
+                                .lineLimit(1)
+                        }
+                        if let xg = play.xg {
+                            Text(xg.formatted(.number.precision(.fractionLength(2))) + " xG")
+                                .font(RinkType.statSmall)
+                                .fontWeight(play.isGoal ? .bold : .regular)
+                                .foregroundStyle(play.isGoal ? RinkPalette.performanceHigh : RinkPalette.inkSecondary)
+                                .lineLimit(1)
+                        }
                     }
+                    .frame(width: 72, alignment: .trailing)
                 }
                 .padding(.horizontal, RinkGeo.padInline)
                 .padding(.vertical, 10)
                 .background(index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt)
                 .accessibilityElement(children: .combine)
             }
-            footnoteRow("Every goal plus the five most dangerous shots that did not score.")
+            footnoteRow("Every goal, with its assists, plus the five most dangerous shots that did not score. PP power play, SH shorthanded, EN empty net.")
         }
     }
 

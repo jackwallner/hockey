@@ -1082,8 +1082,8 @@ struct ComparePlayerPicker: View {
     private var filtered: [Player] {
         guard !searchText.isEmpty else { return players }
         return players.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.team.localizedCaseInsensitiveContains(searchText)
+            $0.name.searchMatches(searchText) ||
+            $0.team.searchMatches(searchText)
         }
     }
 
@@ -1148,8 +1148,8 @@ struct CompareTeamPicker: View {
         let sorted = teams.sorted { teamFullName($0) < teamFullName($1) }
         guard !searchText.isEmpty else { return sorted }
         return sorted.filter {
-            $0.localizedCaseInsensitiveContains(searchText)
-                || teamFullName($0).localizedCaseInsensitiveContains(searchText)
+            $0.searchMatches(searchText)
+                || teamFullName($0).searchMatches(searchText)
         }
     }
 

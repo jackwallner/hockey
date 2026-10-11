@@ -69,6 +69,10 @@ struct TeamGameCard: View {
                 Text(line)
                     .font(RinkType.statMed)
                     .foregroundStyle(game.result(for: team) == "W" ? RinkPalette.performanceHigh : RinkPalette.performanceLow)
+            } else if let live = viewModel.liveScore(for: game) {
+                Text("\(live.score(isHome: game.isHome(team)))-\(live.score(isHome: !game.isHome(team)))")
+                    .font(RinkType.statMed)
+                    .foregroundStyle(RinkPalette.ink)
             }
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
@@ -81,7 +85,7 @@ struct TeamGameCard: View {
         case .final:
             return viewModel.hasStats(game) ? "Final · box score" : "Final · stats arriving"
         case .inProgress, .awaitingScore:
-            return "In progress"
+            return viewModel.liveScore(for: game).map { "Live · \($0.clockLabel)" } ?? "In progress"
         case .upcoming:
             return "\(game.dayLabel), \(game.kickoff?.formatted(date: .omitted, time: .shortened) ?? "time TBD")"
         }

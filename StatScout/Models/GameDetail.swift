@@ -28,6 +28,18 @@ struct RatedValue: Decodable, Hashable, Sendable {
     }
 }
 
+/// Each side's expected goals for one final, the number the Games list shows
+/// under a score.
+struct GameXG: Hashable, Sendable {
+    let away: Double
+    let home: Double
+
+    /// "xG 2.9-1.7", away first like the rows above it.
+    var label: String {
+        "xG " + String(format: "%.1f-%.1f", away, home)
+    }
+}
+
 /// Shot-level breakdown for one game, from `public.game_details`: expected
 /// goals by side, every skater's and goalie's line, the cumulative xG race,
 /// and the chances that decided it.
@@ -94,13 +106,46 @@ struct GameDetail: Decodable, Sendable {
         let result: String
         let playerId: Int?
         let shooter: String?
+        /// Goals only: assisting players' full names, primary first.
+        let assists: [String]?
+        /// Goals only: "PP", "SH" or "EN"; nil at even strength.
+        let strength: String?
+        /// Goals only: the score after it, `[away, home]`.
+        let score: [Int]?
+        /// Goals only: the scorer's season goal count, the "(5)" of a summary.
+        let goalNumber: Int?
 
         var id: String { "\(period)-\(clock)-\(team)-\(result)-\(playerId ?? 0)" }
         var isGoal: Bool { result.uppercased() == "GOAL" }
 
+        /// "Saved", "Missed", "Blocked" for a chance that did not score.
+        var resultLabel: String? {
+            switch result.uppercased() {
+            case "SAVE": return "Saved"
+            case "MISS": return "Missed"
+            case "BLOCK": return "Blocked"
+            default: return nil
+            }
+        }
+
+        /// "Draisaitl, Nugent-Hopkins", "Unassisted", or nil before the feed
+        /// carried assists.
+        var assistLine: String? {
+            guard isGoal, let assists else { return nil }
+            guard !assists.isEmpty else { return "Unassisted" }
+            return assists.map(Self.lastName).joined(separator: ", ")
+        }
+
+        /// "Connor McDavid" -> "McDavid", "James van Riemsdyk" -> "van Riemsdyk".
+        static func lastName(_ name: String) -> String {
+            let parts = name.split(separator: " ", maxSplits: 1)
+            return parts.count == 2 ? String(parts[1]) : name
+        }
+
         enum CodingKeys: String, CodingKey {
-            case period, clock, team, description, xg, result, shooter
+            case period, clock, team, description, xg, result, shooter, assists, strength, score
             case playerId = "player_id"
+            case goalNumber = "goal_number"
         }
     }
 

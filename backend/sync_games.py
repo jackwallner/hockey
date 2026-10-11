@@ -20,7 +20,8 @@ NHL id as text; ``game_type`` is ``REG`` or the playoff round (``R1``, ``R2``,
 blocks from the Monday on or before ``regularSeasonStartDate`` (playoffs
 continue the count); ``kickoff_at`` is ``startTimeUTC``; scores are written only
 when ``gameState`` is ``FINAL`` or ``OFF``; ``overtime`` is a last period of
-``OT`` or ``SO``. Preseason (gameType 1) and all-star games are skipped.
+``OT`` or ``SO``, and ``final_period`` says which (``OT``, ``SO``, or ``2OT``
+and up in the playoffs). Preseason (gameType 1) and all-star games are skipped.
 
 CLI: ``python backend/sync_games.py --season 2026`` (syncs that season and the
 one before it; ``--only`` limits it to one season).
@@ -78,6 +79,8 @@ class Game:
     home_score: Optional[int]
     overtime: bool
     stadium: Optional[str]
+    # "OT", "SO", or "2OT" and up for a playoff game; None in regulation.
+    final_period: Optional[str] = None
 
     @property
     def is_final(self) -> bool:
@@ -98,6 +101,7 @@ class Game:
             "home_score": self.home_score,
             "overtime": self.overtime,
             "stadium": self.stadium,
+            "final_period": self.final_period,
             "synced_at": synced_at.isoformat(),
         }
 
@@ -148,6 +152,18 @@ def _last_period_type(raw: Mapping[str, Any]) -> str:
     return str(outcome.get("lastPeriodType") or period.get("periodType") or "").upper()
 
 
+def final_period(raw: Mapping[str, Any]) -> Optional[str]:
+    """``"OT"``, ``"SO"`` or ``"2OT"`` (playoff overtimes keep counting)."""
+    kind = _last_period_type(raw)
+    if kind == "SO":
+        return "SO"
+    if kind != "OT":
+        return None
+    number = int((raw.get("periodDescriptor") or {}).get("number") or 4)
+    extra = max(1, number - 3)
+    return "OT" if extra == 1 else f"{extra}OT"
+
+
 def parse_game(
     raw: Mapping[str, Any],
     season: int,
@@ -186,6 +202,7 @@ def parse_game(
         home_score=_score(home) if final else None,
         overtime=final and _last_period_type(raw) in ("OT", "SO"),
         stadium=venue or None,
+        final_period=final_period(raw) if final else None,
     )
 
 

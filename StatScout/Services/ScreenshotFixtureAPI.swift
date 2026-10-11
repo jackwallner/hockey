@@ -130,6 +130,17 @@ struct ScreenshotFixtureAPI: StatcastProviding {
         season == Self.season ? Self.gameIds : []
     }
 
+    func fetchGameExpectedGoals(season: Int) async throws -> [String: GameXG] {
+        guard season == Self.season else { return [:] }
+        var out: [String: GameXG] = [:]
+        for game in Self.games where game.isFinal && Self.gameIds.contains(game.id) {
+            guard let detail = Self.makeGameDetail(for: game),
+                  let away = detail.away["xg"]?.value, let home = detail.home["xg"]?.value else { continue }
+            out[game.id] = GameXG(away: away, home: home)
+        }
+        return out
+    }
+
     func fetchGameDetail(gameId: String) async throws -> GameDetail? {
         guard let game = Self.games.first(where: { $0.id == gameId }), game.isFinal else { return nil }
         return Self.makeGameDetail(for: game)

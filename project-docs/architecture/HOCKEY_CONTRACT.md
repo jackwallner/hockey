@@ -198,8 +198,11 @@ Goalie keys: `sv_pct`, `gaa`, `gsax`, `gsax_per_60`, `hd_sv_pct`,
 `game_id` text (NHL id), `game_type` `REG` or playoff round `R1`/`R2`/`CF`/`SCF`,
 `week` league week, `kickoff_at` = `startTimeUTC`, `stadium` = venue, scores
 written only when `gameState` is `FINAL` or `OFF` (in-progress games stay
-null; the app says "In progress" after the start time), `overtime` = last
-period type `OT` or `SO`. Synced from the schedule endpoint for the live
+null), `overtime` = last period type `OT` or `SO`, `final_period` = `OT`,
+`SO`, or `2OT` and up for a playoff game (null in regulation). Running
+scores of games under way come from the NHL scoreboard
+(`api-web.nhle.com/v1/score/<date>`), which the app reads itself every 30
+seconds while a game is on. Synced from the schedule endpoint for the live
 season and the previous one.
 
 ## `game_details`
@@ -227,7 +230,11 @@ is a plain count):
 - `big_plays`: every goal plus the five highest-xG non-goals, each
   `{period, clock, team, description, xg, result, player_id, shooter}` with
   `clock` as `"12:34"` elapsed in the period, `result` one of `GOAL`, `SAVE`,
-  `MISS`, `BLOCK`, and `description` like "Snap shot, slot, rebound".
+  `MISS`, `BLOCK`, and `description` like "Snap shot, slot, rebound". Goals
+  also carry `assists` (full names, primary first), `strength` (`PP`, `SH`,
+  `EN` or null), `score` (`[away, home]` after the goal) and `goal_number`
+  (the scorer's season total), from the NHL play-by-play; a goal the shot file
+  lacks is added with a null `xg`, and the league's credited scorer wins.
 
 ## Enrichment
 
@@ -235,7 +242,8 @@ is a plain count):
   `height_in`, `weight_lb`, `birthplace` (new column), `years_exp`,
   `rookie_season`, `draft_year`, `draft_round`, `draft_pick`, `draft_team`,
   `toi_seconds`, `toi_per_gp`, `pp_toi_seconds`, `pk_toi_seconds`,
-  `toi_share` (new columns; the snap and contract and injury columns stay
+  `toi_share`, `is_rookie` (the NHL stats API `isRookie` flag, the league's
+  Calder eligibility) (new columns; the snap and contract and injury columns stay
   null and the app hides them when null). No free contract or injury source
   exists; the Contract Value views are removed from the hockey app.
 - `team_ratings`: goals per game against an average team. Offense =

@@ -118,9 +118,14 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
 
     /// Dates covered, e.g. "Sep 24 - Oct 7". Nil when the rollup carries no
     /// anchor date.
-    var weekRangeLabel: String? {
+    var weekRangeLabel: String? { weekRangeLabel(notBefore: nil) }
+
+    /// The span, starting no earlier than `notBefore` (opening night), so a
+    /// two-week window a few days into the season does not claim September.
+    func weekRangeLabel(notBefore: Date?) -> String? {
         guard let asOf else { return nil }
-        let start = Calendar.current.date(byAdding: .day, value: -(windowWeeks * 7 - 1), to: asOf) ?? asOf
+        var start = Calendar.current.date(byAdding: .day, value: -(windowWeeks * 7 - 1), to: asOf) ?? asOf
+        if let notBefore, notBefore > start, notBefore <= asOf { start = notBefore }
         let style = Date.FormatStyle().month(.abbreviated).day()
         return "\(start.formatted(style)) - \(asOf.formatted(style))"
     }

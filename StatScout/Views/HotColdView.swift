@@ -53,6 +53,16 @@ struct HotColdView: View {
         )
     }
 
+    /// Opening night of the season and phase on the board, from the live
+    /// schedule; nil for an older season.
+    private var openingDay: Date? {
+        guard selectedSeason == viewModel.freeSeason else { return nil }
+        return viewModel.games
+            .filter { $0.seasonPhase == selectedPhase }
+            .map { GameDay.day(of: $0) }
+            .min()
+    }
+
     /// How much better this player got. Falling numbers are the improvement for
     /// goals against average, so the board ranks on this rather than on the
     /// raw delta.
@@ -84,7 +94,7 @@ struct HotColdView: View {
     }
 
     private var earlyTitle: String {
-        let weeks = forms.compactMap(\.weekRangeLabel).first ?? "This season"
+        let weeks = forms.compactMap { $0.weekRangeLabel(notBefore: openingDay) }.first ?? "This season"
         return "\(side.label.uppercased()) · \(weeks.uppercased()) LEADERS"
     }
 
@@ -590,7 +600,7 @@ struct HotColdView: View {
                 if let then, let now {
                     Text([
                         "\(metric.format(then)) → \(metric.format(now))",
-                        form.weekRangeLabel ?? "\(form.games) GP",
+                        form.weekRangeLabel(notBefore: openingDay) ?? "\(form.games) GP",
                     ].joined(separator: " · "))
                         .font(RinkType.micro)
                         .foregroundStyle(RinkPalette.inkTertiary)

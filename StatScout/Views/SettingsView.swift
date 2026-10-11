@@ -375,9 +375,9 @@ struct StatGlossaryView: View {
         }
         guard !searchText.isEmpty else { return all }
         return all.filter {
-            $0.label.localizedCaseInsensitiveContains(searchText)
-                || $0.category.localizedCaseInsensitiveContains(searchText)
-                || $0.description.localizedCaseInsensitiveContains(searchText)
+            $0.label.searchMatches(searchText)
+                || $0.category.searchMatches(searchText)
+                || $0.description.searchMatches(searchText)
         }
     }
 

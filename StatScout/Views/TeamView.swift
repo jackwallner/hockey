@@ -166,8 +166,8 @@ struct TeamView: View {
 
     private var filteredPlayers: [Player] {
         let bySearch = searchText.isEmpty ? players : players.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText)
-                || $0.displayPosition.localizedCaseInsensitiveContains(searchText)
+            $0.name.searchMatches(searchText)
+                || $0.displayPosition.searchMatches(searchText)
         }
         let bySide = bySearch.filter { $0.positionGroup == rosterSide }
         let byCategory = bySide.filter { player in

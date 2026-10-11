@@ -488,6 +488,11 @@ def summary_totals(summary: Optional[pd.DataFrame], cols: dict[str, str]) -> pd.
         hand = summary.dropna(subset=["shootsCatches"])
         hand = hand.assign(playerId=hand["playerId"].astype("int64"))
         out["handedness"] = hand.groupby("playerId")["shootsCatches"].last()
+    for column in ("skaterFullName", "goalieFullName"):
+        if column in summary.columns:
+            named = summary.dropna(subset=[column])
+            named = named.assign(playerId=named["playerId"].astype("int64"))
+            out["nhl_name"] = named.groupby("playerId")[column].last()
     return out
 
 
@@ -571,6 +576,12 @@ def build_agg(
             hand = extra["handedness"].reindex(agg.index)
             existing = agg["handedness"] if "handedness" in agg.columns else pd.Series(np.nan, index=agg.index)
             agg["handedness"] = existing.fillna(hand)
+        # MoneyPuck strips accents ("Tim Sttzle", "Alexis Lafrenire"); the
+        # league spells every name in full.
+        if "nhl_name" in extra.columns:
+            proper = extra["nhl_name"].reindex(agg.index)
+            agg["name"] = proper.where(proper.notna() & (proper.astype(str).str.strip() != ""), agg["name"])
+    agg = agg.drop(columns=["nhl_name"], errors="ignore")
 
     derive_skater_metrics(agg)
     derive_goalie_metrics(agg)

@@ -37,6 +37,8 @@ protocol StatcastProviding: Sendable {
     func fetchPlayerProfiles(season: Int) async throws -> [PlayerProfile]
     func fetchTeamRatings(season: Int) async throws -> [TeamRating]
     func fetchGameProjections(season: Int) async throws -> [GameProjection]
+    func fetchLiveScores(dates: Set<String>) async -> [String: LiveScore]
+    func fetchGameExpectedGoals(season: Int) async throws -> [String: GameXG]
 }
 
 extension StatcastProviding {
@@ -50,6 +52,9 @@ extension StatcastProviding {
     func fetchPlayerProfiles(season: Int) async throws -> [PlayerProfile] { [] }
     func fetchTeamRatings(season: Int) async throws -> [TeamRating] { [] }
     func fetchGameProjections(season: Int) async throws -> [GameProjection] { [] }
+    /// Fixture and test providers have no live games.
+    func fetchLiveScores(dates: Set<String>) async -> [String: LiveScore] { [:] }
+    func fetchGameExpectedGoals(season: Int) async throws -> [String: GameXG] { [:] }
 }
 
 struct StatcastAPI: StatcastProviding {
@@ -59,6 +64,10 @@ struct StatcastAPI: StatcastProviding {
     init(baseURL: URL, apiKey: String) {
         self.baseURL = baseURL
         self.apiKey = apiKey
+    }
+
+    func fetchLiveScores(dates: Set<String>) async -> [String: LiveScore] {
+        await LiveScoreClient().fetch(dates: dates)
     }
 
     func fetchPlayers() async throws -> [Player] {
@@ -362,6 +371,36 @@ struct StatcastAPI: StatcastProviding {
             let rows = try JSONDecoder().decode([Row].self, from: data)
             ids.formUnion(rows.compactMap(\.game_id))
             if rows.count < pageSize { return ids }
+            offset += pageSize
+        }
+    }
+
+    /// Both sides' xG for every built game of the season, read out of
+    /// `team_stats` so the list never downloads the full breakdowns.
+    func fetchGameExpectedGoals(season: Int) async throws -> [String: GameXG] {
+        struct Row: Decodable {
+            let game_id: String
+            let away_xg: Double?
+            let home_xg: Double?
+        }
+        var out: [String: GameXG] = [:]
+        let pageSize = 1000
+        var offset = 0
+        while true {
+            let data = try await get("game_details", [
+                URLQueryItem(name: "select", value: "game_id,away_xg:team_stats->away->xg->value,home_xg:team_stats->home->xg->value"),
+                URLQueryItem(name: "season", value: "eq.\(season)"),
+                URLQueryItem(name: "order", value: "game_id.asc"),
+                URLQueryItem(name: "limit", value: String(pageSize)),
+                URLQueryItem(name: "offset", value: String(offset)),
+            ])
+            let rows = try JSONDecoder().decode([Row].self, from: data)
+            for row in rows {
+                if let away = row.away_xg, let home = row.home_xg {
+                    out[row.game_id] = GameXG(away: away, home: home)
+                }
+            }
+            if rows.count < pageSize { return out }
             offset += pageSize
         }
     }

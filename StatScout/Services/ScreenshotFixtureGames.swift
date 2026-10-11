@@ -350,20 +350,31 @@ extension ScreenshotFixtureAPI {
 
         // The chances that decided it: every goal plus the five biggest misses.
         let descriptions = ["Wrist shot, slot", "Snap shot, slot, rebound", "One-timer, high slot", "Backhand, in tight", "Slap shot, off the rush", "Tip-in, crease"]
+        var runningScore = [0, 0]
         func play(_ shot: Shot, index: Int) -> [String: Any] {
             let period = min(4, Int(shot.elapsed / 1_200) + 1)
             let inPeriod = Int(shot.elapsed) - (period - 1) * 1_200
-            let results = ["SAVE", "SAVE", "MISS", "BLOCK"]
-            return [
+            let results = ["SAVE", "SAVE", "MISS"]
+            var row: [String: Any] = [
                 "period": period,
                 "clock": String(format: "%d:%02d", inPeriod / 60, inPeriod % 60),
                 "team": shot.team,
                 "description": descriptions[Int(fnv(seed + "\(index)") % UInt64(descriptions.count))],
                 "xg": shot.xg,
-                "result": shot.isGoal ? "GOAL" : results[Int(fnv(seed + "r\(index)") % 4)],
+                "result": shot.isGoal ? "GOAL" : results[Int(fnv(seed + "r\(index)") % 3)],
                 "player_id": shot.shooter.id,
                 "shooter": shot.shooter.name,
             ]
+            guard shot.isGoal else { return row }
+            runningScore[shot.team == game.awayTeam ? 0 : 1] += 1
+            let mates = (shot.team == game.awayTeam ? awayRoster : homeRoster).skaters.filter { $0.id != shot.shooter.id }
+            let start = Int(fnv(seed + "a\(index)") % UInt64(max(1, mates.count)))
+            let count = Int(fnv(seed + "n\(index)") % 3)
+            row["assists"] = (0..<min(count, mates.count)).map { mates[(start + $0) % mates.count].name }
+            row["score"] = runningScore
+            row["goal_number"] = 1 + Int(fnv(seed + "g\(index)") % 6)
+            row["strength"] = fnv(seed + "s\(index)") % 4 == 0 ? "PP" : nil
+            return row
         }
         let goalShots = events.filter(\.isGoal)
         let topMisses = events.filter { !$0.isGoal }.sorted { $0.xg > $1.xg }.prefix(5)

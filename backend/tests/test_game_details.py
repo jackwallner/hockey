@@ -208,6 +208,63 @@ def test_big_play_fields_match_the_contract():
     assert miss["player_id"] == 11
 
 
+def test_goal_strength_reads_the_situation_code():
+    assert gd.goal_strength("1551", home=True) is None
+    assert gd.goal_strength("1451", home=True) == "PP"
+    assert gd.goal_strength("1451", home=False) == "SH"
+    assert gd.goal_strength("0651", home=True) == "EN"
+    assert gd.goal_strength("1560", home=True) is None  # extra attacker, not a power play
+    assert gd.goal_strength("1460", home=True) == "PP"  # 6-on-4 with the goalie pulled
+    assert gd.goal_strength(None, home=True) is None
+
+
+def pbp_goal(period, clock, scorer, owner, situation="1551", assists=(), score=(0, 0), total=1, period_type="REG"):
+    details = {"scoringPlayerId": scorer, "eventOwnerTeamId": owner, "shotType": "wrist",
+               "awayScore": score[0], "homeScore": score[1], "scoringPlayerTotal": total}
+    for key, pid in zip(("assist1PlayerId", "assist2PlayerId"), assists):
+        details[key] = pid
+    return {"typeDescKey": "goal", "periodDescriptor": {"number": period, "periodType": period_type},
+            "timeInPeriod": clock, "situationCode": situation, "details": details}
+
+
+def test_goals_gain_assists_strength_and_score_and_missing_goals_are_added():
+    pbp = {
+        "homeTeam": {"id": 12, "abbrev": "CAR"}, "awayTeam": {"id": 13, "abbrev": "FLA"},
+        "plays": [
+            pbp_goal(1, "06:40", 2, 13, "1541", assists=(3,), score=(1, 0), total=4),
+            pbp_goal(2, "01:41", 12, 12, assists=(11, 31), score=(1, 1)),
+            pbp_goal(3, "05:00", 11, 12, score=(1, 2), total=2),  # not in the shot file
+            pbp_goal(3, "19:50", 11, 12, "0651", score=(1, 3), total=3),
+            pbp_goal(5, "00:00", 2, 13, period_type="SO"),  # shootout: never a goal here
+        ],
+    }
+    names = {2: "Away Sniper", 3: "Andy Blueliner", 11: "Hank One", 12: "Home Two", 31: "H. Goalie"}
+    plays = gd.annotate_goals(gd.big_plays(gd.ordered_shots(shots_frame())), pbp, names)
+    goals = [p for p in plays if p["result"] == "GOAL"]
+    assert [(g["period"], g["clock"]) for g in goals] == [(1, "6:40"), (2, "1:40"), (3, "5:00"), (3, "19:50")]
+    assert goals[0]["assists"] == ["Andy Blueliner"] and goals[0]["strength"] == "PP"
+    assert goals[0]["score"] == [1, 0] and goals[0]["goal_number"] == 4
+    assert goals[1]["assists"] == ["Hank One", "H. Goalie"] and goals[1]["strength"] is None
+    added = goals[2]
+    assert added["xg"] is None and added["shooter"] == "Hank One" and added["team"] == "CAR"
+    assert added["description"] == "Wrist shot" and added["score"] == [1, 2]
+    assert goals[3]["strength"] == "EN"
+    assert gd.annotate_goals([], None, names) == []
+
+
+def test_a_goal_credited_to_another_player_takes_the_official_scorer():
+    pbp = {
+        "homeTeam": {"id": 12, "abbrev": "CAR"}, "awayTeam": {"id": 13, "abbrev": "FLA"},
+        "plays": [pbp_goal(1, "06:41", 7, 13, assists=(2,), score=(1, 0))],
+    }
+    names = {2: "Away Sniper", 7: "Tip Specialist"}
+    plays = gd.annotate_goals(gd.big_plays(gd.ordered_shots(shots_frame())), pbp, names)
+    goals = [p for p in plays if p["result"] == "GOAL" and p["team"] == "FLA"]
+    assert len(goals) == 1
+    assert goals[0]["shooter"] == "Tip Specialist" and goals[0]["player_id"] == 7
+    assert goals[0]["assists"] == ["Away Sniper"] and goals[0]["xg"] == 0.3
+
+
 # ---- team stats ----------------------------------------------------------------
 def test_team_totals_split_five_on_five_and_leave_out_empty_net_strength():
     totals = gd.team_shot_totals(shots_frame())

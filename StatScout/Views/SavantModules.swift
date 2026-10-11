@@ -25,23 +25,40 @@ struct PlayerIdentityStrip: View {
     /// Bio from `player_profiles`; nil keeps the strip to team and position.
     var profile: PlayerProfile? = nil
 
-    /// `#97 · C · 28 yrs · 6'1", 196 lb`.
+    /// `#97 · C · Shoots L · 28 yrs`.
     private var bioLine: String {
         guard let profile else { return positionAndHandedness(player) }
         return [
             profile.jersey.map { "#\($0)" },
             player.displayPosition,
+            handednessLabel,
             profile.age().map { "\($0) yrs" },
-            profile.sizeLabel,
         ]
         .compactMap { $0 }
         .joined(separator: " · ")
     }
 
-    /// "Richmond Hill, ON, CAN · 2015 R1 #1".
+    /// "Shoots L", or "Catches L" for a goalie.
+    private var handednessLabel: String? {
+        let hand = player.handedness.trimmingCharacters(in: CharacterSet.whitespaces.union(.punctuationCharacters))
+        guard !hand.isEmpty else { return nil }
+        return "\(player.positionGroup == .goalie ? "Catches" : "Shoots") \(hand)"
+    }
+
+    /// `6'1", 196 lb · Richmond Hill, ON, CAN`.
     private var originLine: String? {
         guard let profile else { return nil }
-        let parts = [profile.birthplace, profile.draftLabel].compactMap { $0 }
+        let parts = [profile.sizeLabel, profile.birthplace].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    /// "Draft: 2015 Rd 1, #1 overall · Rookie".
+    private var careerLine: String? {
+        guard let profile else { return nil }
+        let parts = [
+            profile.draftLabel.map { $0 == "Undrafted" ? $0 : "Draft: \($0)" },
+            profile.isRookie == true ? "Rookie" : nil,
+        ].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
@@ -64,8 +81,8 @@ struct PlayerIdentityStrip: View {
                     .foregroundStyle(.white.opacity(0.65))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                if let originLine {
-                    Text(originLine)
+                ForEach([originLine, careerLine].compactMap { $0 }, id: \.self) { line in
+                    Text(line)
                         .font(RinkType.small)
                         .foregroundStyle(.white.opacity(0.65))
                         .lineLimit(1)

@@ -105,7 +105,7 @@ struct StatsView: View {
     private var standardBoardPlayers: [Player] {
         viewModel.qualifiedSeasonPlayers.filter {
             $0.positionGroup == viewModel.selectedPosition
-                && viewModel.matchesSelectedConference($0)
+                && viewModel.matchesBoardFilters($0)
         }
     }
 

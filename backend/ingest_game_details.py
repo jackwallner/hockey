@@ -15,6 +15,10 @@ One ``public.game_details`` row per final game, in the shapes the app's
   ``[t_seconds, away_xg, home_xg, away_goals, home_goals]`` entry per shot plus
   a last entry at the end of the game that carries the official final score.
 * ``big_plays``: every goal and the five highest-xG chances that were not.
+  Goals carry ``assists`` (names), ``strength`` (``PP``, ``SH``, ``EN`` or
+  null), ``score`` (``[away, home]`` after the goal) and ``goal_number`` (the
+  scorer's season total) from the play-by-play, which also fills in any goal
+  the shot file lacks (with a null xG).
 
 Sources per game, joined on the NHL player id:
 
@@ -281,6 +285,134 @@ def big_plays(shots: pd.DataFrame) -> list[dict[str, Any]]:
     plays = sorted((_big_play(s) for s in goals + others), key=lambda p: p["_time"])
     for play in plays:
         del play["_time"]
+    return plays
+
+
+PBP_SHOT_TYPES = {
+    "wrist": "Wrist shot", "snap": "Snap shot", "slap": "Slap shot", "tip-in": "Tip-in",
+    "backhand": "Backhand", "deflected": "Deflection", "wrap-around": "Wraparound",
+}
+
+
+def _period_seconds(text: Any) -> Optional[int]:
+    """``"12:37"`` -> 757."""
+    try:
+        minutes, seconds = str(text).split(":")
+        return int(minutes) * 60 + int(seconds)
+    except ValueError:
+        return None
+
+
+def goal_strength(situation: Any, home: bool) -> Optional[str]:
+    """``"PP"``, ``"SH"`` or ``"EN"`` for the scoring side, None at even strength.
+
+    ``situationCode`` reads away goalie, away skaters, home skaters, home
+    goalie. A pulled goalie's extra attacker does not make a power play.
+    """
+    code = str(situation or "")
+    if len(code) != 4 or not code.isdigit():
+        return None
+    away_goalie, away_skaters, home_skaters, home_goalie = (int(c) for c in code)
+    mine, theirs = (home_skaters, away_skaters) if home else (away_skaters, home_skaters)
+    my_goalie, their_goalie = (home_goalie, away_goalie) if home else (away_goalie, home_goalie)
+    if their_goalie == 0:
+        return "EN"
+    mine -= 1 if my_goalie == 0 else 0
+    if mine > theirs:
+        return "PP"
+    return "SH" if mine < theirs else None
+
+
+def pbp_goals(pbp: Optional[Mapping[str, Any]], names: Mapping[int, str]) -> list[dict[str, Any]]:
+    """Goals from the play-by-play (shootout excluded): scorer, assists, strength, score."""
+    if not pbp:
+        return []
+    home_id = (pbp.get("homeTeam") or {}).get("id")
+    abbrevs = {
+        (pbp.get(key) or {}).get("id"): normalize_team((pbp.get(key) or {}).get("abbrev"))
+        for key in ("homeTeam", "awayTeam")
+    }
+    goals = []
+    for play in pbp.get("plays") or []:
+        period = play.get("periodDescriptor") or {}
+        if play.get("typeDescKey") != "goal" or str(period.get("periodType") or "").upper() == "SO":
+            continue
+        details = play.get("details") or {}
+        number = _int(period.get("number")) or 1
+        elapsed = _period_seconds(play.get("timeInPeriod"))
+        if elapsed is None:
+            continue
+        owner = details.get("eventOwnerTeamId")
+        scorer = details.get("scoringPlayerId")
+        assists = [
+            names.get(int(details[key]))
+            for key in ("assist1PlayerId", "assist2PlayerId")
+            if details.get(key) is not None
+        ]
+        goals.append({
+            "period": number,
+            "elapsed": elapsed,
+            "player_id": None if scorer is None else int(scorer),
+            "team": abbrevs.get(owner),
+            "shot_type": str(details.get("shotType") or "").lower(),
+            "assists": [a for a in assists if a],
+            "strength": goal_strength(play.get("situationCode"), owner == home_id),
+            "score": [_int(details.get("awayScore")), _int(details.get("homeScore"))],
+            "goal_number": _int(details.get("scoringPlayerTotal")) or None,
+        })
+    return goals
+
+
+def annotate_goals(
+    plays: list[dict[str, Any]], pbp: Optional[Mapping[str, Any]], names: Mapping[int, str]
+) -> list[dict[str, Any]]:
+    """Add assists, strength, the score after it and the scorer's season goal
+    count to every goal, and add the goals the shot file is missing.
+
+    A shot-file goal pairs with the play-by-play goal of the same period and
+    scorer nearest in time (within ten seconds), else the same team's goal at
+    that moment, whose official scorer then replaces MoneyPuck's shooter.
+    Unpaired play-by-play goals join with a null xG, so the scoring summary is
+    always complete.
+    """
+    goals = pbp_goals(pbp, names)
+    if not goals:
+        return plays
+    unused = list(goals)
+    # Same scorer first; then the same team at the same moment, where the
+    # league credited a deflection to someone other than MoneyPuck's shooter.
+    for same_scorer in (True, False):
+        for play in plays:
+            if play["result"] != "GOAL" or "assists" in play:
+                continue
+            elapsed = _period_seconds(play["clock"]) or 0
+            candidates = [
+                g for g in unused
+                if g["period"] == play["period"] and abs(g["elapsed"] - elapsed) <= 10
+                and (g["player_id"] == play["player_id"] if same_scorer else g["team"] == play["team"])
+            ]
+            if not candidates:
+                continue
+            match = min(candidates, key=lambda g: abs(g["elapsed"] - elapsed))
+            unused.remove(match)
+            play.update({k: match[k] for k in ("assists", "strength", "score", "goal_number")})
+            if not same_scorer and match["player_id"] is not None:
+                play["player_id"] = match["player_id"]
+                play["shooter"] = names.get(match["player_id"], play["shooter"])
+    for goal in unused:
+        name = names.get(goal["player_id"]) if goal["player_id"] is not None else None
+        plays.append({
+            "period": goal["period"],
+            "clock": f"{goal['elapsed'] // 60}:{goal['elapsed'] % 60:02d}",
+            "team": goal["team"],
+            "description": PBP_SHOT_TYPES.get(goal["shot_type"], "Shot"),
+            "xg": None,
+            "result": "GOAL",
+            "player_id": goal["player_id"],
+            "shooter": name,
+            **{k: goal[k] for k in ("assists", "strength", "score", "goal_number")},
+        })
+    plays.sort(key=lambda p: (p["period"], _period_seconds(p["clock"]) or 0))
     return plays
 
 
@@ -561,7 +693,7 @@ def build_game_row(
             ordered, game.get("away_score"), game.get("home_score"),
             game_end_seconds(boxscore, last_shot),
         ),
-        "big_plays": big_plays(ordered),
+        "big_plays": annotate_goals(big_plays(ordered), pbp, names),
         "updated_at": now.isoformat(),
     }
 

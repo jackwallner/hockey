@@ -21,6 +21,9 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
     let homeScore: Int?
     let overtime: Bool
     let stadium: String?
+    /// "OT", "SO", or "2OT" and up for a playoff game; nil in regulation and
+    /// on rows synced before the column existed.
+    let finalPeriod: String?
 
     enum CodingKeys: String, CodingKey {
         case id = "game_id"
@@ -36,6 +39,7 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
         case homeScore = "home_score"
         case overtime
         case stadium
+        case finalPeriod = "final_period"
     }
 
     init(
@@ -51,7 +55,8 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
         awayScore: Int? = nil,
         homeScore: Int? = nil,
         overtime: Bool = false,
-        stadium: String? = nil
+        stadium: String? = nil,
+        finalPeriod: String? = nil
     ) {
         self.id = id
         self.season = season
@@ -66,6 +71,7 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
         self.homeScore = homeScore
         self.overtime = overtime
         self.stadium = stadium
+        self.finalPeriod = finalPeriod
     }
 
     init(from decoder: Decoder) throws {
@@ -87,6 +93,7 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
         homeScore = try c.decodeIfPresent(Int.self, forKey: .homeScore)
         overtime = try c.decodeIfPresent(Bool.self, forKey: .overtime) ?? false
         stadium = try c.decodeIfPresent(String.self, forKey: .stadium)
+        finalPeriod = try c.decodeIfPresent(String.self, forKey: .finalPeriod)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -105,6 +112,7 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
         try c.encodeIfPresent(homeScore, forKey: .homeScore)
         try c.encode(overtime, forKey: .overtime)
         try c.encodeIfPresent(stadium, forKey: .stadium)
+        try c.encodeIfPresent(finalPeriod, forKey: .finalPeriod)
     }
 
     var isFinal: Bool { awayScore != nil && homeScore != nil }
@@ -126,21 +134,33 @@ struct Game: Codable, Hashable, Identifiable, Sendable {
         isHome(team) ? homeScore : awayScore
     }
 
-    /// "W", "L" or "OTL" for a final, from `team`'s side. An overtime or
-    /// shootout loss earns a point, so the standings vocabulary keeps it apart.
+    /// "OT", "SO", "2OT" for a final decided past regulation, else nil.
+    var extraPeriodLabel: String? {
+        guard isFinal, overtime else { return nil }
+        return finalPeriod ?? "OT"
+    }
+
+    /// "Final", "Final/OT", "Final/SO", "Final/2OT".
+    var finalLabel: String {
+        extraPeriodLabel.map { "Final/\($0)" } ?? "Final"
+    }
+
+    /// "W", "L" or "OTL" for a final, from `team`'s side. A regular-season
+    /// overtime or shootout loss earns a point, so the standings vocabulary
+    /// keeps it apart; a playoff overtime loss is just a loss.
     func result(for team: String) -> String? {
         guard let mine = score(of: team), let theirs = score(of: opponent(of: team)) else { return nil }
         if mine > theirs { return "W" }
-        return overtime ? "OTL" : "L"
+        return overtime && seasonPhase == .regular ? "OTL" : "L"
     }
 
-    /// "W 4-3 OT", team score first.
+    /// "W 4-3 OT", "L 2-3 SO", team score first.
     func resultLine(for team: String) -> String? {
         guard let result = result(for: team),
               let mine = score(of: team),
               let theirs = score(of: opponent(of: team)) else { return nil }
         let shown = result == "OTL" ? "L" : result
-        return "\(shown) \(mine)-\(theirs)\(overtime ? " OT" : "")"
+        return "\(shown) \(mine)-\(theirs)\(extraPeriodLabel.map { " \($0)" } ?? "")"
     }
 
     /// "vs HOU" at home, "at HOU" away.

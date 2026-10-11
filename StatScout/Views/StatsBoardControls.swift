@@ -192,12 +192,16 @@ struct StatsViewMenu: View {
     private var isActive: Bool {
         viewModel.qualifierLevel != .all
             || viewModel.selectedConference != .all
+            || viewModel.isRookieFilterActive
             || board == .bestWorst
     }
 
     var body: some View {
         Menu {
             conferenceSection
+            if viewModel.canFilterRookies {
+                playersSection
+            }
             qualifierSection
             boardSection
         } label: {
@@ -223,6 +227,24 @@ struct StatsViewMenu: View {
                         Label(conference.rawValue, systemImage: "checkmark")
                     } else {
                         Text(conference.rawValue)
+                    }
+                }
+            }
+        }
+    }
+
+    private var playersSection: some View {
+        Section("Players") {
+            ForEach([false, true], id: \.self) { rookies in
+                Button {
+                    viewModel.rookiesOnly = rookies
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                } label: {
+                    let title = rookies ? "Rookies" : "Everyone"
+                    if rookies == viewModel.rookiesOnly {
+                        Label(title, systemImage: "checkmark")
+                    } else {
+                        Text(title)
                     }
                 }
             }

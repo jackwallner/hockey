@@ -338,6 +338,12 @@ def test_profiles_cover_every_requested_player_even_without_sources():
     assert only_logs["toi_seconds"] == 3000 and only_logs["jersey"] is None  # ice time needs no bio
 
 
+def test_the_league_rookie_flag_is_written_only_when_known():
+    rows = ie.build_player_profiles(2026, {1, 2}, {}, {}, {}, NOW, rookies={2})
+    assert [row["is_rookie"] for row in rows] == [False, True]
+    assert "is_rookie" not in ie.build_player_profiles(2026, {1}, {}, {}, {}, NOW)[0]
+
+
 def test_a_rookie_has_zero_years_of_experience():
     bio = {"rookie_season": 2026}
     row = ie.build_player_profiles(2026, {9}, {9: bio}, {}, {}, NOW)[0]

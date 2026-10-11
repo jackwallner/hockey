@@ -24,6 +24,8 @@ job can fail, lag or be rerun without touching them:
 
 ``years_exp`` = season - rookie season (0 for a rookie); ``rookie_season`` is
 the start year of his first NHL season in the landing ``seasonTotals``.
+``is_rookie`` is the league's own Calder eligibility from the stats API's
+``isRookie`` flag, left unwritten when that call fails.
 
 Every source is optional: a missing bio leaves that player's bio columns null
 for this run rather than failing the others.
@@ -49,7 +51,10 @@ from dotenv import load_dotenv
 from supabase import create_client
 
 import team_ratings as tr
-from ingest import CACHE_DIR, DEFAULT_SEASON, MIN_SEASON, http_get, load_moneypuck, resolve_season
+from ingest import (
+    CACHE_DIR, DEFAULT_SEASON, MIN_SEASON, NHL_PAGE_SIZE, NHL_SUMMARY_URL, http_get, load_moneypuck,
+    resolve_season, season_id,
+)
 from ingest_game_logs import load_shots_frame
 
 load_dotenv()
@@ -233,6 +238,34 @@ def special_teams_toi(skaters: pd.DataFrame) -> dict[int, dict[str, int]]:
     return out
 
 
+def fetch_rookie_ids(season: int) -> Optional[set[int]]:
+    """Calder-eligible skaters and goalies, from the NHL's own ``isRookie`` flag.
+
+    The league's rule (25 games in no earlier season, six in no two, age 26 by
+    September 15) is not derivable from ``rookie_season``. None when the stats
+    API fails, so a bad run leaves the stored flags alone.
+    """
+    expression = f'seasonId={season_id(season)} and gameTypeId=2 and isRookie="1"'
+    ids: set[int] = set()
+    try:
+        for kind in ("skater", "goalie"):
+            start = 0
+            while True:
+                params = {"limit": NHL_PAGE_SIZE, "start": start, "sort": "playerId", "cayenneExp": expression}
+                content = http_get(NHL_SUMMARY_URL.format(kind=kind), params=params)
+                payload = json.loads(content) if content else {}
+                page = payload.get("data") or []
+                ids.update(int(row["playerId"]) for row in page if row.get("playerId") is not None)
+                start += NHL_PAGE_SIZE
+                if len(page) < NHL_PAGE_SIZE or start >= int(payload.get("total") or 0):
+                    break
+    except (RuntimeError, ValueError) as error:
+        logger.warning("Rookie list unavailable: %s", error)
+        return None
+    logger.info("NHL rookies %s: %d", season, len(ids))
+    return ids
+
+
 def build_player_profiles(
     season: int,
     player_ids: set[int],
@@ -240,6 +273,7 @@ def build_player_profiles(
     ice: Mapping[int, Mapping[str, Any]],
     special: Mapping[int, Mapping[str, int]],
     now: datetime,
+    rookies: Optional[set[int]] = None,
 ) -> list[dict[str, Any]]:
     """One row per player the app ships for ``season``, every column present."""
     stamp = now.isoformat()
@@ -270,6 +304,8 @@ def build_player_profiles(
             "toi_share": times.get("toi_share"),
             "updated_at": stamp,
         })
+        if rookies is not None:
+            rows[-1]["is_rookie"] = pid in rookies
     return rows
 
 
@@ -440,7 +476,8 @@ def main() -> int:
     player_ids = fetch_player_ids(client, season)
     bios = {pid: load_bio(pid, now) for pid in sorted(player_ids)}
     profiles = build_player_profiles(
-        season, player_ids, bios, ice_time(fetch_toi_logs(client, season)), special_teams(season), now
+        season, player_ids, bios, ice_time(fetch_toi_logs(client, season)), special_teams(season), now,
+        rookies=fetch_rookie_ids(season),
     )
     logger.info("Built %d player profiles (%d with a bio)", len(profiles), sum(1 for b in bios.values() if b))
     if profiles and not args.dry_run:

@@ -5,8 +5,35 @@ struct StandingsView: View {
     @Bindable var viewModel: DashboardViewModel
 
     var body: some View {
+        if viewModel.games.isEmpty {
+            loadingState
+        } else {
+            table
+        }
+    }
+
+    /// Before the schedule lands every club would read 0-0-0, which looks
+    /// like a broken table rather than one on its way.
+    @ViewBuilder
+    private var loadingState: some View {
+        if viewModel.isGamesLoading || viewModel.gamesError == nil {
+            ProgressView("Loading standings")
+                .font(RinkType.small)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 48)
+        } else {
+            ContentUnavailableView {
+                Label("Couldn't load standings", systemImage: "wifi.slash")
+            } description: {
+                Text("Check your connection and pull to refresh.")
+            }
+            .padding(.vertical, 32)
+        }
+    }
+
+    private var table: some View {
         let table = viewModel.standings
-        VStack(spacing: 12) {
+        return VStack(spacing: 12) {
             ForEach([LeagueConference.east, .west]) { conference in
                 conferenceTitle(conference)
                 ForEach(LeagueDivision.allCases.filter { $0.conference == conference }) { division in
@@ -55,7 +82,10 @@ struct StandingsView: View {
     private func header(_ title: String) -> some View {
         HStack(spacing: 0) {
             Text(title.uppercased())
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            Text("GP").frame(width: 26, alignment: .trailing)
             Text("W-L-OTL").frame(width: 56, alignment: .trailing)
             Text("PTS").frame(width: 34, alignment: .trailing)
             Text("P%").frame(width: 36, alignment: .trailing)
@@ -67,7 +97,6 @@ struct StandingsView: View {
         .font(RinkType.micro)
         .foregroundStyle(RinkPalette.inkTertiary)
         .lineLimit(1)
-        .minimumScaleFactor(0.7)
         .frame(height: RinkGeo.rowHeightHeader)
         .padding(.horizontal, RinkGeo.padInline)
         .background(RinkPalette.surfaceAlt)
@@ -81,8 +110,11 @@ struct StandingsView: View {
                 Text(displayTeamAbbr(row.team))
                     .font(RinkType.bodyBold)
                     .foregroundStyle(RinkPalette.ink)
+                    .lineLimit(1)
+                    .fixedSize()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            cell("\(row.games)", width: 26, color: RinkPalette.inkSecondary)
             cell(row.record, width: 56, color: RinkPalette.ink)
             cell(row.games == 0 ? "-" : "\(row.points)", width: 34, color: RinkPalette.ink, bold: true)
             cell(row.games == 0 ? "-" : pointsPercentage(row), width: 36, color: RinkPalette.inkSecondary)
@@ -98,7 +130,7 @@ struct StandingsView: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(teamFullName(row.team)), \(row.record), \(row.points) points, goal differential \(row.differential)"
+            "\(teamFullName(row.team)), \(row.games) games, \(row.record), \(row.points) points, goal differential \(row.differential)"
         )
     }
 
@@ -181,15 +213,15 @@ struct PowerRankingsView: View {
             guard let asOf = viewModel.dataCoverage?.asOf else { return "" }
             return "Through \(asOf.formatted(DataCoverage.gameDayStyle)). "
         } ?? ""
-        return through + "Goals per game better or worse than an average team on neutral ice: expected goals and actual goals for, minus against, adjusted for schedule. Early in the season last year counts as extra games of evidence. Read two ratings like a puck line, with about 0.2 goals for home ice."
+        return through + "Goals per game better or worse than an average team on neutral ice: expected goals and actual goals for, minus against, adjusted for schedule. Early in the season last year counts as extra games of evidence. The gap between two ratings, plus about 0.2 goals for home ice, sets the win chances on the Games tab."
     }
 
     private var header: some View {
         HStack(spacing: 0) {
             Text("#").frame(width: 28, alignment: .leading)
             Text("TEAM").frame(maxWidth: .infinity, alignment: .leading)
-            Text("OFF").frame(width: 44, alignment: .trailing)
-            Text("DEF").frame(width: 44, alignment: .trailing)
+            Text("OFF").frame(width: 48, alignment: .trailing)
+            Text("DEF").frame(width: 48, alignment: .trailing)
             Text("RATING").frame(width: 60, alignment: .trailing)
         }
         .font(RinkType.micro)
@@ -225,15 +257,15 @@ struct PowerRankingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(TeamRating.signed(rating.offense))
                 .font(RinkType.statSmall)
-                .foregroundStyle(tint(rating.offense))
-                .frame(width: 44, alignment: .trailing)
+                .foregroundStyle(tint(rating.offense, threshold: 0.1))
+                .frame(width: 48, alignment: .trailing)
             Text(TeamRating.signed(rating.defense))
                 .font(RinkType.statSmall)
-                .foregroundStyle(tint(rating.defense))
-                .frame(width: 44, alignment: .trailing)
+                .foregroundStyle(tint(rating.defense, threshold: 0.1))
+                .frame(width: 48, alignment: .trailing)
             Text(TeamRating.signed(rating.rating))
                 .font(RinkType.statMed)
-                .foregroundStyle(tint(rating.rating))
+                .foregroundStyle(tint(rating.rating, threshold: 0.2))
                 .frame(width: 60, alignment: .trailing)
         }
         .monospacedDigit()
@@ -247,9 +279,11 @@ struct PowerRankingsView: View {
         )
     }
 
-    private func tint(_ value: Double) -> Color {
-        if value >= 1 { return RinkPalette.performanceHigh }
-        if value <= -1 { return RinkPalette.performanceLow }
+    /// Ratings are goals a game: a fifth of a goal is a clearly good or bad
+    /// club, a tenth on either side of the puck.
+    private func tint(_ value: Double, threshold: Double) -> Color {
+        if value >= threshold { return RinkPalette.performanceHigh }
+        if value <= -threshold { return RinkPalette.performanceLow }
         return RinkPalette.inkSecondary
     }
 }

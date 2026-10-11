@@ -1339,8 +1339,8 @@ private struct PlayerPickerSheet: View {
     var filteredPlayers: [Player] {
         guard !searchText.isEmpty else { return players }
         return players.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.team.localizedCaseInsensitiveContains(searchText)
+            $0.name.searchMatches(searchText) ||
+            $0.team.searchMatches(searchText)
         }
     }
 

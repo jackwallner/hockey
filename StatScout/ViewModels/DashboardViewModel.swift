@@ -11,6 +11,9 @@ final class DashboardViewModel {
     var playerHistories: [Int: [Player]] = [:]
     var searchText = ""
     var selectedConference: LeagueConference = .all
+    /// Calder-eligible players only. Applies on the live season, the only one
+    /// with the league's rookie flag.
+    var rookiesOnly = false
     var selectedPosition: PlayerPositionGroup = .forward {
         didSet {
             guard oldValue != selectedPosition else { return }
@@ -395,12 +398,38 @@ final class DashboardViewModel {
     /// Games whose player stats are published, so a final can say whether its
     /// box score is in yet.
     private(set) var gameIdsWithStats: Set<String> = []
+    /// Both sides' expected goals for finals with a built breakdown.
+    private(set) var gameXG: [String: GameXG] = [:]
     private(set) var isGamesLoading = false
     private(set) var gamesError: String?
     private(set) var gamesLoadedAt: Date?
     private var gamesTask: Task<Void, Never>?
 
     var currentGameDay: GameDay? { GameDay.current(in: games) }
+
+    /// Running scores for games under way, keyed by game id, from the NHL
+    /// scoreboard. Only games the schedule does not yet call final.
+    private(set) var liveScores: [String: LiveScore] = [:]
+
+    func liveScore(for game: Game) -> LiveScore? {
+        game.isFinal ? nil : liveScores[game.id]
+    }
+
+    /// Re-reads the scoreboard for every game that has started without a
+    /// posted final. Clears it when nothing is under way.
+    func refreshLiveScores(now: Date = .now) async {
+        let started = games.filter { [.inProgress, .awaitingScore].contains($0.status(now: now)) }
+        guard !started.isEmpty else {
+            if !liveScores.isEmpty { liveScores = [:] }
+            return
+        }
+        let dates = Set(started.map { LiveScoreClient.dateKey($0.gameDate) })
+        let fetched = await provider.fetchLiveScores(dates: dates)
+        let ids = Set(started.map(\.id))
+        // A failed read keeps the last scores on screen rather than blanking them.
+        guard !fetched.isEmpty else { return }
+        liveScores = fetched.filter { ids.contains($0.key) }
+    }
 
     // MARK: - Enrichment
 
@@ -480,6 +509,10 @@ final class DashboardViewModel {
             // describe. Optional: a failure keeps whatever was there.
             async let ratings = try? provider.fetchTeamRatings(season: season)
             async let projected = try? provider.fetchGameProjections(season: season)
+            async let expected = try? provider.fetchGameExpectedGoals(season: season)
+            if let loadedXG = await expected, !loadedXG.isEmpty {
+                gameXG = loadedXG
+            }
             if let loadedRatings = await ratings, !loadedRatings.isEmpty {
                 teamRatings = Dictionary(
                     loadedRatings.map { (normalizedTeamAbbreviation($0.team), $0) },
@@ -764,8 +797,8 @@ final class DashboardViewModel {
             .filter {
                 selectedConference.contains(team: $0)
                     && (
-                        teamFullName($0).localizedCaseInsensitiveContains(query)
-                            || $0.localizedCaseInsensitiveContains(query)
+                        teamFullName($0).searchMatches(query)
+                            || $0.searchMatches(query)
                     )
             }
             .sorted { teamFullName($0) < teamFullName($1) }
@@ -783,11 +816,11 @@ final class DashboardViewModel {
         let gateLabel = qualifierLevel == .qualified ? currentSortMetricLabelForGate : nil
         return seasonPlayers.filter { player in
             let matchesSearch = searchText.isEmpty
-                || player.name.localizedCaseInsensitiveContains(searchText)
-                || player.team.localizedCaseInsensitiveContains(searchText)
-                || teamFullName(player.team).localizedCaseInsensitiveContains(searchText)
+                || player.name.searchMatches(searchText)
+                || player.team.searchMatches(searchText)
+                || teamFullName(player.team).searchMatches(searchText)
             let matchesPosition = player.positionGroup == selectedPosition
-            let matchesConference = matchesSelectedConference(player)
+            let matchesConference = matchesBoardFilters(player)
             let matchingMetrics = player.metrics.filter {
                 HockeyMetricRegistry.isSupported($0, by: selectedPosition)
             }
@@ -800,8 +833,21 @@ final class DashboardViewModel {
         }
     }
 
-    func matchesSelectedConference(_ player: Player) -> Bool {
-        selectedConference.contains(team: player.team)
+    /// Conference, plus the rookie filter where it applies.
+    func matchesBoardFilters(_ player: Player) -> Bool {
+        guard selectedConference.contains(team: player.team) else { return false }
+        return !isRookieFilterActive || isRookie(player)
+    }
+
+    /// The league flags rookies for the live season only.
+    var canFilterRookies: Bool {
+        selectedSeason == freeSeason && profiles.values.contains { $0.isRookie == true }
+    }
+
+    var isRookieFilterActive: Bool { rookiesOnly && canFilterRookies }
+
+    func isRookie(_ player: Player) -> Bool {
+        profile(for: player)?.isRookie == true
     }
 
     enum QualifierLevel: String, CaseIterable, Identifiable {
@@ -1020,7 +1066,7 @@ final class DashboardViewModel {
 
     var allMetrics: [(label: String, category: MetricCategory, best: (player: Player, percentile: Int, actualValue: String)?, worst: (player: Player, percentile: Int, actualValue: String)?)] {
         var metricMap: [String: (category: MetricCategory, values: [(player: Player, percentile: Int, actualValue: String)])] = [:]
-        for player in seasonPlayers where matchesSelectedConference(player) {
+        for player in seasonPlayers where matchesBoardFilters(player) {
             for metric in player.metrics {
                 guard isQualified(player, for: metric.category) else { continue }
                 let compositeKey = "\(metric.label)|\(metric.category.rawValue)"

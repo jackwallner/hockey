@@ -235,9 +235,9 @@ struct StandardStatsLeadersView: View {
             } else {
                 let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
                 let ranked = Array(sortedPlayers.enumerated()).filter { _, player in
-                    query.isEmpty || player.name.localizedCaseInsensitiveContains(query)
-                        || player.team.localizedCaseInsensitiveContains(query)
-                        || teamFullName(player.team).localizedCaseInsensitiveContains(query)
+                    query.isEmpty || player.name.searchMatches(query)
+                        || player.team.searchMatches(query)
+                        || teamFullName(player.team).searchMatches(query)
                 }
                 let peerValues = filteredPlayers.compactMap { standardStat(for: $0)?.value }
                 if ranked.isEmpty {
@@ -358,7 +358,8 @@ struct StandardStatsLeadersView: View {
 
     private var sampleLabel: String {
         guard let viewModel else { return "PLAYER" }
-        return viewModel.qualifierLevel == .qualified ? "QUALIFIED PLAYERS" : "ALL PLAYERS"
+        let who = viewModel.isRookieFilterActive ? "ROOKIES" : "PLAYERS"
+        return viewModel.qualifierLevel == .qualified ? "QUALIFIED \(who)" : "ALL \(who)"
     }
 
     /// The live season while the NHL summary or MoneyPuck's files are still

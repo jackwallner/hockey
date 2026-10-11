@@ -15,6 +15,8 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
     /// "Richmond Hill, ON, CAN".
     var birthplace: String?
     var yearsExperience: Int?
+    /// The league's Calder eligibility; nil before the feed carried it.
+    var isRookie: Bool?
     var draftYear: Int?
     var draftRound: Int?
     var draftPick: Int?
@@ -37,6 +39,7 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         case weightPounds = "weight_lb"
         case birthplace
         case yearsExperience = "years_exp"
+        case isRookie = "is_rookie"
         case draftYear = "draft_year"
         case draftRound = "draft_round"
         case draftPick = "draft_pick"
@@ -63,15 +66,23 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         weightPounds = try c.decodeIfPresent(Int.self, forKey: .weightPounds)
         birthplace = try c.decodeIfPresent(String.self, forKey: .birthplace)
         yearsExperience = try c.decodeIfPresent(Int.self, forKey: .yearsExperience)
+        isRookie = try c.decodeIfPresent(Bool.self, forKey: .isRookie)
         draftYear = try c.decodeIfPresent(Int.self, forKey: .draftYear)
         draftRound = try c.decodeIfPresent(Int.self, forKey: .draftRound)
         draftPick = try c.decodeIfPresent(Int.self, forKey: .draftPick)
         draftTeam = try c.decodeIfPresent(String.self, forKey: .draftTeam)
-        toiSeconds = try c.decodeIfPresent(Int.self, forKey: .toiSeconds)
-        toiPerGame = try c.decodeIfPresent(Int.self, forKey: .toiPerGame)
-        powerPlayToiSeconds = try c.decodeIfPresent(Int.self, forKey: .powerPlayToiSeconds)
-        penaltyKillToiSeconds = try c.decodeIfPresent(Int.self, forKey: .penaltyKillToiSeconds)
+        // Seconds arrive as numerics ("toi_per_gp": 1437.2); decoding them as
+        // Int threw and dropped every profile with a fractional average.
+        toiSeconds = Self.seconds(c, .toiSeconds)
+        toiPerGame = Self.seconds(c, .toiPerGame)
+        powerPlayToiSeconds = Self.seconds(c, .powerPlayToiSeconds)
+        penaltyKillToiSeconds = Self.seconds(c, .penaltyKillToiSeconds)
         toiShare = try c.decodeIfPresent(Double.self, forKey: .toiShare)
+    }
+
+    private static func seconds(_ c: KeyedDecodingContainer<CodingKeys>, _ key: CodingKeys) -> Int? {
+        guard let value = try? c.decodeIfPresent(Double.self, forKey: key), value.isFinite else { return nil }
+        return Int(value.rounded())
     }
 
     private static func day(_ raw: String) -> Date? {
@@ -95,10 +106,11 @@ struct PlayerProfile: Decodable, Hashable, Sendable {
         return "\(height), \(weightPounds) lb"
     }
 
-    /// "2015 R1 #1", or "Undrafted" for a player who came in without a pick.
+    /// "2015 Rd 1, #1 overall", or "Undrafted" for a player who came in
+    /// without a pick. The feed's pick is the overall number.
     var draftLabel: String? {
         if let draftYear, let draftRound, let draftPick {
-            return "\(draftYear) R\(draftRound) #\(draftPick)"
+            return "\(draftYear) Rd \(draftRound), #\(draftPick) overall"
         }
         return yearsExperience != nil ? "Undrafted" : nil
     }
@@ -151,10 +163,12 @@ struct TeamRating: Decodable, Hashable, Sendable, Identifiable {
         case pointsAgainst = "points_against"
     }
 
+    /// "+0.58", "-0.12": ratings live within about half a goal of zero, so
+    /// one decimal would flatten most of the league to "+0.1".
     static func signed(_ value: Double) -> String {
-        let rounded = (value * 10).rounded() / 10
-        if rounded == 0 { return "0.0" }
-        return String(format: "%+.1f", rounded)
+        let rounded = (value * 100).rounded() / 100
+        if rounded == 0 { return "0.00" }
+        return String(format: "%+.2f", rounded)
     }
 }
 
@@ -171,12 +185,14 @@ struct GameProjection: Decodable, Hashable, Sendable {
         case homeWinProbability = "home_win_prob"
     }
 
-    /// "EDM by 0.6", "Toss-up" under a quarter of a goal.
+    /// "EDM 62%", the favourite's chance to win, or "Toss-up" inside 53%.
+    /// Hockey reads a matchup as a win chance, not a point spread: margins
+    /// here are fractions of a goal.
     func label(home: String, away: String) -> String {
-        let margin = abs(homeMargin)
-        guard margin >= 0.25 else { return "Toss-up" }
-        let favourite = homeMargin > 0 ? home : away
-        return "\(displayTeamAbbr(favourite)) by \(String(format: "%.1f", margin))"
+        let favouriteChance = max(homeWinProbability, 1 - homeWinProbability)
+        guard favouriteChance >= 0.53 else { return "Toss-up" }
+        let favourite = homeWinProbability >= 0.5 ? home : away
+        return "\(displayTeamAbbr(favourite)) \(Int((favouriteChance * 100).rounded()))%"
     }
 
     func winProbability(for team: String, home: String) -> Double {
@@ -196,7 +212,8 @@ struct StandingsRow: Hashable, Sendable, Identifiable {
     var ties = 0
     var pointsFor = 0
     var pointsAgainst = 0
-    /// "W2", "L1"; nil before a game.
+    /// "W2", "L1", "OT1" (overtime or shootout losses, as the league writes
+    /// it); nil before a game.
     var streak: String?
 
     var id: String { team }
@@ -239,7 +256,7 @@ struct StandingsRow: Hashable, Sendable, Identifiable {
                 row.pointsFor += mine
                 row.pointsAgainst += theirs
                 rows[team] = row
-                results[team, default: []].append(result == "OTL" ? "L" : result)
+                results[team, default: []].append(result == "OTL" ? "OT" : result)
             }
         }
         for (team, list) in results {

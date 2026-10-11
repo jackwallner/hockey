@@ -369,6 +369,17 @@ def test_summary_fields_merge_by_player_id(agg):
     assert agg.loc[2, "handedness"] == ""
 
 
+def test_league_names_restore_the_accents_moneypuck_strips(skaters, goalies, skater_summary, goalie_summary):
+    skater_summary = skater_summary.assign(skaterFullName=["Tim St\u00fctzle", None])
+    goalie_summary = goalie_summary.assign(goalieFullName=["Luk\u00e1\u0161 Dosto\u0161", ""])
+    out = ingest.build_agg(skaters, goalies, skater_summary, goalie_summary)
+    assert out.loc[1, "name"] == "Tim St\u00fctzle"
+    assert out.loc[10, "name"] == "Luk\u00e1\u0161 Dosto\u0161"
+    assert out.loc[3, "name"] == ingest.build_agg(skaters, goalies).loc[3, "name"]  # no league name
+    assert out.loc[11, "name"] == "Goalie Two"  # a blank league name keeps MoneyPuck's
+    assert "nhl_name" not in out.columns
+
+
 def test_headshots_use_the_latest_season_and_team(agg):
     assert agg.loc[1, "image_url"].endswith("/20252026/EDM/1.png")
 

@@ -76,21 +76,23 @@ struct GamesView: View {
     /// Re-reads the schedule while this tab is on screen: every two minutes
     /// while a game is under way or a final is still waiting on its stats, every
     /// ten otherwise. The backend itself only updates every fifteen minutes on a
-    /// game day, so anything faster would be noise.
+    /// game day, so anything faster would be noise. Running scores come from
+    /// the NHL scoreboard every thirty seconds while a game is on.
     private func pollWhileActive() async {
+        var lastSchedule = Date.distantPast
         while !Task.isCancelled {
-            await viewModel.loadGames()
             let now = Date()
-            let busy = viewModel.games.contains { game in
-                switch game.status(now: now) {
-                case .inProgress, .awaitingScore: return true
-                case .final:
-                    guard let kickoff = game.kickoff else { return false }
-                    return !viewModel.hasStats(game) && now.timeIntervalSince(kickoff) < 12 * 3_600
-                case .upcoming: return false
-                }
+            if now.timeIntervalSince(lastSchedule) >= 115 {
+                await viewModel.loadGames()
+                lastSchedule = now
             }
-            try? await Task.sleep(for: .seconds(busy ? 120 : 600))
+            let live = viewModel.games.contains { [.inProgress, .awaitingScore].contains($0.status(now: now)) }
+            await viewModel.refreshLiveScores(now: now)
+            let busy = live || viewModel.games.contains { game in
+                guard game.status(now: now) == .final, let kickoff = game.kickoff else { return false }
+                return !viewModel.hasStats(game) && now.timeIntervalSince(kickoff) < 12 * 3_600
+            }
+            try? await Task.sleep(for: .seconds(live ? 30 : busy ? 120 : 600))
         }
     }
 
@@ -150,7 +152,7 @@ struct GamesView: View {
         if !upcoming.isEmpty { section(title: "Upcoming", games: upcoming) }
 
         if upcoming.contains(where: { viewModel.projection(for: $0) != nil }) {
-            Text("Projected margins come from StatScout Power Ratings: each club's expected goals and scoring against an average team, adjusted for schedule, plus a fraction of a goal for home ice. Details on the Teams tab.")
+            Text("Win chances come from StatScout Power Ratings: each club's expected goals and scoring against an average team, adjusted for schedule, plus a fraction of a goal for home ice. Details on the Teams tab.")
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -160,8 +162,8 @@ struct GamesView: View {
         }
 
         Text(favorites.team == nil
-             ? "Scores post when each game goes final, expected goals usually by the next morning. Follow a team from its page to pin its game here."
-             : "Scores post when each game goes final. Expected goals and player stats usually follow by the next morning.")
+             ? "Live scores update every thirty seconds. Expected goals and player stats usually follow the final by the next morning. Follow a team from its page to pin its game here."
+             : "Live scores update every thirty seconds. Expected goals and player stats usually follow the final by the next morning.")
             .font(RinkType.micro)
             .foregroundStyle(RinkPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -181,7 +183,9 @@ struct GamesView: View {
                         highlight: favorites.team,
                         awayRecord: viewModel.record(forTeam: game.awayTeam, through: game),
                         homeRecord: viewModel.record(forTeam: game.homeTeam, through: game),
-                        projection: viewModel.projection(for: game)
+                        projection: viewModel.projection(for: game),
+                        live: viewModel.liveScore(for: game),
+                        xg: viewModel.gameXG[game.id]
                     )
                         .background(index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt)
                 }
@@ -235,22 +239,26 @@ struct GameRow: View {
     /// it for one still to be played.
     var awayRecord: String? = nil
     var homeRecord: String? = nil
-    /// The power ratings' projected margin, upcoming games only.
+    /// The power ratings' win chance, upcoming games only.
     var projection: GameProjection? = nil
+    /// The NHL scoreboard's running score, games under way only.
+    var live: LiveScore? = nil
+    /// Each side's expected goals once the breakdown is built.
+    var xg: GameXG? = nil
 
     var body: some View {
         let status = game.status()
         HStack(spacing: 12) {
             VStack(spacing: 6) {
-                teamLine(game.awayTeam, score: game.awayScore, status: status, record: awayRecord)
-                teamLine(game.homeTeam, score: game.homeScore, status: status, record: homeRecord)
+                teamLine(game.awayTeam, score: game.awayScore ?? live?.awayScore, status: status, record: awayRecord)
+                teamLine(game.homeTeam, score: game.homeScore ?? live?.homeScore, status: status, record: homeRecord)
             }
             .frame(maxWidth: .infinity)
 
             VStack(alignment: .trailing, spacing: 3) {
                 Text(statusTitle(status))
                     .font(RinkType.smallBold)
-                    .foregroundStyle(status == .inProgress ? RinkPalette.performanceLow : RinkPalette.ink)
+                    .foregroundStyle(isLive(status) ? RinkPalette.performanceLow : RinkPalette.ink)
                 if let detail = statusDetail(status) {
                     Text(detail)
                         .font(RinkType.micro)
@@ -313,9 +321,15 @@ struct GameRow: View {
         }
     }
 
+    private func isLive(_ status: GameStatus) -> Bool {
+        if let live { return !live.isFinal }
+        return status == .inProgress
+    }
+
     private func statusTitle(_ status: GameStatus) -> String {
+        if let live { return live.clockLabel }
         switch status {
-        case .final: return game.overtime ? "Final/OT" : "Final"
+        case .final: return game.finalLabel
         case .inProgress: return "In progress"
         case .awaitingScore: return "Final soon"
         case .upcoming: return game.kickoffLabel
@@ -323,8 +337,14 @@ struct GameRow: View {
     }
 
     private func statusDetail(_ status: GameStatus) -> String? {
+        if let live {
+            guard let away = live.awayShots, let home = live.homeShots else { return nil }
+            return "Shots \(away)-\(home)"
+        }
         switch status {
-        case .final: return hasStats ? game.dayLabel : "Stats arriving"
+        case .final:
+            if let xg { return xg.label }
+            return hasStats ? game.dayLabel : "Stats arriving"
         case .inProgress, .awaitingScore: return "Score at final"
         case .upcoming:
             if let projection {
@@ -342,9 +362,15 @@ struct GameRow: View {
             let score = "\(away) \(game.awayScore ?? 0), \(home) \(game.homeScore ?? 0)"
             return "\(score), \(statusTitle(status))" + (hasStats ? "" : ", stats arriving")
         case .inProgress, .awaitingScore:
+            if let live {
+                return "\(away) \(live.awayScore), \(home) \(live.homeScore), \(live.clockLabel)"
+            }
             return "\(away) at \(home), in progress"
         case .upcoming:
-            let projected = projection.map { ", projected \($0.label(home: game.homeTeam, away: game.awayTeam))" } ?? ""
+            let projected = projection.map { projection -> String in
+                let label = projection.label(home: game.homeTeam, away: game.awayTeam)
+                return label == "Toss-up" ? ", projected a toss-up" : ", projected \(label) to win"
+            } ?? ""
             return "\(away) at \(home), \(game.dayLabel) at \(game.kickoff?.formatted(date: .omitted, time: .shortened) ?? "time TBD")\(projected)"
         }
     }

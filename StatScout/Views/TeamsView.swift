@@ -57,8 +57,8 @@ struct TeamsView: View {
         // header read "4 teams" above a grid of 32.
         guard !viewModel.teamsWithData.isEmpty else { return [] }
         let teams = searchText.isEmpty ? Self.allTeams : Self.allTeams.filter {
-            teamFullName($0).localizedCaseInsensitiveContains(searchText) ||
-            $0.localizedCaseInsensitiveContains(searchText)
+            teamFullName($0).searchMatches(searchText) ||
+            $0.searchMatches(searchText)
         }
         // Plain alphabetical by full team name - the old score-based ordering was
         // confusing and the score itself was a mislabeled percentile. The

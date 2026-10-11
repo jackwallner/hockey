@@ -123,6 +123,19 @@ def test_the_game_outcome_wins_over_the_period_descriptor():
     assert game.overtime
 
 
+@pytest.mark.parametrize("descriptor,label", [
+    ({"periodType": "REG", "number": 3}, None),
+    ({"periodType": "OT", "number": 4}, "OT"),
+    ({"periodType": "SO", "number": 5}, "SO"),
+    ({"periodType": "OT", "number": 5, "otPeriods": 2}, "2OT"),
+    ({"periodType": "OT", "number": 7}, "4OT"),
+])
+def test_final_period_names_the_overtime(descriptor, label):
+    assert parse_game(raw(periodDescriptor=descriptor), 2025, START_2025).final_period == label
+    live = parse_game(raw(gameState="LIVE", periodDescriptor=descriptor), 2025, START_2025)
+    assert live.final_period is None
+
+
 def test_an_unfinished_game_is_never_overtime():
     game = parse_game(raw(gameState="LIVE", periodDescriptor={"periodType": "OT"}), 2025, START_2025)
     assert not game.overtime
@@ -163,7 +176,7 @@ def test_row_shape_matches_the_games_table():
     assert set(row) == {
         "game_id", "season", "season_type", "game_type", "week", "game_date",
         "kickoff_at", "away_team", "home_team", "away_score", "home_score",
-        "overtime", "stadium", "synced_at",
+        "overtime", "stadium", "final_period", "synced_at",
     }
     assert row["game_date"] == "2025-10-07"
 
