@@ -37,32 +37,10 @@ case "$SUPABASE_URL" in
 esac
 export SUPABASE_URL SUPABASE_ANON_KEY
 
-# Auto-increment build number so TestFlight never rejects a duplicate
-echo "==> Bumping build number..."
-CURRENT_BUILD=$(grep 'CURRENT_PROJECT_VERSION:' project.yml | sed 's/.*: *"\(.*\)".*/\1/')
-NEXT_BUILD=$((CURRENT_BUILD + 1))
-sed -i '' "s/CURRENT_PROJECT_VERSION: \"$CURRENT_BUILD\"/CURRENT_PROJECT_VERSION: \"$NEXT_BUILD\"/" project.yml
-echo "    $CURRENT_BUILD -> $NEXT_BUILD"
 
-echo "==> Regenerating Xcode project..."
-if command -v xcodegen &> /dev/null; then
-  xcodegen generate
-else
-  echo "warning: xcodegen not found. Using existing StatScout.xcodeproj."
-fi
-
-echo "==> Cleaning..."
-xcodebuild -project StatScout.xcodeproj -scheme "$SCHEME" clean
-
-# Sign with the ASC API key when available, not Xcode's Apple ID session.
-AUTH=()
-if [ -n "$ASC_KEY_PATH" ] && [ -n "$ASC_API_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ]; then
-  AUTH=(-authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_API_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
-  export ASC_KEY_PATH ASC_API_KEY_ID ASC_ISSUER_ID
-fi
-
-echo "==> Archiving..."
-xcodebuild -project StatScout.xcodeproj -scheme "$SCHEME" -configuration Release archive -archivePath "$ARCHIVE_PATH" -destination "generic/platform=iOS" -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"}
-
-echo "==> Exporting & Uploading..."
-exec "$DIR/upload-testflight.sh" "$ARCHIVE_PATH"
+# TestFlight release for StatScout. The shared fleet script does the work: bump the
+# build in project.yml, xcodegen, archive Release signed with the App Store
+# Connect API key, upload, then commit and push the bump once Apple accepts it.
+# Flags (--upload-only, --no-bump, --clean, --post-archive) and credentials are
+# documented in ~/ios/release/testflight.sh.
+exec "$HOME/ios/release/testflight.sh" --project StatScout.xcodeproj --scheme StatScout --clean "$@"
