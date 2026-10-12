@@ -352,7 +352,9 @@ struct CompareView: View {
                 playersB: viewModel.players(
                     forSeason: route.seasonB,
                     phase: route.phaseB
-                )
+                ),
+                clubA: clubSeason(route.teamA, season: route.seasonA, phase: route.phaseA),
+                clubB: clubSeason(route.teamB, season: route.seasonB, phase: route.phaseB)
             )
             .modifier(RinkNavBarPublic())
         }
@@ -1117,7 +1119,7 @@ struct ComparePlayerPicker: View {
                         )
                     } description: {
                         if isLoading {
-                            Text("Pulling the \(season.map(String.init) ?? "") roster.")
+                            Text("Pulling the " + (season.map(SeasonLabel.display) ?? "") + " roster.")
                         } else if !searchText.isEmpty {
                             Text("Nobody matches “\(searchText)”.")
                         } else if let season {
@@ -1197,10 +1199,33 @@ struct CompareTeamPicker: View {
     }
 }
 
+extension CompareView {
+    /// The club's own numbers when the side is the live regular season.
+    func clubSeason(_ team: String, season: Int, phase: SeasonPhase) -> ClubSeason? {
+        guard season == viewModel.freeSeason, phase == .regular else { return nil }
+        let abbr = normalizedTeamAbbreviation(team)
+        return ClubSeason(
+            standing: viewModel.standings[abbr],
+            summary: viewModel.teamSummaries[abbr],
+            rating: viewModel.teamRating(abbr)
+        )
+    }
+}
+
+/// A club's own live regular season: its standings line, season summary and
+/// power rating. Only the live season has them.
+struct ClubSeason {
+    let standing: StandingsRow?
+    let summary: TeamSeasonSummary?
+    let rating: TeamRating?
+}
+
 struct TeamComparisonView: View {
     let route: TeamComparisonRoute
     let playersA: [Player]
     let playersB: [Player]
+    var clubA: ClubSeason? = nil
+    var clubB: ClubSeason? = nil
 
     private struct StatRow: Identifiable {
         let id: String
@@ -1241,7 +1266,7 @@ struct TeamComparisonView: View {
     /// unable to reference a single advanced number - the exact thing the rest
     /// of the app is built on.
     private var statGroups: [(title: String, rows: [StatRow])] {
-        MetricCategory.allCases.flatMap { category -> [(title: String, rows: [StatRow])] in
+        [("TEAM · THIS SEASON", clubRows)] + MetricCategory.allCases.flatMap { category -> [(title: String, rows: [StatRow])] in
             [
                 (category.rawValue.uppercased() + " · ADVANCED", advancedRows(for: category)),
                 (category.rawValue.uppercased() + " · STANDARD", standardRows(for: category)),
@@ -1251,6 +1276,34 @@ struct TeamComparisonView: View {
             (title: group.title, rows: group.rows.filter { $0.aText != "-" || $0.bText != "-" })
         }
         .filter { !$0.rows.isEmpty }
+    }
+
+    /// The club's own numbers, not roster sums: record, goals, special teams,
+    /// xG share and power rating. Only when both sides are the live regular
+    /// season, the one season these exist for.
+    private var clubRows: [StatRow] {
+        guard let a = clubA, let b = clubB else { return [] }
+        func percent(_ v: Double) -> String { (v * 100).formatted(.number.precision(.fractionLength(1))) + "%" }
+        func decimal(_ v: Double) -> String { v.formatted(.number.precision(.fractionLength(2))) }
+        func row(_ label: String, _ x: Double?, _ y: Double?, higherIsBetter: Bool = true, format: (Double) -> String) -> StatRow {
+            let sign: Double = higherIsBetter ? 1 : -1
+            return StatRow(id: "club-" + label, label: label,
+                           aText: x.map(format) ?? "-", bText: y.map(format) ?? "-",
+                           aValue: x.map { $0 * sign }, bValue: y.map { $0 * sign })
+        }
+        var rows: [StatRow] = []
+        if let sa = a.standing, let sb = b.standing {
+            rows.append(StatRow(id: "club-record", label: "Record", aText: sa.record, bText: sb.record,
+                                aValue: Double(sa.points), bValue: Double(sb.points)))
+            rows.append(row("P%", sa.winPercentage, sb.winPercentage) { RecentMetricKey.savePercentage($0) })
+        }
+        rows.append(row("GF/GP", a.summary?.goalsFor.value, b.summary?.goalsFor.value, format: decimal))
+        rows.append(row("GA/GP", a.summary?.goalsAgainst.value, b.summary?.goalsAgainst.value, higherIsBetter: false, format: decimal))
+        rows.append(row("PP%", a.summary?.powerPlay?.value, b.summary?.powerPlay?.value, format: percent))
+        rows.append(row("PK%", a.summary?.penaltyKill?.value, b.summary?.penaltyKill?.value, format: percent))
+        rows.append(row("xGF%", a.summary?.expectedGoalsShare?.value, b.summary?.expectedGoalsShare?.value, format: percent))
+        rows.append(row("Power", a.rating?.rating, b.rating?.rating) { TeamRating.signed($0) })
+        return rows
     }
 
     /// Every advanced metric that either roster has for this category, in the
@@ -1389,7 +1442,8 @@ struct TeamComparisonView: View {
                     }
                 }
 
-                Text("Totals sum the selected roster's player season lines. Traded players bring their full-season line, so these are roster aggregates rather than official team totals.")
+                Text((clubRows.isEmpty ? "" : "Team · This season is each club's own record and results; PP%, PK% and xGF% cover games with a shot breakdown. ")
+                     + "The other sections sum the selected roster's player season lines. Traded players bring their full-season line, so those are roster aggregates rather than official team totals.")
                     .font(RinkType.micro)
                     .foregroundStyle(RinkPalette.inkTertiary)
                     .fixedSize(horizontal: false, vertical: true)
