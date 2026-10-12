@@ -24,6 +24,17 @@ struct TeamGameCard: View {
                 }
                 actions
             }
+            .task(id: viewModel.currentGame(forTeam: team)?.id) { await pollLiveScore() }
+        }
+    }
+
+    /// Keeps the running score fresh while the club's game is on.
+    private func pollLiveScore() async {
+        while !Task.isCancelled {
+            guard let game = viewModel.currentGame(forTeam: team),
+                  [.inProgress, .awaitingScore].contains(game.status()) else { return }
+            await viewModel.refreshLiveScores()
+            try? await Task.sleep(for: .seconds(30))
         }
     }
 
@@ -436,7 +447,7 @@ struct PlayerGameLogCard: View {
     private func row(_ entry: Entry) -> some View {
         let game = entry.gameId.flatMap { viewModel.game(id: $0) }
         let content = HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(entry.gameDate.formatted(.dateTime.month(.abbreviated).day()))
+            Text(entry.gameDate.formatted(DataCoverage.gameDayStyle))
                 .font(RinkType.statSmall)
                 .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(width: 44, alignment: .leading)

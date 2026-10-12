@@ -918,7 +918,7 @@ struct CompareView: View {
                 perkRow("person.2.fill", "Head-to-head comparisons across every metric")
                 perkRow("chart.line.uptrend.xyaxis", "Year-over-year trends for any player")
                 perkRow("calendar.badge.clock", "Every past season unlocked")
-                perkRow("arrow.down.circle.fill", "Available offline, even at the stadium")
+                perkRow("arrow.down.circle.fill", "Available offline, even at the rink")
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 4)

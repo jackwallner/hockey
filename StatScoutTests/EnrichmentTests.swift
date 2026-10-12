@@ -164,12 +164,13 @@ final class EnrichmentTests: XCTestCase {
     }
 
     func testProjectionLabelsTheFavourite() throws {
-        let json = #"[{"game_id":"g","home_margin":-0.6,"home_win_prob":0.446},{"game_id":"h","home_margin":0.1,"home_win_prob":0.51}]"#
+        let json = #"[{"game_id":"g","home_margin":-0.6,"home_win_prob":0.446},{"game_id":"h","home_margin":0.1,"home_win_prob":0.52},{"game_id":"i","home_margin":0.0,"home_win_prob":0.502}]"#
         let rows = try JSONDecoder.statScout.decode([GameProjection].self, from: Data(json.utf8))
         XCTAssertEqual(rows[0].label(home: "EDM", away: "SEA"), "SEA 55%")
         XCTAssertEqual(rows[0].winProbability(for: "SEA", home: "EDM"), 0.554, accuracy: 0.0001)
         XCTAssertEqual(rows[0].winProbability(for: "EDM", home: "EDM"), 0.446, accuracy: 0.0001)
-        XCTAssertEqual(rows[1].label(home: "EDM", away: "SEA"), "Toss-up")
+        XCTAssertEqual(rows[1].label(home: "EDM", away: "SEA"), "EDM 52%")
+        XCTAssertEqual(rows[2].label(home: "EDM", away: "SEA"), "Toss-up")
     }
 
     func testTeamRatingDecodesAndSigns() throws {

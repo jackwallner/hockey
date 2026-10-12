@@ -563,6 +563,30 @@ final class DashboardViewModel {
         return "\(wins)-\(losses)-\(otLosses)"
     }
 
+    /// A club's last `count` regular-season results before `game`, oldest
+    /// first: "W", "L", or "OT" for an overtime or shootout loss.
+    func recentResults(forTeam team: String, before game: Game, count: Int = 5) -> [String] {
+        let cutoff = game.kickoff ?? game.gameDate
+        let finals = games
+            .filter { $0.seasonPhase == .regular && $0.isFinal && $0.involves(team) && ($0.kickoff ?? $0.gameDate) < cutoff }
+            .sorted { ($0.kickoff ?? $0.gameDate) < ($1.kickoff ?? $1.gameDate) }
+        return finals.suffix(count).compactMap { $0.result(for: team) }.map { $0 == "OTL" ? "OT" : $0 }
+    }
+
+    /// Every club's regular season at a glance, with league ranks.
+    var teamSummaries: [String: TeamSeasonSummary] {
+        TeamSeasonSummary.build(games: games, xg: gameXG, teams: leagueTeamAbbreviations)
+    }
+
+    /// Earlier meetings of the two clubs this season, oldest first.
+    func meetings(of game: Game) -> [Game] {
+        let cutoff = game.kickoff ?? game.gameDate
+        return games
+            .filter { $0.id != game.id && $0.isFinal && $0.involves(game.awayTeam) && $0.involves(game.homeTeam)
+                && ($0.kickoff ?? $0.gameDate) < cutoff }
+            .sorted { ($0.kickoff ?? $0.gameDate) < ($1.kickoff ?? $1.gameDate) }
+    }
+
     /// Every game on a club's schedule this season, in kickoff order.
     func schedule(forTeam team: String) -> [Game] {
         games.filter { $0.involves(team) }
@@ -1210,6 +1234,10 @@ final class DashboardViewModel {
     private func performLoad() async {
         defer { loadTask = nil }
         hasStartedLoading = true
+        // The schedule does not depend on the player snapshot, so it loads
+        // alongside it: scores, standings and team cards no longer wait for
+        // the whole player download.
+        Task { await self.loadGames() }
         isLoading = players.isEmpty
         loadingMessage = players.isEmpty ? "Loading saved players…" : "Refreshing player data…"
         loadingProgress = players.isEmpty ? 0.12 : 0.2

@@ -74,9 +74,37 @@ final class HockeyGameDayTests: XCTestCase {
         XCTAssertNil(plays[2].assistLine)
         XCTAssertEqual(plays[2].resultLabel, "Missed")
         XCTAssertNil(plays[3].assistLine, "older rows without assists say nothing rather than Unassisted")
+        let brothers = #"[{"period":1,"clock":"16:47","team":"WSH","description":"Snap shot","xg":0.16,"result":"GOAL","assists":["Aliaksei Protas","Ilya Protas"]}]"#
+        let protas = try JSONDecoder().decode([GameDetail.BigPlay].self, from: Data(brothers.utf8))
+        XCTAssertEqual(protas[0].assistLine, "A. Protas, I. Protas")
     }
 
     func testExpectedGoalsLabelReadsAwayFirst() {
         XCTAssertEqual(GameXG(away: 2.873, home: 1.204).label, "xG 2.9-1.2")
+    }
+
+    func testSeasonSummaryAddsSpecialTeamsAndRanksTheLeague() throws {
+        func game(_ id: String, _ away: String, _ home: String, _ a: Int, _ h: Int) -> Game {
+            Game(id: id, season: 2026, week: 1, kickoff: Date(timeIntervalSince1970: 1_791_000_000),
+                 awayTeam: away, homeTeam: home, awayScore: a, homeScore: h)
+        }
+        let games = [game("1", "EDM", "SJS", 3, 1), game("2", "SJS", "VAN", 2, 4)]
+        let xg = [
+            "1": GameXG(away: 2.0, home: 1.0, awayPowerPlayGoals: 1, awayPowerPlays: 4,
+                        homePowerPlayGoals: 0, homePowerPlays: 2, awayShots: 30, homeShots: 20),
+        ]
+        let table = TeamSeasonSummary.build(games: games, xg: xg, teams: ["EDM", "SJS", "VAN"])
+        let edm = try XCTUnwrap(table["EDM"])
+        XCTAssertEqual(edm.goalsFor.value, 3)
+        XCTAssertEqual(try XCTUnwrap(edm.powerPlay).value, 0.25)
+        XCTAssertEqual(try XCTUnwrap(edm.penaltyKill).value, 1.0)
+        XCTAssertEqual(try XCTUnwrap(edm.expectedGoalsShare).value, 2.0 / 3.0, accuracy: 0.0001)
+        let sjs = try XCTUnwrap(table["SJS"])
+        XCTAssertEqual(sjs.games, 2)
+        XCTAssertEqual(try XCTUnwrap(sjs.penaltyKill).value, 0.75)
+        XCTAssertEqual(edm.goalsAgainst.rank, 1, "fewest against ranks first")
+        XCTAssertEqual(sjs.goalsAgainst.rank, 3)
+        XCTAssertNil(table["VAN"]?.powerPlay, "no breakdown, no special teams")
+        XCTAssertEqual(TeamSeasonSummary.ordinal(22), "22nd")
     }
 }

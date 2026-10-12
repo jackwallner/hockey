@@ -252,7 +252,10 @@ struct TeamRankingsCard: View {
         var seen = Set<String>()
         for cat in cats {
             let present = Set(pool.flatMap { p in p.metrics.filter { $0.category == cat }.map(\.label) })
-            for label in cat.metricPriorityOrder where present.contains(label) {
+            // Advanced only: a roster mean of goals or hits ("1.2 G") reads as
+            // nothing, and the Standard tab carries the counting stats.
+            for label in cat.metricPriorityOrder where present.contains(label)
+                && HockeyMetricRegistry.definition(for: label, category: cat)?.kind != .traditional {
                 if seen.insert(label).inserted { pairs.append((label, cat)) }
             }
         }

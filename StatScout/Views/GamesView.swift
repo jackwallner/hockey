@@ -161,9 +161,16 @@ struct GamesView: View {
                 .padding(.top, 12)
         }
 
-        Text(favorites.team == nil
-             ? "Live scores update every thirty seconds. Expected goals and player stats usually follow the final by the next morning. Follow a team from its page to pin its game here."
-             : "Live scores update every thirty seconds. Expected goals and player stats usually follow the final by the next morning.")
+        Text(
+            [
+                slate.contains { [.inProgress, .awaitingScore].contains($0.status(now: now)) }
+                    ? "Live scores update every thirty seconds." : nil,
+                "Expected goals and player stats usually follow the final by the next morning.",
+                favorites.team == nil ? "Follow a team from its page to pin its game here." : nil,
+            ]
+            .compactMap { $0 }
+            .joined(separator: " ")
+        )
             .font(RinkType.micro)
             .foregroundStyle(RinkPalette.inkTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -284,8 +291,13 @@ struct GameRow: View {
     }
 
     private func teamLine(_ team: String, score: Int?, status: GameStatus, record: String?) -> some View {
-        let isWinner = game.result(for: team) == "W"
-        let dim = status == .final && !isWinner
+        // The scoreboard can call a game final a few minutes before the
+        // schedule sync does; the loser dims either way.
+        let liveFinal = live.map { $0.isFinal } ?? false
+        let isWinner = liveFinal
+            ? live.map { $0.score(isHome: game.isHome(team)) > $0.score(isHome: !game.isHome(team)) } ?? false
+            : game.result(for: team) == "W"
+        let dim = (status == .final || liveFinal) && !isWinner
         return HStack(spacing: 8) {
             TeamColorDot(abbr: team, size: 10)
             Text(displayTeamAbbr(team))
@@ -332,7 +344,8 @@ struct GameRow: View {
         case .final: return game.finalLabel
         case .inProgress: return "In progress"
         case .awaitingScore: return "Final soon"
-        case .upcoming: return game.kickoffLabel
+        // The day is already the section's; the row only needs the time.
+        case .upcoming: return game.kickoff?.formatted(date: .omitted, time: .shortened) ?? "Time TBD"
         }
     }
 
@@ -344,7 +357,7 @@ struct GameRow: View {
         switch status {
         case .final:
             if let xg { return xg.label }
-            return hasStats ? game.dayLabel : "Stats arriving"
+            return hasStats ? "xG arriving" : "Stats arriving"
         case .inProgress, .awaitingScore: return "Score at final"
         case .upcoming:
             if let projection {

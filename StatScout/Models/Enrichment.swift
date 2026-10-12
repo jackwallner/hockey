@@ -185,12 +185,13 @@ struct GameProjection: Decodable, Hashable, Sendable {
         case homeWinProbability = "home_win_prob"
     }
 
-    /// "EDM 62%", the favourite's chance to win, or "Toss-up" inside 53%.
-    /// Hockey reads a matchup as a win chance, not a point spread: margins
-    /// here are fractions of a goal.
+    /// "EDM 62%", the favourite's chance to win, or "Toss-up" when it rounds
+    /// to 50%. Hockey reads a matchup as a win chance, not a point spread:
+    /// margins here are fractions of a goal, and most games sit near even, so
+    /// 52% still says who is favoured.
     func label(home: String, away: String) -> String {
         let favouriteChance = max(homeWinProbability, 1 - homeWinProbability)
-        guard favouriteChance >= 0.53 else { return "Toss-up" }
+        guard favouriteChance >= 0.505 else { return "Toss-up" }
         let favourite = homeWinProbability >= 0.5 ? home : away
         return "\(displayTeamAbbr(favourite)) \(Int((favouriteChance * 100).rounded()))%"
     }
@@ -301,5 +302,105 @@ struct StandingsRow: Hashable, Sendable, Identifiable {
         default: suffix = "TH"
         }
         return "\(number)\(suffix)"
+    }
+}
+
+/// A club's season at a glance from its posted finals and game breakdowns:
+/// the numbers a standings page leaves out, each with its league rank.
+struct TeamSeasonSummary: Hashable, Sendable {
+    struct Stat: Hashable, Sendable {
+        let value: Double
+        /// 1 is best in the league.
+        var rank: Int = 0
+    }
+
+    let team: String
+    let games: Int
+    var goalsFor: Stat
+    var goalsAgainst: Stat
+    var shotsFor: Stat?
+    var shotsAgainst: Stat?
+    var powerPlay: Stat?
+    var penaltyKill: Stat?
+    var expectedGoalsShare: Stat?
+
+    /// Every club's summary, ranked. `xg` covers the games with a built
+    /// breakdown, the source of shots, special teams and xG.
+    static func build(games: [Game], xg: [String: GameXG], teams: [String]) -> [String: TeamSeasonSummary] {
+        struct Totals {
+            var games = 0, goalsFor = 0, goalsAgainst = 0
+            var detailed = 0, shotsFor = 0, shotsAgainst = 0
+            var ppGoals = 0, ppChances = 0, pkAgainst = 0, pkChances = 0
+            var xgFor = 0.0, xgAgainst = 0.0
+        }
+        var totals: [String: Totals] = [:]
+        for game in games where game.seasonPhase == .regular && game.isFinal {
+            for side in [game.awayTeam, game.homeTeam] {
+                let team = normalizedTeamAbbreviation(side)
+                let home = game.isHome(side)
+                var t = totals[team] ?? Totals()
+                t.games += 1
+                t.goalsFor += game.score(of: side) ?? 0
+                t.goalsAgainst += game.score(of: game.opponent(of: side)) ?? 0
+                if let x = xg[game.id] {
+                    t.detailed += 1
+                    t.xgFor += home ? x.home : x.away
+                    t.xgAgainst += home ? x.away : x.home
+                    t.shotsFor += (home ? x.homeShots : x.awayShots) ?? 0
+                    t.shotsAgainst += (home ? x.awayShots : x.homeShots) ?? 0
+                    t.ppGoals += (home ? x.homePowerPlayGoals : x.awayPowerPlayGoals) ?? 0
+                    t.ppChances += (home ? x.homePowerPlays : x.awayPowerPlays) ?? 0
+                    t.pkAgainst += (home ? x.awayPowerPlayGoals : x.homePowerPlayGoals) ?? 0
+                    t.pkChances += (home ? x.awayPowerPlays : x.homePowerPlays) ?? 0
+                }
+                totals[team] = t
+            }
+        }
+        var out: [String: TeamSeasonSummary] = [:]
+        for team in teams {
+            guard let t = totals[team], t.games > 0 else { continue }
+            let detailed = Double(max(t.detailed, 1))
+            out[team] = TeamSeasonSummary(
+                team: team,
+                games: t.games,
+                goalsFor: Stat(value: Double(t.goalsFor) / Double(t.games)),
+                goalsAgainst: Stat(value: Double(t.goalsAgainst) / Double(t.games)),
+                shotsFor: t.detailed > 0 ? Stat(value: Double(t.shotsFor) / detailed) : nil,
+                shotsAgainst: t.detailed > 0 ? Stat(value: Double(t.shotsAgainst) / detailed) : nil,
+                powerPlay: t.ppChances > 0 ? Stat(value: Double(t.ppGoals) / Double(t.ppChances)) : nil,
+                penaltyKill: t.pkChances > 0 ? Stat(value: 1 - Double(t.pkAgainst) / Double(t.pkChances)) : nil,
+                expectedGoalsShare: t.xgFor + t.xgAgainst > 0 ? Stat(value: t.xgFor / (t.xgFor + t.xgAgainst)) : nil
+            )
+        }
+        rank(&out, \.goalsFor, higherIsBetter: true)
+        rank(&out, \.goalsAgainst, higherIsBetter: false)
+        rankOptional(&out, \.shotsFor, higherIsBetter: true)
+        rankOptional(&out, \.shotsAgainst, higherIsBetter: false)
+        rankOptional(&out, \.powerPlay, higherIsBetter: true)
+        rankOptional(&out, \.penaltyKill, higherIsBetter: true)
+        rankOptional(&out, \.expectedGoalsShare, higherIsBetter: true)
+        return out
+    }
+
+    /// Competition ranking: ties share the better rank ("T-3rd" style).
+    private static func rank(_ table: inout [String: TeamSeasonSummary], _ path: WritableKeyPath<TeamSeasonSummary, Stat>, higherIsBetter: Bool) {
+        let values = table.mapValues { $0[keyPath: path].value }
+        for (team, value) in values {
+            let better = values.values.filter { higherIsBetter ? $0 > value + 1e-9 : $0 < value - 1e-9 }.count
+            table[team]?[keyPath: path].rank = better + 1
+        }
+    }
+
+    private static func rankOptional(_ table: inout [String: TeamSeasonSummary], _ path: WritableKeyPath<TeamSeasonSummary, Stat?>, higherIsBetter: Bool) {
+        let values = table.compactMapValues { $0[keyPath: path]?.value }
+        for (team, value) in values {
+            let better = values.values.filter { higherIsBetter ? $0 > value + 1e-9 : $0 < value - 1e-9 }.count
+            table[team]?[keyPath: path]?.rank = better + 1
+        }
+    }
+
+    /// "1st", "2nd", "32nd".
+    static func ordinal(_ rank: Int) -> String {
+        StandingsRow.ordinal(rank).lowercased()
     }
 }

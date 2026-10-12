@@ -410,12 +410,21 @@ struct TeamsView: View {
               viewModel.selectedPhase == .regular else { return nil }
         if let game = viewModel.currentGame(forTeam: abbr),
            [.inProgress, .awaitingScore].contains(game.status()) {
-            return ("Live", "playing \(game.matchupLabel(for: abbr))", RinkPalette.performanceLow)
+            return liveStatus(game, abbr)
         }
         if let record = viewModel.record(forTeam: abbr) {
             return (record, "record \(record)", RinkPalette.inkSecondary)
         }
         return firstGameStatus(abbr)
+    }
+
+    /// "Live 2-1" with the club's score first once the scoreboard has it.
+    private func liveStatus(_ game: Game, _ abbr: String) -> (text: String, spoken: String, color: Color) {
+        guard let live = viewModel.liveScore(for: game) else {
+            return ("Live", "playing \(game.matchupLabel(for: abbr))", RinkPalette.performanceLow)
+        }
+        let mine = live.score(isHome: game.isHome(abbr)), theirs = live.score(isHome: !game.isHome(abbr))
+        return ("Live \(mine)-\(theirs)", "\(mine) to \(theirs) \(game.matchupLabel(for: abbr)), \(live.clockLabel)", RinkPalette.performanceLow)
     }
 
     /// Before a club's first final: its first puck drop.
@@ -428,7 +437,7 @@ struct TeamsView: View {
             let color = game.result(for: abbr) == "W" ? RinkPalette.performanceHigh : RinkPalette.performanceLow
             return (line, "\(line) \(game.matchupLabel(for: abbr))", color)
         case .inProgress, .awaitingScore:
-            return ("Live", "playing \(game.matchupLabel(for: abbr))", RinkPalette.performanceLow)
+            return liveStatus(game, abbr)
         case .upcoming:
             return (
                 game.kickoff?.formatted(.dateTime.weekday(.abbreviated)) ?? "TBD",

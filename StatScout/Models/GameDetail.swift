@@ -29,10 +29,17 @@ struct RatedValue: Decodable, Hashable, Sendable {
 }
 
 /// Each side's expected goals for one final, the number the Games list shows
-/// under a score.
+/// under a score, plus the power-play and shot counts the season team
+/// summaries add up.
 struct GameXG: Hashable, Sendable {
     let away: Double
     let home: Double
+    var awayPowerPlayGoals: Int? = nil
+    var awayPowerPlays: Int? = nil
+    var homePowerPlayGoals: Int? = nil
+    var homePowerPlays: Int? = nil
+    var awayShots: Int? = nil
+    var homeShots: Int? = nil
 
     /// "xG 2.9-1.7", away first like the rows above it.
     var label: String {
@@ -133,7 +140,13 @@ struct GameDetail: Decodable, Sendable {
         var assistLine: String? {
             guard isGoal, let assists else { return nil }
             guard !assists.isEmpty else { return "Unassisted" }
-            return assists.map(Self.lastName).joined(separator: ", ")
+            // Brothers on one line ("Protas, Protas") need their initials.
+            let last = assists.map(Self.lastName)
+            return zip(assists, last).map { full, surname in
+                guard last.filter({ $0 == surname }).count > 1, let initial = full.first else { return surname }
+                return "\(initial). \(surname)"
+            }
+            .joined(separator: ", ")
         }
 
         /// "Connor McDavid" -> "McDavid", "James van Riemsdyk" -> "van Riemsdyk".

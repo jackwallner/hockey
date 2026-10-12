@@ -382,13 +382,25 @@ struct StatcastAPI: StatcastProviding {
             let game_id: String
             let away_xg: Double?
             let home_xg: Double?
+            let away_ppg: Double?
+            let away_ppo: Double?
+            let home_ppg: Double?
+            let home_ppo: Double?
+            let away_sog: Double?
+            let home_sog: Double?
         }
         var out: [String: GameXG] = [:]
         let pageSize = 1000
         var offset = 0
         while true {
             let data = try await get("game_details", [
-                URLQueryItem(name: "select", value: "game_id,away_xg:team_stats->away->xg->value,home_xg:team_stats->home->xg->value"),
+                URLQueryItem(name: "select", value: [
+                    "game_id",
+                    "away_xg:team_stats->away->xg->value", "home_xg:team_stats->home->xg->value",
+                    "away_ppg:team_stats->away->pp_goals", "away_ppo:team_stats->away->pp_opportunities",
+                    "home_ppg:team_stats->home->pp_goals", "home_ppo:team_stats->home->pp_opportunities",
+                    "away_sog:team_stats->away->sog", "home_sog:team_stats->home->sog",
+                ].joined(separator: ",")),
                 URLQueryItem(name: "season", value: "eq.\(season)"),
                 URLQueryItem(name: "order", value: "game_id.asc"),
                 URLQueryItem(name: "limit", value: String(pageSize)),
@@ -397,7 +409,12 @@ struct StatcastAPI: StatcastProviding {
             let rows = try JSONDecoder().decode([Row].self, from: data)
             for row in rows {
                 if let away = row.away_xg, let home = row.home_xg {
-                    out[row.game_id] = GameXG(away: away, home: home)
+                    out[row.game_id] = GameXG(
+                        away: away, home: home,
+                        awayPowerPlayGoals: row.away_ppg.map { Int($0) }, awayPowerPlays: row.away_ppo.map { Int($0) },
+                        homePowerPlayGoals: row.home_ppg.map { Int($0) }, homePowerPlays: row.home_ppo.map { Int($0) },
+                        awayShots: row.away_sog.map { Int($0) }, homeShots: row.home_sog.map { Int($0) }
+                    )
                 }
             }
             if rows.count < pageSize { return out }

@@ -218,6 +218,11 @@ struct TeamView: View {
                         TeamGameCard(viewModel: viewModel, team: team)
                             .padding(.horizontal, 12)
                             .padding(.top, 10)
+                        if displayPhase == .regular {
+                            TeamSeasonGlance(viewModel: viewModel, team: team)
+                                .padding(.horizontal, 12)
+                                .padding(.top, 10)
+                        }
                     }
                 }
                 tabSelector

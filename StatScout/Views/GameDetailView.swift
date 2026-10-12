@@ -198,6 +198,8 @@ struct GameDetailView: View {
         switch game.status() {
         case .upcoming:
             upcomingCard(game)
+        case .inProgress where viewModel.liveScore(for: game)?.isFinal == true:
+            finalDetail(game)
         case .inProgress:
             notice(
                 icon: "hockey.puck",
@@ -750,12 +752,181 @@ struct GameDetailView: View {
         }
     }
 
+    @ViewBuilder
     private func upcomingCard(_ game: Game) -> some View {
-        notice(
-            icon: "calendar",
-            title: "Not started yet",
-            text: "The score and shot breakdown post here when the game goes final. Scout both rosters from the team pages above."
-        )
+        if game.seasonPhase == .regular, viewModel.standings[normalizedTeamAbbreviation(game.awayTeam)]?.games ?? 0 > 0
+            || viewModel.projection(for: game) != nil {
+            matchupCard(game)
+            seriesCard(game)
+            footnote("Win chance and ratings come from StatScout Power Ratings: goals a game better or worse than an average team, from expected and actual goals, adjusted for schedule, with home ice worth about 0.2 goals. Power play, penalty kill and xGF% (each club's share of expected goals) cover every game with a shot breakdown, ranked across the league. The shot breakdown posts here after the final.")
+        } else {
+            notice(
+                icon: "calendar",
+                title: "Not started yet",
+                text: "The score and shot breakdown post here when the game goes final. Scout both rosters from the team pages above."
+            )
+        }
+    }
+
+    // MARK: - Matchup preview
+
+    private func matchupCard(_ game: Game) -> some View {
+        let away = normalizedTeamAbbreviation(game.awayTeam)
+        let home = normalizedTeamAbbreviation(game.homeTeam)
+        let table = viewModel.standings
+        let awayRow = table[away], homeRow = table[home]
+        let awayRating = viewModel.teamRating(away), homeRating = viewModel.teamRating(home)
+        let summaries = viewModel.teamSummaries
+        let awaySummary = summaries[away], homeSummary = summaries[home]
+        func perGame(_ goals: Int?, _ games: Int?) -> (String, Double)? {
+            guard let goals, let games, games > 0 else { return nil }
+            let value = Double(goals) / Double(games)
+            return (String(format: "%.2f", value), value)
+        }
+        func place(_ team: String) -> String? {
+            guard let standing = StandingsRow.divisionPlace(of: team, in: table) else { return nil }
+            return "\(StandingsRow.ordinal(standing.place).lowercased()) \(standing.division.rawValue)"
+        }
+        return card(title: "Matchup") {
+            if let projection = viewModel.projection(for: game) {
+                winChance(game, projection: projection)
+            }
+            HStack {
+                teamLabel(game.awayTeam)
+                Spacer()
+                teamLabel(game.homeTeam)
+            }
+            .padding(.horizontal, RinkGeo.padCard)
+            .frame(height: 30)
+            .background(RinkPalette.surfaceAlt)
+            matchupRow("Record", awayRow?.games ?? 0 > 0 ? awayRow?.record : nil, homeRow?.games ?? 0 > 0 ? homeRow?.record : nil, index: 0)
+            matchupRow("Points", awayRow.map { "\($0.points)" }, homeRow.map { "\($0.points)" },
+                       compare: (Double(awayRow?.points ?? 0), Double(homeRow?.points ?? 0)), index: 1)
+            matchupRow("Division", place(away), place(home), index: 2)
+            matchupRow("Last 5", lastFive(away, game), lastFive(home, game), index: 3)
+            let awayGF = perGame(awayRow?.goalsFor, awayRow?.games), homeGF = perGame(homeRow?.goalsFor, homeRow?.games)
+            matchupRow("Goals for / game", awayGF?.0, homeGF?.0, compare: awayGF.flatMap { a in homeGF.map { (a.1, $0.1) } }, index: 4)
+            let awayGA = perGame(awayRow?.goalsAgainst, awayRow?.games), homeGA = perGame(homeRow?.goalsAgainst, homeRow?.games)
+            matchupRow("Goals against / game", awayGA?.0, homeGA?.0, compare: awayGA.flatMap { a in homeGA.map { (-a.1, -$0.1) } }, index: 5)
+            summaryRow("Power play", awaySummary?.powerPlay, homeSummary?.powerPlay, index: 6)
+            summaryRow("Penalty kill", awaySummary?.penaltyKill, homeSummary?.penaltyKill, index: 7)
+            summaryRow("xGF%", awaySummary?.expectedGoalsShare, homeSummary?.expectedGoalsShare, index: 8)
+            matchupRow("Power rating", awayRating.map { TeamRating.signed($0.rating) }, homeRating.map { TeamRating.signed($0.rating) },
+                       compare: awayRating.flatMap { a in homeRating.map { (a.rating, $0.rating) } }, index: 9)
+            matchupRow("Power rank", awayRating.map { "#\($0.rank)" }, homeRating.map { "#\($0.rank)" },
+                       compare: awayRating.flatMap { a in homeRating.map { (-Double(a.rank), -Double($0.rank)) } }, index: 10)
+        }
+    }
+
+    /// A share stat with its league rank: "24.0% (9th)".
+    private func summaryRow(_ label: String, _ away: TeamSeasonSummary.Stat?, _ home: TeamSeasonSummary.Stat?, index: Int) -> some View {
+        func text(_ stat: TeamSeasonSummary.Stat?) -> String? {
+            stat.map { "\(Self.percent($0.value)) (\(TeamSeasonSummary.ordinal($0.rank)))" }
+        }
+        return matchupRow(label, text(away), text(home),
+                          compare: away.flatMap { a in home.map { (-Double(a.rank), -Double($0.rank)) } }, index: index)
+    }
+
+    private static func percent(_ share: Double) -> String {
+        (share * 100).formatted(.number.precision(.fractionLength(1))) + "%"
+    }
+
+    /// "W W L OT W", oldest first, or nil before the club's first final.
+    private func lastFive(_ team: String, _ game: Game) -> String? {
+        let results = viewModel.recentResults(forTeam: team, before: game)
+        return results.isEmpty ? nil : results.joined(separator: " ")
+    }
+
+    /// The two clubs' chances as one split bar in their colors.
+    private func winChance(_ game: Game, projection: GameProjection) -> some View {
+        let away = projection.winProbability(for: game.awayTeam, home: game.homeTeam)
+        let home = 1 - away
+        let colors = raceColors(game)
+        return VStack(spacing: 6) {
+            HStack {
+                Text("\(displayTeamAbbr(game.awayTeam)) \(Int((away * 100).rounded()))%")
+                Spacer()
+                Text("Win chance")
+                    .font(RinkType.micro)
+                    .foregroundStyle(RinkPalette.inkTertiary)
+                Spacer()
+                Text("\(Int((home * 100).rounded()))% \(displayTeamAbbr(game.homeTeam))")
+            }
+            .font(RinkType.smallBold)
+            .foregroundStyle(RinkPalette.ink)
+            GeometryReader { proxy in
+                HStack(spacing: 2) {
+                    Capsule().fill(colors.away).frame(width: max(4, proxy.size.width * away - 1))
+                    Capsule().fill(colors.home)
+                }
+            }
+            .frame(height: 8)
+        }
+        .padding(RinkGeo.padCard)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Win chance: \(teamFullName(game.awayTeam)) \(Int((away * 100).rounded())) percent, \(teamFullName(game.homeTeam)) \(Int((home * 100).rounded())) percent")
+    }
+
+    /// Away value, label, home value; the better side in bold when the two
+    /// can be compared.
+    private func matchupRow(_ label: String, _ away: String?, _ home: String?, compare: (Double, Double)? = nil, index: Int) -> some View {
+        let awayBetter = compare.map { $0.0 > $0.1 } ?? false
+        let homeBetter = compare.map { $0.1 > $0.0 } ?? false
+        return HStack(spacing: 8) {
+            Text(away ?? "-")
+                .font(awayBetter ? RinkType.statMed : RinkType.statSmall)
+                .foregroundStyle(awayBetter ? RinkPalette.ink : RinkPalette.inkSecondary)
+                .frame(width: 104, alignment: .leading)
+            Text(label)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkTertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity)
+            Text(home ?? "-")
+                .font(homeBetter ? RinkType.statMed : RinkType.statSmall)
+                .foregroundStyle(homeBetter ? RinkPalette.ink : RinkPalette.inkSecondary)
+                .frame(width: 104, alignment: .trailing)
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
+        .monospacedDigit()
+        .padding(.horizontal, RinkGeo.padCard)
+        .frame(height: 38)
+        .background(index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label): away \(away ?? "none"), home \(home ?? "none")")
+    }
+
+    /// Earlier meetings this season, each linking to its game.
+    @ViewBuilder
+    private func seriesCard(_ game: Game) -> some View {
+        let meetings = viewModel.meetings(of: game)
+        if !meetings.isEmpty {
+            card(title: "Season series") {
+                ForEach(Array(meetings.enumerated()), id: \.element.id) { index, meeting in
+                    NavigationLink(value: GameRoute(gameId: meeting.id)) {
+                        HStack {
+                            Text(meeting.dayLabel)
+                                .font(RinkType.small)
+                                .foregroundStyle(RinkPalette.inkSecondary)
+                            Spacer()
+                            Text("\(displayTeamAbbr(meeting.awayTeam)) \(meeting.awayScore ?? 0), \(displayTeamAbbr(meeting.homeTeam)) \(meeting.homeScore ?? 0)\(meeting.extraPeriodLabel.map { " (\($0))" } ?? "")")
+                                .font(RinkType.smallBold)
+                                .foregroundStyle(RinkPalette.ink)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(RinkPalette.inkTertiary)
+                        }
+                        .padding(.horizontal, RinkGeo.padCard)
+                        .frame(height: 40)
+                        .background(index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 
     // MARK: - Pieces

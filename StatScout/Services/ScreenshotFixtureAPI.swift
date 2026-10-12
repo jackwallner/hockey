@@ -136,7 +136,13 @@ struct ScreenshotFixtureAPI: StatcastProviding {
         for game in Self.games where game.isFinal && Self.gameIds.contains(game.id) {
             guard let detail = Self.makeGameDetail(for: game),
                   let away = detail.away["xg"]?.value, let home = detail.home["xg"]?.value else { continue }
-            out[game.id] = GameXG(away: away, home: home)
+            func count(_ side: [String: RatedValue], _ key: String) -> Int? { side[key].map { Int($0.value) } }
+            out[game.id] = GameXG(
+                away: away, home: home,
+                awayPowerPlayGoals: count(detail.away, "pp_goals"), awayPowerPlays: count(detail.away, "pp_opportunities"),
+                homePowerPlayGoals: count(detail.home, "pp_goals"), homePowerPlays: count(detail.home, "pp_opportunities"),
+                awayShots: count(detail.away, "sog"), homeShots: count(detail.home, "sog")
+            )
         }
         return out
     }
