@@ -32,11 +32,20 @@ jobs:
           wait="${wait:-900}"
           # A job can run six hours. Wake early instead; the planner books the
           # rest of the wait on the next hop.
-          if [ "$wait" -gt 20700 ]; then wait=20700; fi
+          if [ "$wait" -gt 20400 ]; then wait=20400; fi
           echo "Sleeping ${wait}s"
           sleep "$wait"
 
       - name: Start the refresh workflow
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run nightly-statcast.yml --repo "$GITHUB_REPOSITORY" -f planned=true
+        run: |
+          # One GitHub API 504 here used to end the chain until a backup cron fired.
+          for attempt in 1 2 3 4 5; do
+            if gh workflow run nightly-statcast.yml --repo "$GITHUB_REPOSITORY" -f planned=true; then
+              exit 0
+            fi
+            echo "Dispatch attempt $attempt failed; retrying in $((attempt * 30))s"
+            sleep $((attempt * 30))
+          done
+          exit 1

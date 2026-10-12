@@ -263,4 +263,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WAIT: ${{ needs.probe.outputs.wait_seconds }}
-        run: gh workflow run refresh-timer.yml --repo "$GITHUB_REPOSITORY" -f wait_seconds="$WAIT"
+        run: |
+          # One GitHub API 504 here used to end the chain until a backup cron fired.
+          for attempt in 1 2 3 4 5; do
+            if gh workflow run refresh-timer.yml --repo "$GITHUB_REPOSITORY" -f wait_seconds="$WAIT"; then
+              exit 0
+            fi
+            echo "Dispatch attempt $attempt failed; retrying in $((attempt * 30))s"
+            sleep $((attempt * 30))
+          done
+          exit 1
