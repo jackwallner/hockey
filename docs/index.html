@@ -269,6 +269,8 @@
         }
 
         .download-btn:hover { opacity: 0.85; }
+        .download-btn[aria-disabled="true"] { cursor: default; }
+        .download-btn[aria-disabled="true"]:hover { opacity: 1; }
 
         /* Screenshot showcase */
         .showcase {
@@ -615,7 +617,6 @@
                 <img src="icon_256.png" alt="StatScout">
                 <span>StatScout</span>
             </a>
-            <a class="nav-link" href="https://apps.apple.com/us/app/hockey-next-xg-statscout/id6820644691?uo=4">Download</a>
         </div>
     </nav>
 
@@ -623,7 +624,7 @@
         <h1>See who leads <span>beyond the box score</span></h1>
         <p class="tagline">An NHL stats app for iPhone: every player ranked on expected goals, with the full percentile profile one tap away and the whole league sorted by who's heating up.</p>
         <p class="platforms">iPhone &middot; Fresh after every game &middot; No account</p>
-        <a class="download-btn" href="https://apps.apple.com/us/app/hockey-next-xg-statscout/id6820644691?uo=4">Download on the App Store</a>
+        <span class="download-btn" aria-disabled="true">Coming soon to the App Store</span>
     </section>
 
     <section class="showcase">
@@ -809,7 +810,7 @@
     <section class="cta">
         <h2>Know who's actually good</h2>
         <p>Free on the App Store. No account required. StatScout+ optional.</p>
-        <a class="download-btn" href="https://apps.apple.com/us/app/hockey-next-xg-statscout/id6820644691?uo=4">Download on the App Store</a>
+        <span class="download-btn" aria-disabled="true">Coming soon to the App Store</span>
     </section>
 
     <footer>
