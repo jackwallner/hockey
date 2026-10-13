@@ -492,28 +492,16 @@ final class StatScoutTourUITests: XCTestCase {
         }
     }
 
-    func testT24ReviewPrompt() throws {
+    /// Two plain rows, no rating question in front of either. Not tapped:
+    /// both leave the app (App Store, Mail).
+    func testT24RateAndFeedbackRows() throws {
         let app = launch()
         begin("24")
         waitForText("RANK", in: app)
         tapButton("Settings", in: app)
-        tapAnyButton(containing: "Rate or Send Feedback", in: app)
-        waitForText("Yes, I'm enjoying it", in: app, timeout: 15)
-        Thread.sleep(forTimeInterval: 1)
-        shot(app, "review_prompt_enjoyment")
-        tapButton("Yes, I'm enjoying it", in: app)
-        Thread.sleep(forTimeInterval: 1)
-        shot(app, "review_prompt_pitch")
-        app.terminate()
-
-        let second = launch()
-        waitForText("RANK", in: second)
-        tapButton("Settings", in: second)
-        tapAnyButton(containing: "Rate or Send Feedback", in: second)
-        waitForText("Not really", in: second, timeout: 15)
-        tapButton("Not really", in: second)
-        Thread.sleep(forTimeInterval: 1)
-        shot(second, "review_prompt_feedback")
+        waitForText("Rate StatScout", in: app, timeout: 15)
+        waitForText("Send Feedback", in: app, timeout: 5)
+        shot(app, "settings_rate_and_feedback")
     }
 
     // MARK: - 25 Season picker

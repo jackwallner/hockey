@@ -1,13 +1,17 @@
 import Foundation
 
 extension Notification.Name {
-    /// Posted after a satisfaction moment, host may present the enjoyment funnel after a short delay.
+    /// Posted after a satisfaction moment. The root view may request the system
+    /// rating prompt after a short delay, with no question in front of it.
     static let statscoutPositiveMomentForReview = Notification.Name("com.jackwallner.hockey.positiveMomentForReview")
 }
 
-/// How the user last resolved the in-app review / feedback prompt.
+/// What the user did about a review. Only opening the review page ends the
+/// passive asks: someone who sent feedback can still rate.
 enum ReviewPromptOutcome: String, Sendable {
     case openedWriteReview
+    /// Written by the old feedback funnel. Kept so those installs decode it;
+    /// it no longer stops anything.
     case submittedFeedback
 }
 
@@ -22,23 +26,15 @@ enum ReviewPromptTracker {
     private static let outcomeKey = "reviewPrompt.outcome"
     private static let positiveMomentCountKey = "reviewPrompt.positiveMomentCount"
     private static let pendingPositiveMomentKey = "reviewPrompt.pendingPositiveMoment"
-    private static let softDeferKey = "reviewPrompt.softDefer"
-    private static let distinctDaysKey = "reviewPrompt.distinctUseDays"
-    private static let lastUseDayKey = "reviewPrompt.lastUseDay"
 
-    // Enjoyment pre-filter keeps unhappy users off the public Store; thresholds
-    // match the Vitals portfolio standard for passive prompts.
-    static let minimumLaunchCount = 5
-    static let minimumDaysSinceFirstOpen = 7
-    static let minimumPositiveMoments = 3
-    static let cooldownDays = 120
-    /// Shorter cooldown after "Maybe later". Apple's `requestReview()` is
-    /// rate-limited and silently shows nothing much of the time, so the common
-    /// case was a user who never saw a prompt being locked out for four months.
-    static let softDeferCooldownDays = 30
-    /// Separate calendar days of use before a returning-user prompt is allowed.
-    /// Three taps in one sitting isn't a habit; three days is.
-    static let minimumDistinctUseDays = 3
+    /// Ask early. Most installs are gone within a week, and a rating from
+    /// someone on their second visit beats no rating at all. The only tenure
+    /// gate is "not the first session": a second cold start.
+    static let minimumLaunchCount = 2
+    /// Days between our calls. Apple shows the prompt at most three times a
+    /// year per device and decides each time, so this paces the asks rather
+    /// than the user's answers.
+    static let cooldownDays = 30
 
     static var appLaunchCount: Int {
         get { max(defaults.integer(forKey: launchCountKey), 0) }
@@ -97,28 +93,7 @@ enum ReviewPromptTracker {
             || ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "1"
     }
 
-    /// Distinct calendar days the app has been opened.
-    static var distinctUseDays: Int {
-        max(defaults.integer(forKey: distinctDaysKey), 0)
-    }
-
-    /// Bump the distinct-day counter once per calendar day. This is the
-    /// retention signal the funnel leans on now: the old trigger fired on the
-    /// third player profile opened, which a single sitting satisfies and which
-    /// says nothing about whether someone values the app.
-    private static func recordUseDay(now: Date) {
-        // Local calendar on purpose: "a different day" should mean the user's
-        // day, not UTC's. Built from components rather than a cached formatter,
-        // which isn't Sendable under Swift 6 strict concurrency.
-        let parts = Calendar.current.dateComponents([.year, .month, .day], from: now)
-        let key = "\(parts.year ?? 0)-\(parts.month ?? 0)-\(parts.day ?? 0)"
-        guard defaults.string(forKey: lastUseDayKey) != key else { return }
-        defaults.set(key, forKey: lastUseDayKey)
-        defaults.set(distinctUseDays + 1, forKey: distinctDaysKey)
-    }
-
     static func recordAppLaunch(now: Date = .now) {
-        recordUseDay(now: now)
         if firstAppOpenDate == nil {
             firstAppOpenDate = now
         }
@@ -136,68 +111,42 @@ enum ReviewPromptTracker {
     }
 
     static func passivePromptAllowed(now: Date = .now) -> Bool {
-        guard outcome == nil else { return false }
+        guard outcome != .openedWriteReview else { return false }
         guard let last = lastShownDate else { return true }
-        let days = isSoftDeferred ? softDeferCooldownDays : cooldownDays
-        return now.timeIntervalSince(last) >= TimeInterval(days) * 86_400
+        let cooldown = TimeInterval(cooldownDays) * 86_400
+        return now.timeIntervalSince(last) >= cooldown
     }
 
-    /// True after "Maybe later" until the next hard `markShown` or outcome.
-    /// Callers must NOT call `markShown()` on sheet dismiss while this is set,
-    /// that clears the flag and reinstates the full cooldown, which is exactly
-    /// the leak this exists to close.
-    static var isSoftDeferred: Bool {
-        defaults.bool(forKey: softDeferKey)
-    }
-
-    /// The user said they like the app, then deferred the store review. We fire
-    /// `requestReview()`, which Apple often no-ops, so keep the door open with
-    /// the short cooldown instead of jailing them for the full term.
-    static func markSoftDeferred(now: Date = .now) {
-        lastShownDate = now
-        defaults.set(true, forKey: softDeferKey)
-        consumePendingPositiveMoment()
-    }
-
-    static func canPresentEnjoymentPrompt(
-        hasCompletedOnboarding: Bool,
-        now: Date = .now
-    ) -> Bool {
+    static func canRequestReview(hasCompletedOnboarding: Bool, now: Date = .now) -> Bool {
         guard !isAutomationRun else { return false }
         guard hasCompletedOnboarding else { return false }
         guard passivePromptAllowed(now: now) else { return false }
-        guard appLaunchCount >= minimumLaunchCount else { return false }
-        guard positiveMomentCount >= minimumPositiveMoments else { return false }
-        // Came back on separate days, the strongest signal available that
-        // someone actually values the app rather than having poked it once.
-        guard distinctUseDays >= minimumDistinctUseDays else { return false }
-        guard let first = firstAppOpenDate else { return false }
-        let minInterval = TimeInterval(minimumDaysSinceFirstOpen) * 86_400
-        guard now.timeIntervalSince(first) >= minInterval else { return false }
-        return true
+        return appLaunchCount >= minimumLaunchCount
     }
 
-    static func shouldShowAfterPositiveMoment(
+    static func shouldRequestAfterPositiveMoment(
         hasCompletedOnboarding: Bool,
         now: Date = .now
     ) -> Bool {
         guard hasPendingPositiveMoment else { return false }
-        return canPresentEnjoymentPrompt(hasCompletedOnboarding: hasCompletedOnboarding, now: now)
+        return canRequestReview(hasCompletedOnboarding: hasCompletedOnboarding, now: now)
     }
 
     static func markShown(now: Date = .now) {
         lastShownDate = now
-        defaults.set(false, forKey: softDeferKey)
         consumePendingPositiveMoment()
     }
 
+    /// The Settings "Rate" row. Ends the passive asks for good.
     static func markOpenedWriteReview() {
         outcome = .openedWriteReview
         markShown()
     }
 
-    static func markFeedbackSubmitted() {
+    /// Sending feedback never stops the rating asks, and never overwrites a
+    /// write-review stop.
+    static func markFeedbackSent() {
+        guard outcome != .openedWriteReview else { return }
         outcome = .submittedFeedback
-        markShown()
     }
 }

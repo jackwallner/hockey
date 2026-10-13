@@ -18,8 +18,12 @@ metrics, categories, cohorts, seasons or the data pipeline.
 **This repo is NOT the fastlane template canonical source.** That lives in the
 baseball StatScout repo. Metadata/screenshots here are app-specific.
 
-**App Store reviews:** enjoyment funnel in `StatScout/Services/ReviewPromptTracker.swift`
-(passive triggers: 3rd+ player profile open, Pro player comparison).
+**App Store reviews:** system `requestReview()` only, no custom rating question
+(App Review 5.6.1). `ReviewPromptTracker` gates it (2nd launch on, onboarding
+done, 30-day cooldown, Settings "Rate StatScout" row ends asks; "Send Feedback"
+never does); `RootTabView` asks ~3s after a positive moment (3rd+ player profile
+open, Pro player comparison) only if nothing is presented. Write-review links
+use ASC ID `6820644691`.
 
 ## Rules that hold everywhere
 - Seasons are start years (2026 = 2026-27). Every label goes through

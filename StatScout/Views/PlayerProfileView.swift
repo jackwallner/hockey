@@ -257,17 +257,16 @@ struct PlayerProfileView: View {
             if !store.isPro, opens >= 2, PaywallGate.shared.shouldPresent(.playerScouting) {
                 trialPitchTrigger = .playerScouting
             } else if opens >= 3 {
-                // Third+ profile visit = engaged browsing. Never on a visit that
-                // just showed the pitch, or "Enjoying StatScout?" lands the
-                // moment the user dismisses a subscription sheet.
+                // Third+ profile visit = engaged browsing, a positive moment for
+                // the system rating prompt. Never on a visit that just showed
+                // the pitch, so no ask follows a subscription sheet.
                 ReviewPromptTracker.recordPositiveMoment()
             }
         }
     }
 
-    /// Following a player is free. It's the signal the Trends tab and the
-    /// review funnel read from, so gating it would suppress the thing we most
-    /// want people to do.
+    /// Following a player is free. It's the signal the Trends tab reads from,
+    /// so gating it would suppress the thing we most want people to do.
     private var favoriteButton: some View {
         let isFavorite = favorites.isFavorite(playerId: player.playerId)
         return Button {

@@ -3,7 +3,17 @@ import StoreKit
 
 /// App Store review deep links for StatScout.
 enum AppStoreReviewLinks {
-    static let appStoreID = "6792930447"
+    static let appStoreID = "6820644691"
+    static let feedbackEmail = "jackwallner+bb@gmail.com"
+
+    /// A mail draft to the developer for questions, ideas and problems.
+    static var feedbackMailURL: URL {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = feedbackEmail
+        components.queryItems = [URLQueryItem(name: "subject", value: "StatScout feedback")]
+        return components.url!
+    }
 
     /// Opens the App Store write-review page in the user's storefront.
     static var writeReviewURL: URL {

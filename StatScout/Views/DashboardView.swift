@@ -61,14 +61,7 @@ struct DashboardView: View {
             NavigationStack {
                 AboutView(
                     lastUpdated: viewModel.lastUpdated,
-                    dataCoverage: viewModel.dataCoverage,
-                    onRequestReview: {
-                        showingAbout = false
-                        Task { @MainActor in
-                            try? await Task.sleep(nanoseconds: 400_000_000)
-                            ReviewPromptCoordinator.shared.requestEnjoymentPrompt()
-                        }
-                    }
+                    dataCoverage: viewModel.dataCoverage
                 )
                     .navigationTitle("About")
                     .navigationBarTitleDisplayMode(.inline)
