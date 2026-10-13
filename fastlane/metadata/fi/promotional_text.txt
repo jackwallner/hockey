@@ -1,1 +1,1 @@
-Julkaisutarjous: jokainen NHL-pelaaja maalien odotusarvon mukaan, prosenttiprofiilit ja lämpimien ja kylmien pelaajien trendilista, jota pistetaulukko ei näytä.
+Kuka oikeasti kuljettaa peliä? Jokainen NHL-pelaaja odotettujen maalien mukaan, persentiilipalkit omaan pelipaikkaan verrattuna, päivitys joka peli-illan jälkeen.

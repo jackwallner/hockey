@@ -1,1 +1,1 @@
-Ranking wszystkich zawodników NHL według oczekiwanych goli, z profilem percentyli i tablicą trendów dla graczy na fali i w dołku, której box score nigdy nie pokazuje.
+Kto naprawdę napędza grę? Każdy zawodnik NHL według goli oczekiwanych, z paskami percentyli na tle swojej pozycji, aktualizowane po każdym wieczorze meczowym.

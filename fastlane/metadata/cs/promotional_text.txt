@@ -1,1 +1,1 @@
-Úvodní nabídka: každý hráč NHL seřazený podle očekávaných gólů, s profilem percentilů a žebříčkem trendů, který boxscore nikdy neukáže.
+Kdo opravdu táhne hru? Každý hráč NHL seřazený podle očekávaných gólů, s percentilovými pruhy vůči svému postu, aktualizované po každém hracím večeru. Týmy sleduj zdarma.

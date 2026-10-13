@@ -1,1 +1,1 @@
-Start-Aktion: Jeder NHL-Spieler nach expected goals, mit Perzentil-Profil und dem Trends-Board für heiß und kalt, das der Box Score nie zeigt.
+Wer prägt das Spiel wirklich? Jeder NHL-Spieler nach Expected Goals, mit Perzentil-Balken je Position, aktualisiert nach jedem Spieltag. Teams folgen ist gratis.

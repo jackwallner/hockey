@@ -1,1 +1,1 @@
-Tüm NHL oyuncularını beklenen gollere göre sıralayın; yüzdelik profilini ve box score'un hiçbir zaman göstermediği yükselen ve düşen form panosunu inceleyin.
+Oyunu gerçekte kim yönlendiriyor? Her NHL oyuncusu beklenen gole göre sıralı, mevkisine göre yüzdelik çubuklarla, her maç gecesinden sonra güncel. Takip ücretsiz.

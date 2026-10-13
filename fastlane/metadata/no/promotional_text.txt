@@ -1,1 +1,1 @@
-Rangering av alle NHL-spillere etter forventede mål, med persentilprofil og trendtavlen for spillere som er varme eller kalde, som boksscoren aldri viser.
+Hvem driver egentlig spillet? Hver NHL-spiller rangert etter forventede mål, med persentilsøyler mot egen posisjon, oppdatert etter hver kampkveld. Følg lag gratis.

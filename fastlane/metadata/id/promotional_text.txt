@@ -1,1 +1,1 @@
-Penawaran peluncuran: setiap pemain NHL diperingkat menurut expected goals, dengan profil persentil dan papan tren yang tak pernah ditampilkan box score.
+Siapa yang benar-benar menggerakkan permainan? Setiap pemain NHL diurutkan menurut expected goals, dengan bar persentil per posisi, diperbarui tiap malam pertandingan.

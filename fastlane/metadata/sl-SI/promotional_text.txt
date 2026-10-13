@@ -1,1 +1,1 @@
-Razvrstitev vseh igralcev NHL po pričakovanih golih, s percentilnim profilom in lestvico trendov, ki je osnovna statistika nikoli ne pokaže.
+Kdo res vodi igro? Vsak igralec NHL po pričakovanih golih, s percentilnimi stolpci glede na položaj, posodobljeno po vsakem večeru tekem. Ekipe spremljaj brezplačno.

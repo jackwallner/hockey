@@ -1,1 +1,1 @@
-Ocijenite sve igrače NHL-a po očekivanim golovima, uz profil percentila i ploču trendova za igrače u usponu i padu koje box score nikad ne prikazuje.
+Tko stvarno vodi igru? Svaki NHL igrač rangiran po očekivanim golovima, s percentilnim trakama prema svojoj poziciji, ažurirano nakon svake večeri utakmica. Prati timove.

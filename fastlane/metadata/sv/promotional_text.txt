@@ -1,1 +1,1 @@
-Rangordna alla NHL-spelare efter förväntade mål, med percentilprofil och trendtavlan för spelare som är heta eller kalla, som boxscoren aldrig visar.
+Vem driver egentligen spelet? Varje NHL-spelare rankad efter förväntade mål, med percentilstaplar mot sin position, uppdaterat efter varje matchkväll. Följ lag gratis.

@@ -1,1 +1,1 @@
-Xếp hạng mọi cầu thủ NHL theo bàn thắng kỳ vọng, kèm hồ sơ phân vị và bảng xu hướng nóng lạnh mà box score không bao giờ hiển thị.
+Ai thực sự cầm nhịp trận đấu? Mọi cầu thủ NHL xếp theo bàn thắng kỳ vọng, với thanh phân vị so với cùng vị trí, cập nhật sau mỗi đêm thi đấu. Theo dõi đội miễn phí.
