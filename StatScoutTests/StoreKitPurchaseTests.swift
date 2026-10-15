@@ -121,7 +121,7 @@ final class StoreKitPurchaseTests: XCTestCase {
     // MARK: - The copy App Review reads, built from real store data
 
     /// The end of the 3.1.2(c) chain: real `Product` → `StoreProduct` →
-    /// `Package` → the two strings on the button and the disclosure under it.
+    /// `Package` → the price line, the button and the disclosure under it.
     /// If StoreKit ever returns something other than a $9.99 yearly with a
     /// one-week trial, this fails here instead of in App Review.
     func testTheCitedSheetsCopyIsRightAgainstRealStoreData() async throws {
@@ -132,35 +132,15 @@ final class StoreKitPurchaseTests: XCTestCase {
 
         XCTAssertEqual(
             StoreService.directCTALabel(
-                price: yearly.priceLabel, trial: yearly.introOfferLabel,
-                isWinback: false, emphasis: .billedAmountFirst
+                price: yearly.priceLabel, trial: yearly.introOfferLabel, isWinback: false
             ),
-            "Subscribe for $9.99 / year"
-        )
-        XCTAssertEqual(
-            StoreService.directCTATrialSubline(
-                trial: yearly.introOfferLabel, isWinback: false, emphasis: .billedAmountFirst
-            ),
-            "Starts with a 7-day free trial"
+            "Start 7-day free trial"
         )
         XCTAssertEqual(
             StoreService.disclosureText(
-                price: yearly.priceLabel, isSubscription: true,
-                trial: yearly.introOfferLabel, emphasis: .billedAmountFirst
+                price: yearly.priceLabel, isSubscription: true, trial: yearly.introOfferLabel
             ),
-            "$9.99 / year, billed after a 7-day free trial. \(renewSentence) \(cancelSentence)"
-        )
-    }
-
-    /// Every purchase surface uses the same billed-amount-first default against
-    /// the same real product.
-    func testEverySurfaceCopyIsRightAgainstRealStoreData() async throws {
-        let yearly = try await package(for: StatScoutProduct.yearly)
-        XCTAssertEqual(
-            StoreService.directCTALabel(
-                price: yearly.priceLabel, trial: yearly.introOfferLabel, isWinback: false
-            ),
-            "Subscribe for $9.99 / year"
+            "7-Day Free Trial, then $9.99 / year. \(renewSentence) \(cancelSentence)"
         )
     }
 
@@ -187,20 +167,11 @@ final class StoreKitPurchaseTests: XCTestCase {
     func testWhenTheStoreWithholdsTheTrialTheSheetStopsPromisingOne() async throws {
         let yearly = try await package(for: StatScoutProduct.yearly)
         XCTAssertEqual(
-            StoreService.directCTALabel(
-                price: yearly.priceLabel, trial: nil, isWinback: false, emphasis: .billedAmountFirst
-            ),
-            "Subscribe for $9.99 / year"
-        )
-        XCTAssertNil(
-            StoreService.directCTATrialSubline(
-                trial: nil, isWinback: false, emphasis: .billedAmountFirst
-            )
+            StoreService.directCTALabel(price: yearly.priceLabel, trial: nil, isWinback: false),
+            "Try StatScout+ for $9.99 / year"
         )
         XCTAssertEqual(
-            StoreService.disclosureText(
-                price: yearly.priceLabel, isSubscription: true, trial: nil, emphasis: .billedAmountFirst
-            ),
+            StoreService.disclosureText(price: yearly.priceLabel, isSubscription: true, trial: nil),
             "$9.99 / year. \(renewSentence) \(cancelSentence)"
         )
     }
@@ -210,15 +181,9 @@ final class StoreKitPurchaseTests: XCTestCase {
     func testTheWinbackOfferNeverPromisesATrialTheUserHasSpent() async throws {
         let yearly = try await package(for: StatScoutProduct.yearly)
         let label = StoreService.directCTALabel(
-            price: yearly.priceLabel, trial: yearly.introOfferLabel,
-            isWinback: true, emphasis: .billedAmountFirst
+            price: yearly.priceLabel, trial: yearly.introOfferLabel, isWinback: true
         )
-        XCTAssertEqual(label, "Restart for $9.99 / year")
-        XCTAssertNil(
-            StoreService.directCTATrialSubline(
-                trial: yearly.introOfferLabel, isWinback: true, emphasis: .billedAmountFirst
-            )
-        )
+        XCTAssertEqual(label, "Restart StatScout+ for $9.99 / year")
     }
 
     /// A fresh tester is eligible for the intro offer. This is the input that

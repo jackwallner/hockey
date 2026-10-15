@@ -147,15 +147,6 @@ final class PaywallGate: ObservableObject {
     }
 }
 
-/// Which part of an introductory offer gets the primary visual position.
-/// Every live purchase surface uses `billedAmountFirst` for Guideline 3.1.2(c).
-/// `trialFirst` remains only so the pure formatting helpers can guard against a
-/// future regression in tests.
-enum PriceEmphasis {
-    case trialFirst
-    case billedAmountFirst
-}
-
 enum PurchaseState {
     case purchased
     case cancelled
@@ -415,13 +406,12 @@ final class StoreService: NSObject, ObservableObject {
         Self.upgradeCTALabel(trialAvailable: isYearlyTrialAvailable)
     }
 
-    func directCTALabel(for trigger: PaywallTrigger, emphasis: PriceEmphasis = .billedAmountFirst) -> String {
+    func directCTALabel(for trigger: PaywallTrigger) -> String {
         if let yearly = yearlyPackage {
             return Self.directCTALabel(
                 price: yearly.priceLabel,
                 trial: isEligibleForIntroOffer(yearly) ? yearly.introOfferLabel : nil,
-                isWinback: trigger == .winback,
-                emphasis: emphasis
+                isWinback: trigger == .winback
             )
         }
         if let price = proPrice {
@@ -433,37 +423,29 @@ final class StoreService: NSObject, ObservableObject {
 
     /// The label on a button that transacts, as a pure function of the offer.
     ///
-    /// A win-back never leads with the trial whatever the emphasis: a lapsed
-    /// subscriber has already used it, so offering it again is a promise the
-    /// App Store will not keep.
+    /// The approved Baseball Savvy StatScout ladder: the button names the trial
+    /// when one applies, and the billed amount sits on its own `priceLead` line
+    /// directly above the button, one type step louder, so it stays the most
+    /// conspicuous pricing element (Apple 3.1.2(c)).
+    ///
+    /// A win-back never leads with the trial: a lapsed subscriber has already
+    /// used it, so offering it again is a promise the App Store will not keep.
     nonisolated static func directCTALabel(
         price: String,
         trial: String?,
-        isWinback: Bool,
-        emphasis: PriceEmphasis = .billedAmountFirst
+        isWinback: Bool
     ) -> String {
-        if emphasis == .trialFirst, !isWinback, let trial {
+        if !isWinback, let trial {
             return "Start \(trial)"
-        }
-        if emphasis == .billedAmountFirst {
-            return "\(isWinback ? "Restart" : "Subscribe") for \(price)"
         }
         return "\(isWinback ? "Restart" : "Try") StatScout+ for \(price)"
     }
 
     /// The plan picker's own button label, which names no price at all.
     ///
-    /// `PaywallView` is the one surface where the billed amount is already the
-    /// largest, highest-contrast element on screen: the selected plan card
-    /// renders it in `statLarge`/`ink` directly above the button, and the
-    /// disclosure directly below leads with it. Repeating it inside the button
-    /// bought nothing and cost the offer, so the button names the action
-    /// instead. Nothing here promotes the trial over a price the button does not
-    /// state, which is the ordering 3.1.2(c) governs.
-    ///
-    /// Matches the approved `Baseball Savvy StatScout` ladder verbatim. Every
-    /// other app in the fleet names a price in a purchase button only as the
-    /// fallback for a user with no trial left; none do it when a trial applies.
+    /// The billed amount for the selected plan sits on its own `priceLead` line
+    /// directly above this button, so repeating it inside the button buys
+    /// nothing. Matches the approved Baseball Savvy StatScout ladder verbatim.
     nonisolated static func planPickerCTALabel(isLifetime: Bool, trialEligible: Bool) -> String {
         if isLifetime { return "Unlock Lifetime" }
         return trialEligible ? "Start Free Trial" : "Subscribe"
@@ -474,36 +456,6 @@ final class StoreService: NSObject, ObservableObject {
             isLifetime: package.productKind == .lifetime,
             trialEligible: isEligibleForIntroOffer(package) && package.introOfferLabel != nil
         )
-    }
-
-    /// The trial, kept on the button but demoted beneath the billed amount.
-    ///
-    /// 3.1.2(c) does not forbid selling the free trial, it forbids selling it
-    /// *more prominently* than what the user will be charged. So the
-    /// `.billedAmountFirst` button carries both: the price on the top line in
-    /// the button's own type, this one underneath in micro at reduced opacity.
-    /// Dropping the trial from the button entirely would have cleared the
-    /// guideline by giving up the pitch, which is a worse trade than sizing it
-    /// correctly.
-    ///
-    /// nil when there is no trial to name, and on a win-back for the same
-    /// reason `directCTALabel` never leads with one there.
-    func directCTATrialSubline(for trigger: PaywallTrigger, emphasis: PriceEmphasis) -> String? {
-        guard let yearly = yearlyPackage else { return nil }
-        return Self.directCTATrialSubline(
-            trial: isEligibleForIntroOffer(yearly) ? yearly.introOfferLabel : nil,
-            isWinback: trigger == .winback,
-            emphasis: emphasis
-        )
-    }
-
-    nonisolated static func directCTATrialSubline(
-        trial: String?,
-        isWinback: Bool,
-        emphasis: PriceEmphasis
-    ) -> String? {
-        guard emphasis == .billedAmountFirst, !isWinback, let trial else { return nil }
-        return "Starts with a \(trial)"
     }
 
     /// One-line secondary caption shown under the CTA when a trial is offered,
@@ -527,21 +479,18 @@ final class StoreService: NSObject, ObservableObject {
     /// Full Apple-3.1.2 auto-renew disclosure for the yearly plan, shown next
     /// to any direct-purchase CTA so the price (and trial terms, when offered)
     /// are present at the point of purchase.
-    func yearlyCTADisclosureText(emphasis: PriceEmphasis = .billedAmountFirst) -> String? {
-        yearlyPackage.map { disclosureText(for: $0, emphasis: emphasis) }
+    var yearlyCTADisclosureText: String? {
+        yearlyPackage.map { disclosureText(for: $0) }
     }
-
-    var yearlyCTADisclosureText: String? { yearlyCTADisclosureText() }
 
     /// The disclosure for one package. The plan picker renders this for
     /// whichever plan is selected; every one-tap CTA renders it for the yearly
     /// one. Both go through here so the wording can only ever be wrong once.
-    func disclosureText(for package: Package, emphasis: PriceEmphasis = .billedAmountFirst) -> String {
+    func disclosureText(for package: Package) -> String {
         Self.disclosureText(
             price: package.priceLabel,
             isSubscription: package.productKind != .lifetime,
-            trial: isEligibleForIntroOffer(package) ? package.introOfferLabel : nil,
-            emphasis: emphasis
+            trial: isEligibleForIntroOffer(package) ? package.introOfferLabel : nil
         )
     }
 
@@ -552,20 +501,14 @@ final class StoreService: NSObject, ObservableObject {
     nonisolated static func disclosureText(
         price: String,
         isSubscription: Bool,
-        trial: String?,
-        emphasis: PriceEmphasis = .billedAmountFirst
+        trial: String?
     ) -> String {
         guard isSubscription else {
             return "\(price). One-time purchase. Lifetime access, no subscription."
         }
         let renew = "Auto-renews unless cancelled at least 24 hours before the end of the current period. Manage or cancel in Settings › Apple ID › Subscriptions."
         guard let trial else { return "\(price). \(renew)" }
-        switch emphasis {
-        case .trialFirst:
-            return "\(trial.capitalized), then \(price). \(renew)"
-        case .billedAmountFirst:
-            return "\(price), billed after a \(trial). \(renew)"
-        }
+        return "\(trial.capitalized), then \(price). \(renew)"
     }
 
     /// Onboarding pitches the monthly plan, not the yearly one. The trial is

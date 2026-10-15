@@ -205,9 +205,9 @@ struct TrialPitchSheet: View {
             // Same control as every other pitch in the app: it buys the yearly
             // plan in place (trial when eligible, paid otherwise) and carries
             // its own auto-renew disclosure and "See all plans" escape hatch.
-            // The billed amount is the primary line on every purchase surface.
-            // The trial remains visible only as subordinate copy.
-            PlusDirectCTA(trigger: trigger, emphasis: .billedAmountFirst)
+            // The billed amount sits on its own line above the button, louder
+            // than the trial named on it (Apple 3.1.2(c)).
+            PlusDirectCTA(trigger: trigger)
 
             // Legal links and the way out share a row, because three stacked
             // secondary lines under a button is three lines of nothing.

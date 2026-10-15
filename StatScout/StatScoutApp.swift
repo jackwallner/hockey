@@ -328,6 +328,19 @@ struct OnboardingCards: View {
                 }
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkTertiary)
+
+                // Billed amount, last thing before the CTA. Apple 3.1.2(c):
+                // the trial named on the button can't be more conspicuous than
+                // the price, so this sits one type step above the button label
+                // and stays the largest pricing element on the page.
+                //
+                // Fixed height, for the same reason the status line above it is
+                // reserved rather than inserted: `monthlyPackage` is nil until
+                // RevenueCat answers, and a late slot would push the button down.
+                Text(store.monthlyPackage?.priceLabel ?? " ")
+                    .font(RinkType.priceLead)
+                    .foregroundStyle(RinkPalette.ink)
+                    .frame(height: 22)
             }
             .opacity(showsUpsellBlock ? 1 : 0)
             .allowsHitTesting(showsUpsellBlock)
