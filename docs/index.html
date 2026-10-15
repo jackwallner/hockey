@@ -26,6 +26,7 @@
   "@graph": [
     {
       "@type": "MobileApplication",
+      "dateModified": "2026-10-15",
       "@id": "https://jackwallner.com/ios/hockey/#app",
       "name": "Hockey Edge: Puck StatScout",
       "alternateName": "StatScout",
@@ -248,7 +249,7 @@
 
         .hero .platforms {
             font-size: 13px;
-            color: #86868b;
+            color: #6e6e73;
             letter-spacing: 0.3px;
             margin-bottom: 36px;
         }
@@ -338,20 +339,6 @@
         .feature-card {
             background: #fff;
             padding: 36px 32px;
-        }
-
-        .feature-card .label {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #86868b;
-            margin-bottom: 10px;
-        }
-
-        .feature-card .label.statscout-plus {
-            color: #2e6fd4;
         }
 
         .feature-card h3 {
@@ -459,7 +446,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: #86868b;
+            color: #6e6e73;
             margin-bottom: 12px;
         }
 
@@ -491,7 +478,7 @@
         }
 
         .specs-table td:first-child {
-            color: #86868b;
+            color: #6e6e73;
             width: 140px;
             font-size: 12px;
             text-transform: uppercase;
@@ -510,7 +497,7 @@
         .disclaimer p {
             font-size: 12px;
             line-height: 1.6;
-            color: #86868b;
+            color: #6e6e73;
             text-align: center;
         }
 
@@ -536,7 +523,7 @@
             position: absolute;
             right: 4px;
             font-weight: 400;
-            color: #86868b;
+            color: #6e6e73;
         }
 
         .faq details[open] summary::after { content: "\2212"; }
@@ -565,7 +552,7 @@
 
         .cta p {
             font-size: 15px;
-            color: #86868b;
+            color: #6e6e73;
             margin-bottom: 28px;
         }
 
@@ -574,11 +561,11 @@
             text-align: center;
             padding: 20px 24px;
             font-size: 12px;
-            color: #86868b;
+            color: #6e6e73;
         }
 
         footer a {
-            color: #86868b;
+            color: #6e6e73;
             text-decoration: none;
             margin: 0 10px;
         }
@@ -603,6 +590,12 @@
 
         @media (max-width: 480px) {
             .showcase-card img { height: 360px; }
+        }
+        .feature-card .tier {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2e6fd4;
         }
     </style>
 </head>
@@ -656,49 +649,45 @@
         </div>
         <div class="features-grid">
             <div class="feature-card">
-                <span class="label">Percentiles</span>
                 <h3>Color you can read</h3>
                 <p>Every metric is a horizontal bar with a marker that runs from blue for cold to red for hot, the same read fans know from NHL EDGE.</p>
             </div>
             <div class="feature-card">
-                <span class="label">Profiles</span>
                 <h3>The whole picture</h3>
                 <p>Scoring, shot quality, play driving, and goaltending percentiles, plus a switch to standard season stats and game-by-game form.</p>
             </div>
             <div class="feature-card">
-                <span class="label">Leaderboards</span>
                 <h3>Sort and search</h3>
                 <p>The full league filtered by forwards, defensemen, or goalies, sortable on any metric, searchable across every active player.</p>
             </div>
             <div class="feature-card">
-                <span class="label">Game-day updates</span>
                 <h3>Current after every night</h3>
                 <p>In season, StatScout checks for newly published numbers after each night's games, and every screen shows which games the numbers include.</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">Trends &middot; StatScout+</span>
                 <h3>Heating up, cooling off</h3>
                 <p>The whole league ranked by who's rising and falling right now.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">Recent form &middot; StatScout+</span>
                 <h3>Last 2, 4, or 8 weeks</h3>
                 <p>Narrow any player, club, or leaderboard to a recent window instead of a full season.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">Comparisons &middot; StatScout+</span>
                 <h3>Two players, or one over time</h3>
                 <p>Any two players side by side, or one player's seasons against each other.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">Team scouting &middot; StatScout+</span>
                 <h3>All 32 clubs</h3>
                 <p>Advanced and standard team stats, with the same percentile treatment.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
             <div class="feature-card">
-                <span class="label statscout-plus">History &middot; StatScout+</span>
                 <h3>Back to 2008-09</h3>
                 <p>Every season since 2008-09, plus all-time career percentiles.</p>
+                <p class="tier">Included with StatScout+</p>
             </div>
         </div>
     </section>
@@ -811,7 +800,7 @@
     </section>
 
     <footer>
-        <div class="divider">&copy; 2026 Jack Wallner</div>
+        <div class="divider">&copy; 2026 Jack Wallner · Last updated <time datetime="2026-10-15" data-updated>October 15, 2026</time></div>
         <div>
             <a href="https://jackwallner.com/ios/">More apps by Jack Wallner</a>
             <a href="what-is-xg-in-hockey.html">What is xG in hockey?</a>
