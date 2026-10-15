@@ -44,6 +44,17 @@ paths:
 The `submit_review` lane uses `automatic_release: false`. `Deliverfile` lists
 the locales currently accepted by Fastlane; all 39 locales are listed.
 
+## Held release, 2026-10-15
+
+- Build 9 (version 1.0.1) is on TestFlight with the baseball-style
+  paywall: the billed amount on a `priceLead` line above every purchase
+  button, trial-led button labels. Basketball 1.0 (5) was rejected under
+  3.1.2(c) and resubmitted with the same pattern as 1.0 (6).
+- Hold: do not submit 1.0.1 until Basketball 1.0 (6) clears review. If
+  basketball is approved, create the 1.0.1 draft
+  (`ASC_DRAFT_VERSION=1.0 scripts/asc-ensure-draft-version.sh`), attach
+  build 9 and submit. If it is rejected again, rework the pattern first.
+
 ## Draft version helper
 
 `ASC_DRAFT_VERSION` is the version to bump from, not the target version.
