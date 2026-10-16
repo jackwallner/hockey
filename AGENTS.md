@@ -1,7 +1,7 @@
 # Hockey Edge: Puck StatScout Project Guide
 
 Hockey Edge: Puck StatScout: NHL expected-goals percentiles / player-comparison app
-(iOS). XcodeGen project/scheme: `StatScout` (kept from the football fork to
+(iOS, plus a native Android port in `android/`, see `.claude/rules/android.md`). XcodeGen project/scheme: `StatScout` (kept from the football fork to
 minimize churn), sim lease owner `hockey`. Bundle id `com.jackwallner.hockey`,
 product name "Hockey StatScout", home-screen `StatScout`, paid tier `StatScout+`.
 
@@ -57,6 +57,7 @@ an event-aware GitHub Actions refresh.
 |---|---|---|
 | `.claude/rules/backend-pipeline.md` | sources, schema, refresh cadence, bundle regeneration | backend/, supabase/, data scripts |
 | `.claude/rules/app-store-release.md` | release state, draft-version helper, build numbers | project.yml, fastlane/, scripts/asc-* |
+| `.claude/rules/android.md` | Android port: products, RevenueCat, signing, deliberate iOS differences, MBP emulator, Play assets and state | android/, docs/android-*, scripts/play-*, Android scripts |
 
 ---
 Shared iOS conventions (build, simulator, release scripts, ASC key, review funnel, signing, gotchas):
