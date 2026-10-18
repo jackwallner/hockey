@@ -39,7 +39,7 @@
         "url": "https://jackwallner.com/"
       },
       "datePublished": "2026-10-12",
-      "dateModified": "2026-10-15",
+      "dateModified": "2026-10-18",
       "mainEntityOfPage": "https://jackwallner.com/ios/hockey/what-is-xg-in-hockey.html",
       "image": "https://jackwallner.github.io/hockey/appstore-screenshot-01.png",
       "about": {
@@ -86,7 +86,7 @@
           "name": "What is a good GSAx?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "In 2025-26, the median goalie with at least 1,000 minutes was about -0.8, and the 90th percentile was about +17.3. The best total was Logan Thompson at +29.3."
+            "text": "A strong season GSAx is about +17 or higher. In 2025-26, the median goalie with at least 1,000 minutes was about -0.8, and the 90th percentile was about +17.3. The best total was Logan Thompson at +29.3."
           }
         },
         {
@@ -94,7 +94,7 @@
           "name": "Does xG account for shooter skill?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "MoneyPuck's standard xG assumes an average shooter, so skill is not included. Goals above expected, goals minus ixG, is one way to see who finishes better or worse than average."
+            "text": "No. MoneyPuck's standard xG assumes an average shooter, so skill is not included. Goals above expected, goals minus ixG, is one way to see who finishes better or worse than average."
           }
         }
       ]
@@ -178,26 +178,26 @@ footer a { color: #6e6e73; text-decoration: none; margin: 0 10px; }
 <article>
 <div class="container">
 <h1>What are expected goals (xG) in hockey? (And GSAx for goalies)</h1>
-<p class="meta">By Jack Wallner. Last updated <time datetime="2026-10-15" data-updated>October 15, 2026</time>.</p>
-<p class="answer">Expected goals, or xG, give every unblocked shot a probability of becoming a goal, based on things like where it was taken from and what happened just before. Add up those probabilities and you get the number of goals an average shooter would have scored. Goals saved above expected (GSAx) flips it around for goalies: expected goals faced minus goals actually allowed.</p>
+<p class="meta">By Jack Wallner. Last updated <time datetime="2026-10-18" data-updated>October 18, 2026</time>.</p>
+<p class="answer">Expected goals (xG) is a hockey stat that gives every unblocked shot a probability of becoming a goal, based on things like where it was taken from and what happened just before. Add up those probabilities and you get the number of goals an average shooter would have scored. Goals saved above expected (GSAx) flips it around for goalies: expected goals faced minus goals actually allowed.</p>
 
-<h2>How xG works</h2>
-<p>A shot is not a shot. A rebound in the slot goes in far more often than a long wrister from the point. MoneyPuck's glossary gives exactly that pair: a rebound shot in the slot may have a 50 percent chance of being a goal and so is worth 0.5 expected goals, while a shot from the blue line while short-handed may be worth 0.01.</p>
+<h2>How does xG work?</h2>
+<p>xG gives each unblocked shot a goal probability from its location, its type and what happened just before it, then adds those probabilities up. A shot is not a shot. A rebound in the slot goes in far more often than a long wrister from the point. MoneyPuck's glossary gives exactly that pair: a rebound shot in the slot may have a 50 percent chance of being a goal and so is worth 0.5 expected goals, while a shot from the blue line while short-handed may be worth 0.01.</p>
 <p>The model behind it, according to MoneyPuck's methodology page, predicts the probability of each shot being a goal using the location of the shot, the shot type, the last event before the shot and how long before it happened, the time on ice of the players on both teams, the number of players on the ice, the shooter's handedness relative to the side of the ice, and whether the net is empty. Blocked shot attempts are valued at zero, and the value assumes an average shooter takes the shot, so shooting talent is not included.</p>
 <p>A hypothetical game makes the idea concrete. A team takes three shots worth 0.45, 0.08 and 0.03 expected goals. Its game total is 0.56 xG, even if it scored zero or two. Over one game that tells you little. Over 82 it separates the teams that create good chances from the ones that get lucky.</p>
 
-<h2>Why hockey needs it</h2>
-<p>Goals are rare, and a single bounce decides a lot of them. Shot counts alone miss quality, because a team can pile up point shots without testing the goalie. xG keeps the volume and adds the quality. That is why you will see it in team shares like xGF%, the share of 5-on-5 expected goals that went a team's way while a player was on the ice, where 50 percent is even.</p>
+<h2>Why does hockey need xG?</h2>
+<p>Hockey needs xG because goals are rare, and a single bounce decides a lot of them. Shot counts alone miss quality, because a team can pile up point shots without testing the goalie. xG keeps the volume and adds the quality. That is why you will see it in team shares like xGF%, the share of 5-on-5 expected goals that went a team's way while a player was on the ice, where 50 percent is even.</p>
 
-<h2>Goals above expected for shooters</h2>
+<h2>How do you tell if a shooter finishes above expected?</h2>
 <p>Compare a player's goals with his individual expected goals (ixG) to see whether he finished above or below what his shots deserved. In MoneyPuck's 2025-26 regular season data, Connor McDavid scored 48 goals against 43.6 ixG. Nathan MacKinnon scored 53 against 40.6, finishing 12 goals above what his chances were worth. A gap that big can be elite finishing, a hot season or both, and one year of data cannot say which.</p>
 
-<h2>GSAx: how goalies are judged</h2>
-<p>Save percentage depends on the shots a goalie faces, and goalies on different teams face different shots. GSAx adjusts for that. MoneyPuck defines it as expected goals against minus the actual number of goals the goalie has let in. A positive number means the goalie is stopping more goals than an average goalie would.</p>
+<h2>What is GSAx in hockey?</h2>
+<p>GSAx is expected goals against minus the actual number of goals the goalie has let in, as MoneyPuck defines it. A positive number means the goalie is stopping more goals than an average goalie would. Save percentage depends on the shots a goalie faces, and goalies on different teams face different shots. GSAx adjusts for that.</p>
 <p>In the same 2025-26 data, Washington's Logan Thompson faced shots worth 169.3 expected goals and allowed 140, a GSAx of +29.3 across 1,587 shots on goal. St. Louis's Jordan Binnington faced 105.6 expected goals and allowed 128, a GSAx of -22.4.</p>
 
-<h2>What good looks like for goalies</h2>
-<p>I calculated the spread from MoneyPuck's 2025-26 regular season goalie file, using the 68 goalies with at least 1,000 minutes played.</p>
+<h2>What is a good GSAx for a goalie?</h2>
+<p>In 2025-26, a typical goalie's season GSAx was about -0.8, the 90th percentile was +17.3 and the best was +29.3. I calculated the spread from MoneyPuck's 2025-26 regular season goalie file, using the 68 goalies with at least 1,000 minutes played.</p>
 <div class="tablewrap"><table>
 <thead><tr><th>Metric (2025-26)</th><th>Weak (10th pct.)</th><th>Typical (median)</th><th>Strong (90th pct.)</th><th>Best</th></tr></thead>
 <tbody>
@@ -207,7 +207,7 @@ footer a { color: #6e6e73; text-decoration: none; margin: 0 10px; }
 <p class="note">GSAx here is expected goals on shots on goal minus goals allowed, all situations. Percentiles are interpolated from the downloaded rows.</p>
 <p>The median sits near zero because the average goalie is the baseline. A season total of +10 means a goalie saved about ten more goals than the average goalie would have behind the same shots.</p>
 
-<h2>Limits of xG</h2>
+<h2>What are the limits of xG?</h2>
 <p>The model sees shot location and context, not everything on the ice. The inputs MoneyPuck lists do not include screens, pre-shot passing or goalie positioning. Models also get rebuilt: MoneyPuck says it retrained its model for 2026-27, on more than 289,000 shots from 2023-24 through 2025-26. Read xG as a good estimate of chance quality, not as a perfect one.</p>
 
 <h2>How StatScout helps</h2>
@@ -217,8 +217,8 @@ footer a { color: #6e6e73; text-decoration: none; margin: 0 10px; }
 <details><summary>What is xG in hockey?</summary><p>xG, or expected goals, is the probability that an unblocked shot becomes a goal, estimated from factors such as shot location, shot type and what happened just before it. Adding up the shot values gives the goals an average shooter would be expected to score.</p></details>
 <details><summary>What is a good xG for a game?</summary><p>There is no fixed threshold. Teams are usually compared by the share of expected goals they get, called xGF%, where 50 percent is even. Per shot, MoneyPuck&#x27;s example values run from about 0.01 for a long short-handed shot to about 0.50 for a slot rebound.</p></details>
 <details><summary>What does GSAx mean?</summary><p>GSAx is goals saved above expected: the goals an average goalie would have allowed on the same shots, minus the goals the goalie actually allowed. A positive number means the goalie is outperforming the average.</p></details>
-<details><summary>What is a good GSAx?</summary><p>In 2025-26, the median goalie with at least 1,000 minutes was about -0.8, and the 90th percentile was about +17.3. The best total was Logan Thompson at +29.3.</p></details>
-<details><summary>Does xG account for shooter skill?</summary><p>MoneyPuck&#x27;s standard xG assumes an average shooter, so skill is not included. Goals above expected, goals minus ixG, is one way to see who finishes better or worse than average.</p></details>
+<details><summary>What is a good GSAx?</summary><p>A strong season GSAx is about +17 or higher. In 2025-26, the median goalie with at least 1,000 minutes was about -0.8, and the 90th percentile was about +17.3. The best total was Logan Thompson at +29.3.</p></details>
+<details><summary>Does xG account for shooter skill?</summary><p>No. MoneyPuck's standard xG assumes an average shooter, so skill is not included. Goals above expected, goals minus ixG, is one way to see who finishes better or worse than average.</p></details>
 </div>
 <h2>Sources</h2>
 <ol class="sources">
