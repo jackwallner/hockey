@@ -121,7 +121,21 @@ changelog are in `android/play-assets/metadata/android/en-US/` (English only).
 Privacy and terms pages are `docs/android-privacy.html` and
 `docs/android-terms.html` on GitHub Pages.
 
-## Play state (2026-10-15)
+## Play state (2026-10-17)
 
-Not yet created. The app record, listing, App content declarations, products,
-service account access and every upload are still to do in Play Console.
+Staged, not sent for review. Play app id `4972606717178959857` (E3 Apps). versionCode 1
+(1.0.1) uploaded with `~/docs/android/tools/play_stage.py`; listing, icon,
+feature graphic and 7 screenshots committed by API; draft releases on
+internal and production, production targets all 178 countries. Products from
+`scripts/play-products.py` are active (two subscriptions with `trial-7d`, one
+lifetime). App content is complete: privacy policy, no ads, no ad ID, not a
+government app, no financial features, App access (instructions only),
+18 and over, data safety (RevenueCat: purchase history, app interactions,
+device IDs), IARC, category Sports. IARC answered as not educational (Brazil ClassInd shows 14+ for that combination). Publishing overview shows
+"Submit 11 changes for review".
+
+Left for Jack: paste `HOCKEY_PLAY_REVIEW_CODE` from `~/.hockey_credentials`
+into App access > StatScout+ review unlock > Password, then press Send for review
+when this app's pacing slot comes. Grant the RevenueCat service account
+access to this app and upload the Play credentials JSON in RevenueCat
+(console-recipes play.md 2, revenuecat-developer.md B) if not yet done.
