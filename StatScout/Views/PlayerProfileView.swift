@@ -54,6 +54,7 @@ struct PlayerProfileView: View {
     @State private var standardMode: FormDisplayMode = .season
     @State private var standardWindow: RecentWindow = .four
     @State private var favorites = FavoritesStore.shared
+    @State private var shareImage: PlayerShareImage?
 
     private let profileOpenCountKey = "profileOpenCount"
 
@@ -217,14 +218,24 @@ struct PlayerProfileView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if #available(iOS 26.0, *) {
+                if shareImage != nil {
+                    ToolbarItem(placement: .topBarTrailing) { shareButton }
+                        .sharedBackgroundVisibility(.hidden)
+                }
                 ToolbarItem(placement: .topBarTrailing) { favoriteButton }
                     .sharedBackgroundVisibility(.hidden)
                 ToolbarItem(placement: .topBarTrailing) { compareButton }
                     .sharedBackgroundVisibility(.hidden)
             } else {
+                if shareImage != nil {
+                    ToolbarItem(placement: .topBarTrailing) { shareButton }
+                }
                 ToolbarItem(placement: .topBarTrailing) { favoriteButton }
                 ToolbarItem(placement: .topBarTrailing) { compareButton }
             }
+        }
+        .task(id: displayedPlayer.id) {
+            shareImage = renderShareImage()
         }
         .sheet(isPresented: $showPercentileInfo) {
             PercentileInfoSheet()
@@ -277,6 +288,38 @@ struct PlayerProfileView: View {
                 .foregroundStyle(isFavorite ? Color.yellow : .white)
         }
         .accessibilityLabel(isFavorite ? "Unfollow \(player.name)" : "Follow \(player.name)")
+    }
+
+    /// Shares the season board on screen as an image. Hidden until there is a
+    /// ranked metric to draw, so the button never produces an empty card.
+    @ViewBuilder
+    private var shareButton: some View {
+        if let shareImage {
+            ShareLink(
+                item: shareImage,
+                message: Text(StatScoutShare.message(for: displayedPlayer, seasonLabel: seasonLabel)),
+                preview: SharePreview("\(displayedPlayer.name) \(seasonLabel)", image: shareImage.preview)
+            ) {
+                Image(systemName: "square.and.arrow.up")
+                    .foregroundStyle(.white)
+            }
+            .accessibilityLabel("Share \(displayedPlayer.name)'s percentiles")
+            .accessibilityIdentifier("sharePlayerCard")
+        }
+    }
+
+    private func renderShareImage() -> PlayerShareImage? {
+        let groups = groupedMetrics.compactMap { group -> (title: String, metrics: [Metric])? in
+            let ranked = group.metrics.filter { !$0.isUnranked }
+            return ranked.isEmpty ? nil : (title: group.family.rawValue, metrics: ranked)
+        }
+        guard !groups.isEmpty else { return nil }
+        return PlayerShareImage.render(PlayerShareCard(
+            player: displayedPlayer,
+            groups: groups,
+            seasonLabel: seasonLabel,
+            isCurrentSeason: (activeSeason ?? currentSeason) == currentSeason
+        ))
     }
 
     private var compareButton: some View {

@@ -1,6 +1,6 @@
 import SwiftUI
 
-private func positionAndHandedness(_ player: Player) -> String {
+func positionAndHandedness(_ player: Player) -> String {
     let pos = player.displayPosition.trimmingCharacters(in: .whitespaces)
     let hand = player.handedness.trimmingCharacters(in: CharacterSet.whitespaces.union(.punctuationCharacters))
     if pos.isEmpty && hand.isEmpty { return "" }
@@ -9,7 +9,7 @@ private func positionAndHandedness(_ player: Player) -> String {
     return "\(pos) · \(hand)"
 }
 
-private func displayTeamFullName(_ abbr: String) -> String {
+func displayTeamFullName(_ abbr: String) -> String {
     let trimmed = abbr.trimmingCharacters(in: .whitespaces).uppercased()
     if trimmed.isEmpty || trimmed == "TBD" || trimmed == "\u{2014}" || trimmed == "-" {
         return "Free Agent"
