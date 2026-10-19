@@ -31,7 +31,8 @@ PY
 )"
 
 echo "Building and testing $package for Play $track ($status)."
-"$repo/android/gradlew" -p "$repo/android" testDebugUnitTest bundleRelease --max-workers=2
+fm-gradle -p "$repo/android" testDebugUnitTest
+"$repo/android/gradlew" -p "$repo/android" bundleRelease --max-workers=2
 bundle="$repo/android/app/build/outputs/bundle/release/app-release.aab"
 signature_log="$(mktemp)"
 trap 'rm -f "$signature_log"' EXIT
