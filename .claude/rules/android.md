@@ -93,11 +93,12 @@ paths:
 
 Follow the `android-dev` skill's Remote MacBook Pro section. Host
 `jackwallner@192.168.4.25` (strict host keys), SDK
-`/Users/jackwallner/Library/Android/sdk`. The Pro has no cmdline-tools and no
-JDK 17: sync `android/` (minus `build/`, `.gradle/`, `local.properties`,
+`/Users/jackwallner/Library/Android/sdk`. The Pro has no cmdline-tools. Non-connected
+builds use `fm-gradle <tasks>` from `android/` (jmbp is the Pro), never
+`./gradlew` on the Air. For connected tests on this AVD, sync `android/` (minus `build/`, `.gradle/`, `local.properties`,
 `play-assets/`) to `~/hockey-agent-test/android`, write a debug-only
-`local.properties` (sdk.dir, Supabase URL and anon key, Test Store key), and
-unpack a temporary Temurin 17 into `~/hockey-agent-test/jdk`. Create the
+`local.properties` (sdk.dir, Supabase URL and anon key, Test Store key), and set
+`JAVA_HOME` to the Pro's `$HOME/jdks/temurin-17/Contents/Home`. Create the
 temporary AVD `hockey_agent_test` by hand (`.ini` plus a `config.ini` cloned
 from another agent AVD, `android-36` `google_apis_playstore` x86_64,
 1080x2400), boot it headless on port 5562 (`emulator-5562`), and delete only
