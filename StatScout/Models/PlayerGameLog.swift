@@ -74,7 +74,7 @@ struct PlayerGameLog: Codable, Hashable, Sendable {
     /// Shared: a team's season of logs is hundreds of rows, and building a
     /// formatter per row was most of their decode time. DateFormatter is
     /// thread-safe for parsing and formatting once configured.
-    nonisolated(unsafe) private static let gameDateFormatter: DateFormatter = {
+    private static let gameDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
