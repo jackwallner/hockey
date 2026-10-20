@@ -174,14 +174,20 @@ struct TwoTierPlayerCache: PlayerCaching {
     }
 
     private func loadHistoricalCandidates() -> [Player] {
+        // 1. Permanent disk cache, when complete. The bundled archive is only
+        // decoded when it could win: it is the same ~39 MB, and decoding it
+        // beside a good cache doubled the wait for any past season.
+        let cached = (try? historical.loadPlayers()) ?? []
+        if !cached.isEmpty, PlayerSnapshotValidator.isCompleteHistorical(cached) {
+            return cached
+        }
+
         let bundled = loadBundledPlayers(named: historicalBundleResourceName)
         let bundledIsComplete = bundled.map(PlayerSnapshotValidator.isCompleteHistorical) ?? false
 
-        // 1. Permanent disk cache, unless the bundled archive has broader coverage.
-        if let cached = try? historical.loadPlayers(), !cached.isEmpty {
-            if PlayerSnapshotValidator.isCompleteHistorical(cached) || !bundledIsComplete {
-                return cached
-            }
+        // An incomplete cache still beats an archive that is no better.
+        if !cached.isEmpty, !bundledIsComplete {
+            return cached
         }
         // 2. Bundled binary plist (shipped with the app).
         if let bundled, bundledIsComplete {

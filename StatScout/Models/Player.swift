@@ -716,8 +716,19 @@ enum HockeyMetricRegistry {
     ]
 
     static func definition(for label: String, category: MetricCategory) -> MetricDefinition? {
-        definitions.first { $0.label == label && $0.category == category }
+        definitionIndex[category]?[label]
     }
+
+    /// Lookups run inside board sorts and per-player filters, so the table is
+    /// keyed once instead of scanned on every call. The first entry for a
+    /// label wins, as the scan did.
+    private static let definitionIndex: [MetricCategory: [String: MetricDefinition]] = {
+        var index: [MetricCategory: [String: MetricDefinition]] = [:]
+        for definition in definitions where index[definition.category]?[definition.label] == nil {
+            index[definition.category, default: [:]][definition.label] = definition
+        }
+        return index
+    }()
 
     /// How a metric combines when several players are pooled into one number,
     /// the roster aggregate the team comparison draws.

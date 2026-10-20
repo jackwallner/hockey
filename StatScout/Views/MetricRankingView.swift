@@ -47,15 +47,12 @@ struct MetricRankingView: View {
     }
 
     private var rankedPlayers: [Player] {
-        let sorted = players
-            .filter { hasMetric($0) && $0.positionGroup == activeCohort }
-            .sorted(
-                by: DashboardViewModel.metricComparator(
-                    label: metricLabel,
-                    category: metricCategory,
-                    descending: sortDescending
-                )
-            )
+        let sorted = DashboardViewModel.sortedByMetric(
+            players.filter { hasMetric($0) && $0.positionGroup == activeCohort },
+            label: metricLabel,
+            category: metricCategory,
+            descending: sortDescending
+        )
         // Same rule as the Stats board: small samples stay listed, below.
         return sorted.filter { !isSmallSample($0) } + sorted.filter(isSmallSample)
     }

@@ -187,11 +187,12 @@ struct TeamView: View {
                 sortDescending ? fallbackPercentile($0) > fallbackPercentile($1) : fallbackPercentile($0) < fallbackPercentile($1)
             }
         }
-        return byQualifier.sorted(by: DashboardViewModel.metricComparator(
+        return DashboardViewModel.sortedByMetric(
+            byQualifier,
             label: sortMetric.label,
             category: sortMetric.category,
             descending: sortDescending
-        ))
+        )
     }
 
     private func isQualified(_ player: Player) -> Bool {

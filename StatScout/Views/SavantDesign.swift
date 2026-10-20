@@ -233,46 +233,49 @@ enum LeagueDivision: String, CaseIterable, Identifiable, Sendable {
 
 func normalizedTeamAbbreviation(_ team: String) -> String {
     let key = team.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-    let aliases: [String: String] = [
-        // Alternate codes seen in NHL feeds and box scores.
-        "L.A": "LAK", "LA": "LAK", "N.J": "NJD", "NJ": "NJD", "S.J": "SJS", "SJ": "SJS",
-        "T.B": "TBL", "TB": "TBL", "PHX": "ARI", "WAS": "WSH", "VEG": "VGK", "LV": "VGK",
-        "MON": "MTL", "CLB": "CBJ", "NAS": "NSH", "WPJ": "WPG", "CAL": "CGY",
-        // Full names to abbreviation.
-        "ANAHEIM DUCKS": "ANA", "ARIZONA COYOTES": "ARI", "ATLANTA THRASHERS": "ATL",
-        "BOSTON BRUINS": "BOS", "BUFFALO SABRES": "BUF", "CALGARY FLAMES": "CGY",
-        "CAROLINA HURRICANES": "CAR", "CHICAGO BLACKHAWKS": "CHI", "COLORADO AVALANCHE": "COL",
-        "COLUMBUS BLUE JACKETS": "CBJ", "DALLAS STARS": "DAL", "DETROIT RED WINGS": "DET",
-        "EDMONTON OILERS": "EDM", "FLORIDA PANTHERS": "FLA", "LOS ANGELES KINGS": "LAK",
-        "MINNESOTA WILD": "MIN", "MONTREAL CANADIENS": "MTL", "NASHVILLE PREDATORS": "NSH",
-        "NEW JERSEY DEVILS": "NJD", "NEW YORK ISLANDERS": "NYI", "NEW YORK RANGERS": "NYR",
-        "OTTAWA SENATORS": "OTT", "PHILADELPHIA FLYERS": "PHI", "PITTSBURGH PENGUINS": "PIT",
-        "SAN JOSE SHARKS": "SJS", "SEATTLE KRAKEN": "SEA", "ST. LOUIS BLUES": "STL",
-        "ST LOUIS BLUES": "STL", "TAMPA BAY LIGHTNING": "TBL", "TORONTO MAPLE LEAFS": "TOR",
-        "UTAH MAMMOTH": "UTA", "UTAH HOCKEY CLUB": "UTA", "VANCOUVER CANUCKS": "VAN",
-        "VEGAS GOLDEN KNIGHTS": "VGK", "WASHINGTON CAPITALS": "WSH", "WINNIPEG JETS": "WPG"
-    ]
-    return aliases[key] ?? key
+    return teamAbbreviationAliases[key] ?? key
 }
 
+/// Built once: board filters and search call these per player per render,
+/// and a dictionary literal inside the function was rebuilt on every call.
+private let teamAbbreviationAliases: [String: String] = [
+    // Alternate codes seen in NHL feeds and box scores.
+    "L.A": "LAK", "LA": "LAK", "N.J": "NJD", "NJ": "NJD", "S.J": "SJS", "SJ": "SJS",
+    "T.B": "TBL", "TB": "TBL", "PHX": "ARI", "WAS": "WSH", "VEG": "VGK", "LV": "VGK",
+    "MON": "MTL", "CLB": "CBJ", "NAS": "NSH", "WPJ": "WPG", "CAL": "CGY",
+    // Full names to abbreviation.
+    "ANAHEIM DUCKS": "ANA", "ARIZONA COYOTES": "ARI", "ATLANTA THRASHERS": "ATL",
+    "BOSTON BRUINS": "BOS", "BUFFALO SABRES": "BUF", "CALGARY FLAMES": "CGY",
+    "CAROLINA HURRICANES": "CAR", "CHICAGO BLACKHAWKS": "CHI", "COLORADO AVALANCHE": "COL",
+    "COLUMBUS BLUE JACKETS": "CBJ", "DALLAS STARS": "DAL", "DETROIT RED WINGS": "DET",
+    "EDMONTON OILERS": "EDM", "FLORIDA PANTHERS": "FLA", "LOS ANGELES KINGS": "LAK",
+    "MINNESOTA WILD": "MIN", "MONTREAL CANADIENS": "MTL", "NASHVILLE PREDATORS": "NSH",
+    "NEW JERSEY DEVILS": "NJD", "NEW YORK ISLANDERS": "NYI", "NEW YORK RANGERS": "NYR",
+    "OTTAWA SENATORS": "OTT", "PHILADELPHIA FLYERS": "PHI", "PITTSBURGH PENGUINS": "PIT",
+    "SAN JOSE SHARKS": "SJS", "SEATTLE KRAKEN": "SEA", "ST. LOUIS BLUES": "STL",
+    "ST LOUIS BLUES": "STL", "TAMPA BAY LIGHTNING": "TBL", "TORONTO MAPLE LEAFS": "TOR",
+    "UTAH MAMMOTH": "UTA", "UTAH HOCKEY CLUB": "UTA", "VANCOUVER CANUCKS": "VAN",
+    "VEGAS GOLDEN KNIGHTS": "VGK", "WASHINGTON CAPITALS": "WSH", "WINNIPEG JETS": "WPG"
+]
+
 func teamFullName(_ abbr: String) -> String {
-    let map: [String: String] = [
-        "ANA": "Anaheim Ducks", "ARI": "Arizona Coyotes", "ATL": "Atlanta Thrashers",
-        "BOS": "Boston Bruins", "BUF": "Buffalo Sabres", "CGY": "Calgary Flames",
-        "CAR": "Carolina Hurricanes", "CHI": "Chicago Blackhawks", "COL": "Colorado Avalanche",
-        "CBJ": "Columbus Blue Jackets", "DAL": "Dallas Stars", "DET": "Detroit Red Wings",
-        "EDM": "Edmonton Oilers", "FLA": "Florida Panthers", "LAK": "Los Angeles Kings",
-        "MIN": "Minnesota Wild", "MTL": "Montreal Canadiens", "NSH": "Nashville Predators",
-        "NJD": "New Jersey Devils", "NYI": "New York Islanders", "NYR": "New York Rangers",
-        "OTT": "Ottawa Senators", "PHI": "Philadelphia Flyers", "PIT": "Pittsburgh Penguins",
-        "SJS": "San Jose Sharks", "SEA": "Seattle Kraken", "STL": "St. Louis Blues",
-        "TBL": "Tampa Bay Lightning", "TOR": "Toronto Maple Leafs", "UTA": "Utah Mammoth",
-        "VAN": "Vancouver Canucks", "VGK": "Vegas Golden Knights", "WSH": "Washington Capitals",
-        "WPG": "Winnipeg Jets"
-    ]
-    let normalized = normalizedTeamAbbreviation(abbr)
-    return map[normalized] ?? abbr
+    teamFullNames[normalizedTeamAbbreviation(abbr)] ?? abbr
 }
+
+private let teamFullNames: [String: String] = [
+    "ANA": "Anaheim Ducks", "ARI": "Arizona Coyotes", "ATL": "Atlanta Thrashers",
+    "BOS": "Boston Bruins", "BUF": "Buffalo Sabres", "CGY": "Calgary Flames",
+    "CAR": "Carolina Hurricanes", "CHI": "Chicago Blackhawks", "COL": "Colorado Avalanche",
+    "CBJ": "Columbus Blue Jackets", "DAL": "Dallas Stars", "DET": "Detroit Red Wings",
+    "EDM": "Edmonton Oilers", "FLA": "Florida Panthers", "LAK": "Los Angeles Kings",
+    "MIN": "Minnesota Wild", "MTL": "Montreal Canadiens", "NSH": "Nashville Predators",
+    "NJD": "New Jersey Devils", "NYI": "New York Islanders", "NYR": "New York Rangers",
+    "OTT": "Ottawa Senators", "PHI": "Philadelphia Flyers", "PIT": "Pittsburgh Penguins",
+    "SJS": "San Jose Sharks", "SEA": "Seattle Kraken", "STL": "St. Louis Blues",
+    "TBL": "Tampa Bay Lightning", "TOR": "Toronto Maple Leafs", "UTA": "Utah Mammoth",
+    "VAN": "Vancouver Canucks", "VGK": "Vegas Golden Knights", "WSH": "Washington Capitals",
+    "WPG": "Winnipeg Jets"
+]
 
 /// Short club name for tight columns: "Oilers", "Maple Leafs".
 func teamNickname(_ abbr: String) -> String {

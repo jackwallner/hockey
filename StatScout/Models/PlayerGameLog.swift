@@ -58,10 +58,7 @@ struct PlayerGameLog: Codable, Hashable, Sendable {
 
         // game_date arrives as "YYYY-MM-DD" from Supabase (date column, not timestamptz).
         let raw = try c.decode(String.self, forKey: .gameDate)
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/New_York")
-        guard let parsed = formatter.date(from: raw) else {
+        guard let parsed = Self.gameDateFormatter.date(from: raw) else {
             throw DecodingError.dataCorruptedError(forKey: .gameDate, in: c, debugDescription: "Invalid game_date: \(raw)")
         }
         gameDate = parsed
@@ -73,6 +70,17 @@ struct PlayerGameLog: Codable, Hashable, Sendable {
             metrics = [:]
         }
     }
+
+    /// Shared: a team's season of logs is hundreds of rows, and building a
+    /// formatter per row was most of their decode time. DateFormatter is
+    /// thread-safe for parsing and formatting once configured.
+    nonisolated(unsafe) private static let gameDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "America/New_York")
+        return formatter
+    }()
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
@@ -86,10 +94,7 @@ struct PlayerGameLog: Codable, Hashable, Sendable {
         try c.encode(plays, forKey: .plays)
         try c.encode(touches, forKey: .touches)
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/New_York")
-        try c.encode(formatter.string(from: gameDate), forKey: .gameDate)
+        try c.encode(Self.gameDateFormatter.string(from: gameDate), forKey: .gameDate)
         try c.encode(metrics, forKey: .metrics)
     }
 }
