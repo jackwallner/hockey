@@ -75,7 +75,7 @@ def check(locale_dir: Path) -> list[str]:
         n = len(text)
         if n == 0 or n > limit:
             errs.append(f"{name} {n}/{limit}")
-        if "—" in text:
+        if "\u2014" in text:
             errs.append(f"{name} has an em dash")
         if re.search("[­​﻿]", text):
             errs.append(f"{name} has an invisible character")
