@@ -87,13 +87,14 @@ paths:
 - Increment `versionCode` on every Play upload. 1.0.1 is versionCode 1.
 - `scripts/play-upload.sh [validate|internal|internal-draft|production-draft]`
   and `scripts/play-products.py [--dry-run]` need `PLAY_SERVICE_ACCOUNT_JSON`.
-  Neither has been run yet.
+  `play-products.py` has run (products are active); the 1.0.1 upload went
+  through `~/docs/android/tools/play_stage.py`.
 
 ## Emulator (remote MacBook Pro only)
 
 Follow the `android-dev` skill's Remote MacBook Pro section. Host
 `jackwallner@192.168.4.25` (strict host keys), SDK
-`/Users/jackwallner/Library/Android/sdk`. The Pro has no cmdline-tools. Build and
+`/Users/jackwallner/Library/Android/sdk`. The Pro has `cmdline-tools/latest` (avdmanager, sdkmanager). Build and
 test with `fm-gradle <tasks>` from `android/` (jmbp is the Pro), never
 `./gradlew` on the Air. It syncs the source with a debug-only
 `local.properties` (no Play key or upload secrets), uses the Pro's JDK 17 and
