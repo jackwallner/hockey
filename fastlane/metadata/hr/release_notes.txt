@@ -1,1 +1,3 @@
-Hockey Edge: Puck StatScout, prvo izdanje.
+Podijelite percentilnu ploču bilo kojeg igrača kao sliku, izravno s njegova profila.
+Ljestvice, pretraživanje i promjena sezone znatno su brži, osobito za prošle sezone.
+Jasnije cijene na zaslonu za nadogradnju.

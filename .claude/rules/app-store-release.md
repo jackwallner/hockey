@@ -44,16 +44,20 @@ paths:
 The `submit_review` lane uses `automatic_release: false`. `Deliverfile` lists
 the locales currently accepted by Fastlane; all 39 locales are listed.
 
-## Held release, 2026-10-15
+## Pending release, 2026-10-20
 
-- Build 9 (version 1.0.1) is on TestFlight with the baseball-style
-  paywall: the billed amount on a `priceLead` line above every purchase
-  button, trial-led button labels. Basketball 1.0 (5) was rejected under
-  3.1.2(c) and resubmitted with the same pattern as 1.0 (6).
-- Hold: do not submit 1.0.1 until Basketball 1.0 (6) clears review. If
-  basketball is approved, create the 1.0.1 draft
-  (`ASC_DRAFT_VERSION=1.0 scripts/asc-ensure-draft-version.sh`), attach
-  build 9 and submit. If it is rejected again, rework the pattern first.
+- App Store version 1.0.1 (build 13) is `WAITING_FOR_REVIEW`, release type
+  MANUAL. 1.0 is live. Jack lifted the basketball hold and submitted it
+  while Basketball 1.0 (6) was still in review.
+- Carries the baseball-style paywall pricing, the system review prompt, the
+  percentile board share card and the board performance fix (season row
+  index, memoized board reads). What's New reuses football 1.2.7's
+  translated notes; promotional text was copied forward from 1.0.
+- The eleven extra locales above are still not in ASC: the API refuses new
+  localizations while 1.0.1 is in review. Their `release_notes.txt` already
+  hold the 1.0.1 notes. Add them on the next draft with
+  `scripts/asc-add-missing-localizations.py` (source `~/.baseball_credentials`
+  first).
 
 ## Draft version helper
 

@@ -1,1 +1,3 @@
-Hockey Edge: Puck StatScout, phiên bản đầu tiên.
+Chia sẻ bảng phân vị của bất kỳ cầu thủ nào dưới dạng hình ảnh, ngay từ hồ sơ của họ.
+Bảng xếp hạng, tìm kiếm và chuyển mùa giải nhanh hơn nhiều, nhất là với các mùa trước.
+Giá hiển thị rõ ràng hơn trên màn hình nâng cấp.

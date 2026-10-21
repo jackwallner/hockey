@@ -1,1 +1,3 @@
-Hockey Edge: Puck StatScout, the first release.
+Share any player's percentile board as an image, right from their profile.
+Leaderboards, search and season switching are much faster, especially for past seasons.
+Clearer pricing on the upgrade screen.

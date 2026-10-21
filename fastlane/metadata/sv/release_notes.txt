@@ -1,1 +1,3 @@
-Hockey Edge: Puck StatScout, den första versionen.
+Dela valfri spelares percentiltavla som en bild, direkt från profilen.
+Topplistor, sökning och byte av säsong går mycket snabbare, särskilt för tidigare säsonger.
+Tydligare priser på uppgraderingsskärmen.
