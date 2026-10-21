@@ -1,0 +1,42 @@
+Scopri chi comanda oltre il tabellino.
+Classifica i giocatori NHL per gol attesi, apri un profilo completo in percentili con un tocco e segui chi è in forma e chi sta calando in questo momento.
+
+Nota: l'app è in inglese.
+
+StatScout riunisce ixG, gol sopra le attese, xGF%, Corsi, occasioni pericolose, parate sopra le attese (GSAx) e le statistiche classiche in un'app Android veloce.
+
+PERCENTILI A COLPO D'OCCHIO
+Ogni metrica appare come una barra percentile con un indicatore colorato: blu è freddo, rosso è caldo, e l'élite della lega salta subito all'occhio. Gli attaccanti si confrontano con gli attaccanti, i difensori con i difensori, i portieri con i portieri.
+
+PROFILI GIOCATORE COMPLETI
+Tocca un giocatore per vedere tutto: percentili in realizzazione, qualità del tiro, controllo del gioco e rendimento in porta, un selettore tra metriche avanzate e statistiche classiche della stagione e la forma recente partita per partita.
+
+NUMERI AGGIORNATI A OGNI SERATA
+Durante la stagione StatScout cerca nuovi dati dopo ogni serata di partite e si aggiorna appena vengono pubblicati. Ogni schermata indica quali partite sono incluse.
+
+PARTITE E SQUADRE
+Tutte le partite della sera con i risultati finali, un tabellino avanzato per ogni gara (gol attesi, tentativi di tiro, occasioni pericolose e la corsa cumulativa degli xG), classifiche, power rating delle squadre e margini previsti.
+
+CLASSIFICHE E PREFERITI
+Parti dai leader classici come punti e gol o passa alle classifiche avanzate. Filtra per attaccanti, difensori o portieri e cerca qualsiasi giocatore in attività senza perderne la posizione. Tieni gratis la tua squadra e i tuoi giocatori preferiti in Following.
+
+STATSCOUT+
+Sblocca il resto dell'app con StatScout+:
+- Tendenze: tutta la lega ordinata per chi sale e chi scende
+- Forma recente: le ultime 2 / 4 / 8 settimane di qualsiasi giocatore, squadra o classifica
+- Confronto giocatori: due giocatori fianco a fianco, o un giocatore stagione per stagione
+- Analisi squadre: statistiche avanzate e classiche di tutte le 32 squadre
+- Stagioni passate: ogni anno dal 2008-09, più i percentili di carriera di sempre
+
+Scegli Mensile, Annuale o A vita. Un solo acquisto sblocca tutto.
+
+PRIVACY PRIMA DI TUTTO
+Nessun account. Nessuna registrazione. Nessuna pubblicità. Nessun tracciamento di terze parti. L'app effettua solo le richieste di rete necessarie per le statistiche NHL e la verifica degli acquisti.
+
+Dettagli dell'abbonamento
+StatScout+ è disponibile come abbonamento a rinnovo automatico (mensile o annuale, ciascuno con prova gratuita per i nuovi abbonati idonei) o come acquisto unico A vita. I prezzi sono mostrati nell'app prima dell'acquisto e variano in base alla regione. Google Play addebita l'importo sul tuo account alla conferma. Gli abbonamenti si rinnovano automaticamente fino alla disdetta. Gestisci o annulla in qualsiasi momento in Google Play, in Pagamenti e abbonamenti.
+
+Informativa sulla privacy: https://jackwallner.github.io/hockey/android-privacy.html
+Termini di utilizzo: https://jackwallner.github.io/hockey/android-terms.html
+
+I dati su gol attesi e tiri provengono da MoneyPuck.com. Calendario, tabellini e schede dei giocatori sono dati pubblici della NHL. StatScout non è affiliato, autorizzato, approvato né sponsorizzato dalla National Hockey League (NHL), da alcuna squadra NHL, dalla NHLPA o da MoneyPuck. Nomi e statistiche sono usati solo a scopo identificativo e informativo.

@@ -1,0 +1,42 @@
+Pozrite sa, kto vedie aj mimo zápisu o stretnutí.
+Zoraďte hráčov NHL podľa očakávaných gólov, jedným ťuknutím otvorte kompletný percentilový profil a sledujte, kto je práve vo forme a kto chladne.
+
+Upozornenie: samotná aplikácia je v angličtine.
+
+StatScout spája ixG, góly nad očakávania, xGF%, Corsi, šance z nebezpečných miest, zákroky nad očakávania (GSAx) a známe štatistiky zo stretnutí v jednej rýchlej aplikácii pre Android.
+
+PERCENTILY NA PRVÝ POHĽAD
+Každá metrika sa zobrazí ako vodorovný percentilový pruh s farebnou značkou: modrá je studená, červená horúca a elita ligy je vidieť hneď. Útočníci sa porovnávajú s útočníkmi, obrancovia s obrancami a brankári s brankármi.
+
+KOMPLETNÉ PROFILY HRÁČOV
+Ťuknite na hráča a uvidíte všetko: percentily v produktivite, kvalite striel, kontrole hry a výkone brankára, prepínač medzi pokročilými metrikami a bežnými sezónnymi štatistikami a aktuálnu formu zápas po zápase.
+
+ČÍSLA DRŽIA KROK S HERNÝM VEČEROM
+Počas sezóny StatScout po každom hernom večere hľadá novo zverejnené dáta a aktualizuje sa, hneď ako sú k dispozícii. Každá obrazovka ukazuje, ktoré zápasy čísla zahŕňajú.
+
+ZÁPASY A TÍMY
+Všetky zápasy večera s konečnými výsledkami, pokročilý zápis každého stretnutia (očakávané góly, pokusy o strelu, nebezpečné šance a kumulatívny priebeh xG), tabuľka, hodnotenie sily tímov a predpokladané rozdiely.
+
+REBRÍČKY A OBĽÚBENÉ
+Začnite pri známych rebríčkoch, ako sú body a góly, alebo prepnite na pokročilé poradia. Filtrujte útočníkov, obrancov alebo brankárov a vyhľadajte ktoréhokoľvek aktívneho hráča bez straty jeho poradia v lige. Svoj tím a obľúbených hráčov máte zadarmo pokope vo Following.
+
+STATSCOUT+
+Odomknite zvyšok aplikácie so StatScout+:
+- Trendy: celá liga zoradená podľa toho, kto sa zohrieva a kto chladne
+- Aktuálna forma: posledné 2 / 4 / 8 týždne pre ľubovoľného hráča, tím či rebríček
+- Porovnanie hráčov: dvaja hráči vedľa seba, alebo jeden hráč rok po roku
+- Skauting tímov: pokročilé aj bežné štatistiky všetkých 32 tímov
+- Historické sezóny: každý rok späť do 2008-09 a k tomu kariérne percentily všetkých čias
+
+Vyberte mesačný, ročný alebo doživotný plán. Jeden nákup pokryje všetko.
+
+SÚKROMIE NA PRVOM MIESTE
+Žiadny účet. Žiadna registrácia. Žiadne reklamy. Žiadne sledovanie tretími stranami. Aplikácia posiela len požiadavky potrebné pre štatistiky NHL a overenie nákupu.
+
+Podrobnosti predplatného
+StatScout+ je k dispozícii ako automaticky obnovované predplatné (mesačné alebo ročné, obe so skúšobným obdobím zadarmo pre oprávnených nových predplatiteľov) alebo ako jednorazový doživotný nákup. Ceny uvidíte v aplikácii pred nákupom a líšia sa podľa regiónu. Google Play strhne platbu z vášho účtu po potvrdení. Predplatné sa automaticky obnovuje, kým ho nezrušíte. Spravovať alebo zrušiť ho môžete kedykoľvek v Google Play v sekcii Platby a predplatné.
+
+Zásady ochrany súkromia: https://jackwallner.github.io/hockey/android-privacy.html
+Podmienky používania: https://jackwallner.github.io/hockey/android-terms.html
+
+Dáta o očakávaných góloch a strelách pochádzajú z MoneyPuck.com. Rozpis, zápisy o stretnutí a údaje o hráčoch sú verejné dáta NHL. StatScout nie je pridružený k National Hockey League (NHL), žiadnemu tímu NHL, NHLPA ani MoneyPuck, ani nimi nie je autorizovaný, schválený či sponzorovaný. Mená a štatistiky slúžia len na identifikáciu a informáciu.

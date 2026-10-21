@@ -1,0 +1,42 @@
+Vezi cine conduce dincolo de foaia de meci.
+Clasează jucătorii NHL după goluri așteptate, deschide un profil complet pe percentile cu o atingere și urmărește cine e în formă și cine se răcește chiar acum.
+
+Notă: aplicația în sine este în limba engleză.
+
+StatScout reunește ixG, goluri peste așteptări, xGF%, Corsi, ocazii mari, parade peste așteptări (GSAx) și statisticile obișnuite de meci într-o aplicație Android rapidă.
+
+PERCENTILE DINTR-O PRIVIRE
+Fiecare indicator apare ca o bară orizontală de percentilă cu un marcaj colorat: albastrul e rece, roșul e fierbinte, iar elita ligii iese imediat în evidență. Atacanții sunt comparați cu atacanți, fundașii cu fundași, portarii cu portari.
+
+PROFILURI COMPLETE DE JUCĂTORI
+Atinge un jucător ca să vezi tot: percentile la marcare, calitatea șuturilor, controlul jocului și evoluția portarului, un comutator între indicatori avansați și statistici clasice de sezon, plus forma recentă meci cu meci.
+
+CIFRE LA ZI DUPĂ FIECARE SEARĂ DE MECIURI
+În timpul sezonului, StatScout caută date noi după fiecare seară de meciuri și se actualizează imediat ce apar. Fiecare ecran arată ce meciuri sunt incluse.
+
+MECIURI ȘI ECHIPE
+Toate meciurile serii cu scorurile finale, o foaie de meci avansată pentru fiecare joc (goluri așteptate, încercări de șut, ocazii mari și cursa cumulată de xG), clasament, ratinguri de putere ale echipelor și diferențe estimate.
+
+CLASAMENTE ȘI FAVORIȚI
+Începe cu clasamentele obișnuite, ca puncte și goluri, sau treci la clasamente avansate. Filtrează după atacanți, fundași sau portari și caută orice jucător activ fără să-i pierzi locul în ligă. Păstrează gratuit echipa ta și jucătorii favoriți în Following.
+
+STATSCOUT+
+Deblochează restul aplicației cu StatScout+:
+- Tendințe: toată liga ordonată după cine urcă și cine coboară
+- Forma recentă: ultimele 2 / 4 / 8 săptămâni pentru orice jucător, echipă sau clasament
+- Comparații: doi jucători unul lângă altul sau un jucător de la an la an
+- Analiza echipelor: statistici avansate și clasice pentru toate cele 32 de echipe
+- Sezoane anterioare: fiecare an până în 2008-09, plus percentile de carieră
+
+Alege lunar, anual sau pe viață. O singură achiziție acoperă tot.
+
+CONFIDENȚIALITATEA ÎNAINTE DE TOATE
+Fără cont. Fără înregistrare. Fără reclame. Fără urmărire de către terți. Aplicația face doar cererile de rețea necesare pentru statisticile NHL și verificarea achizițiilor.
+
+Detalii despre abonament
+StatScout+ este disponibil ca abonament cu reînnoire automată (lunar sau anual, fiecare cu perioadă de probă gratuită pentru abonații noi eligibili) sau ca achiziție unică pe viață. Prețurile apar în aplicație înainte de cumpărare și variază în funcție de regiune. Google Play debitează contul tău când confirmi. Abonamentele se reînnoiesc automat până la anulare. Gestionează sau anulează oricând în Google Play, la Plăți și abonamente.
+
+Politica de confidențialitate: https://jackwallner.github.io/hockey/android-privacy.html
+Termeni de utilizare: https://jackwallner.github.io/hockey/android-terms.html
+
+Datele despre goluri așteptate și șuturi provin de la MoneyPuck.com. Programul, foile de meci și datele jucătorilor sunt date publice NHL. StatScout nu este afiliat, autorizat, aprobat sau sponsorizat de National Hockey League (NHL), vreo echipă NHL, NHLPA sau MoneyPuck. Numele și statisticile sunt folosite doar pentru identificare și informare.

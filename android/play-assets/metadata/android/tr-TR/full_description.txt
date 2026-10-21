@@ -1,0 +1,42 @@
+Maç raporunun ötesinde kimin öne çıktığını gör.
+NHL oyuncularını beklenen gole göre sırala, tek dokunuşla tam bir yüzdelik profil aç ve şu anda kimin form tuttuğunu, kimin düştüğünü takip et.
+
+Not: Uygulamanın kendisi İngilizcedir.
+
+StatScout; ixG, beklenenin üzerindeki goller, xGF%, Corsi, yüksek tehlikeli fırsatlar, beklenenin üzerindeki kurtarışlar (GSAx) ve bilinen maç istatistiklerini tek bir hızlı Android uygulamasında toplar.
+
+BİR BAKIŞTA YÜZDELİKLER
+Her ölçüm, renkli bir işaretçiyle yatay bir yüzdelik çubuk olarak görünür: mavi soğuk, kırmızı sıcak demektir ve ligin elitleri hemen göze çarpar. Forvetler forvetlerle, defans oyuncuları defans oyuncularıyla, kaleciler kalecilerle karşılaştırılır.
+
+EKSİKSİZ OYUNCU PROFİLLERİ
+Bir oyuncuya dokun, her şeyi gör: skor, şut kalitesi, oyun kontrolü ve kalecilik alanlarında yüzdelikler, gelişmiş ölçümlerle klasik sezon istatistikleri arasında geçiş ve maç maç son form.
+
+HER MAÇ GECESİNE AYAK UYDURAN RAKAMLAR
+Sezon boyunca StatScout her maç gecesinden sonra yeni yayımlanan verileri kontrol eder ve geldiği anda güncellenir. Her ekran, rakamların hangi maçları kapsadığını gösterir.
+
+MAÇLAR VE TAKIMLAR
+Gecenin tüm maçları ve final skorları, her maç için gelişmiş maç raporu (beklenen goller, şut denemeleri, yüksek tehlikeli fırsatlar ve kümülatif xG yarışı), puan durumu, takım güç puanları ve öngörülen farklar.
+
+SIRALAMALAR VE FAVORİLER
+Puan ve gol gibi tanıdık liderlerle başla ya da gelişmiş sıralamalara geç. Forvet, defans veya kaleci olarak filtrele ve lig sırasını kaybetmeden her aktif oyuncuyu ara. Takımını ve favori oyuncularını Following bölümünde ücretsiz olarak bir arada tut.
+
+STATSCOUT+
+Uygulamanın geri kalanını StatScout+ ile aç:
+- Trendler: tüm lig, kimin yükselip kimin düştüğüne göre sıralı
+- Son form: her oyuncu, takım veya sıralama için son 2 / 4 / 8 hafta
+- Oyuncu karşılaştırma: iki oyuncu yan yana ya da bir oyuncu yıldan yıla
+- Takım analizi: 32 takımın tamamı için gelişmiş ve klasik istatistikler
+- Geçmiş sezonlar: 2008-09'a kadar her yıl, ayrıca tüm zamanların kariyer yüzdelikleri
+
+Aylık, Yıllık veya Ömür Boyu seç. Tek satın alma her şeyi kapsar.
+
+ÖNCE GİZLİLİK
+Hesap yok. Kayıt yok. Reklam yok. Üçüncü taraf takibi yok. Uygulama yalnızca NHL istatistikleri ve satın alma doğrulaması için gereken ağ isteklerini yapar.
+
+Abonelik ayrıntıları
+StatScout+, otomatik yenilenen bir abonelik (Aylık veya Yıllık, her biri uygun yeni aboneler için ücretsiz deneme içerir) ya da tek seferlik Ömür Boyu satın alma olarak sunulur. Fiyatlar satın almadan önce uygulamada gösterilir ve bölgeye göre değişir. Google Play, onayladığında hesabından ücret alır. Abonelikler iptal edilene kadar otomatik olarak yenilenir. İstediğin zaman Google Play'de Ödemeler ve abonelikler bölümünden yönet veya iptal et.
+
+Gizlilik Politikası: https://jackwallner.github.io/hockey/android-privacy.html
+Kullanım Koşulları: https://jackwallner.github.io/hockey/android-terms.html
+
+Beklenen gol ve şut verileri MoneyPuck.com'dan alınır. Fikstür, maç raporları ve oyuncu bilgileri herkese açık NHL verileridir. StatScout; National Hockey League (NHL), herhangi bir NHL takımı, NHLPA veya MoneyPuck ile bağlantılı değildir ve bunlar tarafından yetkilendirilmemiş, onaylanmamış ya da sponsor olunmamıştır. İsimler ve istatistikler yalnızca tanımlama ve bilgilendirme amacıyla kullanılır.

@@ -1,0 +1,42 @@
+Se hvem som leder utover kampreferatet.
+Ranger NHL-spillere etter forventede mål, åpne en komplett persentilprofil med ett trykk og følg hvem som er glovarm og hvem som kjølner akkurat nå.
+
+Merk: selve appen er på engelsk.
+
+StatScout samler ixG, mål over forventet, xGF%, Corsi, store sjanser, redninger over forventet (GSAx) og den kjente kampstatistikken i én rask Android-app.
+
+PERSENTILER MED ETT BLIKK
+Hvert mål vises som en vannrett persentilstolpe med en farget markør: blått er kaldt, rødt er varmt, og ligaens elite skiller seg ut med en gang. Forwarder sammenlignes med forwarder, backer med backer og målvakter med målvakter.
+
+KOMPLETTE SPILLERPROFILER
+Trykk på en spiller for hele bildet: persentiler innen poengproduksjon, skuddkvalitet, spillkontroll og målvaktsspill, en bryter mellom avanserte tall og vanlig sesongstatistikk, og nylig form kamp for kamp.
+
+TALL SOM HOLDER TRITT MED KAMPKVELDEN
+I sesongen ser StatScout etter nye tall etter hver kampkveld og oppdateres så snart de er publisert. Hver skjerm viser hvilke kamper tallene gjelder.
+
+KAMPER OG LAG
+Kveldens kamper med sluttresultater, et avansert kampreferat for hver kamp (forventede mål, skuddforsøk, store sjanser og den samlede xG-kurven), tabell, lagenes styrkerangering og anslåtte marginer.
+
+TOPPLISTER OG FAVORITTER
+Start med kjente topplister som poeng og mål, eller bytt til avanserte rangeringer. Filtrer på forwarder, backer eller målvakter og søk blant alle aktive spillere uten å miste ligaplasseringen. Samle laget ditt og favorittspillerne gratis under Following.
+
+STATSCOUT+
+Lås opp resten av appen med StatScout+:
+- Trender: hele ligaen rangert etter hvem som er varm og hvem som kjølner
+- Nylig form: de siste 2 / 4 / 8 ukene for hvilken som helst spiller, lag eller toppliste
+- Sammenlign spillere: to spillere side om side, eller én spiller år for år
+- Lagscouting: avansert og vanlig statistikk for alle 32 lag
+- Tidligere sesonger: hvert år tilbake til 2008-09, pluss karrierepersentiler gjennom tidene
+
+Velg Månedlig, Årlig eller Livstid. Ett kjøp dekker alt.
+
+PERSONVERN FØRST
+Ingen konto. Ingen registrering. Ingen reklame. Ingen sporing fra tredjeparter. Appen gjør bare nettverkskallene som trengs for NHL-statistikk og kjøpsbekreftelse.
+
+Om abonnementet
+StatScout+ finnes som abonnement med automatisk fornyelse (månedlig eller årlig, begge med gratis prøveperiode for kvalifiserte nye abonnenter) eller som engangskjøp for Livstid. Prisene vises i appen før du kjøper og varierer etter region. Google Play belaster kontoen din når du bekrefter. Abonnementer fornyes automatisk til de sies opp. Administrer eller si opp når som helst i Google Play under Betalinger og abonnementer.
+
+Personvernerklæring: https://jackwallner.github.io/hockey/android-privacy.html
+Vilkår for bruk: https://jackwallner.github.io/hockey/android-terms.html
+
+Data om forventede mål og skudd kommer fra MoneyPuck.com. Kampoppsett, kampreferater og spillerdata er offentlige NHL-data. StatScout er ikke tilknyttet, autorisert, godkjent eller sponset av National Hockey League (NHL), noe NHL-lag, NHLPA eller MoneyPuck. Navn og statistikk brukes kun til identifikasjon og informasjon.

@@ -1,0 +1,42 @@
+Voyez qui domine au-delà du sommaire de match.
+Classez les joueurs de la LNH par buts attendus, ouvrez un profil complet en percentiles d'un seul geste et suivez qui est en feu ou en panne en ce moment.
+
+À noter : l'application elle-même est en anglais.
+
+StatScout réunit ixG, buts au-dessus des attentes, xGF%, Corsi, chances de qualité, arrêts au-dessus des attentes (GSAx) et les statistiques habituelles dans une application Android rapide.
+
+DES PERCENTILES LISIBLES
+Chaque statistique s'affiche sous forme de barre de percentile avec un repère de couleur : bleu pour froid, rouge pour chaud, et l'élite de la ligue saute aux yeux. Les attaquants sont comparés aux attaquants, les défenseurs aux défenseurs, les gardiens aux gardiens.
+
+DES PROFILS DE JOUEURS COMPLETS
+Touchez un joueur pour tout voir : percentiles en attaque, qualité des tirs, contrôle du jeu et performance des gardiens, bascule entre statistiques avancées et habituelles, et forme récente match par match.
+
+DES CHIFFRES À JOUR APRÈS CHAQUE SOIRÉE
+Pendant la saison, StatScout vérifie les nouvelles données après chaque soirée de matchs et se met à jour dès leur publication. Chaque écran indique quels matchs sont inclus.
+
+MATCHS ET ÉQUIPES
+Tous les matchs du soir avec les pointages finaux, un sommaire avancé pour chaque match (buts attendus, tentatives de tir, chances de qualité et courbe cumulée des xG), classement, indices de puissance des équipes et écarts projetés.
+
+MENEURS ET FAVORIS
+Commencez par les meneurs habituels (points, buts) ou passez aux classements avancés. Filtrez par attaquants, défenseurs ou gardiens et cherchez n'importe quel joueur actif sans perdre son rang. Gardez gratuitement votre équipe et vos joueurs favoris dans Following.
+
+STATSCOUT+
+Débloquez le reste de l'application avec StatScout+ :
+- Tendances : toute la ligue classée selon qui monte et qui baisse
+- Forme récente : les 2 / 4 / 8 dernières semaines pour un joueur, une équipe ou un classement
+- Comparaisons : deux joueurs côte à côte, ou un joueur d'une saison à l'autre
+- Analyse des équipes : statistiques avancées et habituelles des 32 équipes
+- Saisons passées : chaque année depuis 2008-09, plus les percentiles de carrière
+
+Choisissez Mensuel, Annuel ou À vie. Un seul achat débloque tout.
+
+LA CONFIDENTIALITÉ D'ABORD
+Pas de compte. Pas d'inscription. Pas de publicité. Aucun pistage par des tiers. L'application ne fait que les requêtes réseau nécessaires aux statistiques de la LNH et à la vérification des achats.
+
+Détails de l'abonnement
+StatScout+ est offert en abonnement à renouvellement automatique (mensuel ou annuel, avec essai gratuit pour les nouveaux abonnés admissibles) ou en achat unique À vie. Les prix sont affichés dans l'application avant l'achat et varient selon la région. Google Play facture votre compte à la confirmation. L'abonnement se renouvelle automatiquement jusqu'à son annulation. Gérez-le ou annulez-le en tout temps dans Google Play, sous Paiements et abonnements.
+
+Politique de confidentialité : https://jackwallner.github.io/hockey/android-privacy.html
+Conditions d'utilisation : https://jackwallner.github.io/hockey/android-terms.html
+
+Les données de buts attendus et de tirs proviennent de MoneyPuck.com. Calendrier, sommaires de match et fiches des joueurs sont des données publiques de la LNH (NHL). StatScout n'est ni affilié, ni autorisé, ni approuvé, ni commandité par la Ligue nationale de hockey (NHL), une équipe de la LNH, l'AJLNH (NHLPA) ou MoneyPuck. Les noms et statistiques sont utilisés uniquement à des fins d'identification et d'information.

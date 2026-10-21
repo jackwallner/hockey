@@ -1,0 +1,42 @@
+Zie wie er echt de dienst uitmaakt, voorbij de boxscore.
+Rangschik NHL-spelers op expected goals, open met één tik een volledig percentielprofiel en volg wie nu op stoom is en wie afkoelt.
+
+Let op: de app zelf is in het Engels.
+
+StatScout bundelt ixG, goals boven verwachting, xGF%, Corsi, grote kansen, reddingen boven verwachting (GSAx) en de vertrouwde boxscore-cijfers in één snelle Android-app.
+
+PERCENTIELEN IN ÉÉN OOGOPSLAG
+Elke statistiek verschijnt als horizontale percentielbalk met een gekleurde markering: blauw is koud, rood is heet, en de top van de competitie springt eruit. Aanvallers worden vergeleken met aanvallers, verdedigers met verdedigers, keepers met keepers.
+
+VOLLEDIGE SPELERSPROFIELEN
+Tik op een speler voor het hele plaatje: percentielen in scoren, schotkwaliteit, spelcontrole en keeperswerk, een schakelaar tussen geavanceerde cijfers en gewone seizoensstatistieken, en de recente vorm per wedstrijd.
+
+CIJFERS DIE BIJBLIJVEN MET ELKE SPEELAVOND
+Tijdens het seizoen zoekt StatScout na elke speelavond naar nieuw gepubliceerde cijfers en werkt bij zodra ze binnen zijn. Elk scherm toont welke wedstrijden in de cijfers zitten.
+
+WEDSTRIJDEN EN TEAMS
+Alle wedstrijden van de avond met eindstanden, een geavanceerde boxscore per wedstrijd (expected goals, schotpogingen, grote kansen en het cumulatieve xG-verloop), de stand, team-powerratings en verwachte marges.
+
+RANGLIJSTEN EN FAVORIETEN
+Begin bij vertrouwde ranglijsten zoals punten en goals, of schakel over naar geavanceerde rankings. Filter op aanvallers, verdedigers of keepers en zoek elke actieve speler op zonder zijn plek in de competitie kwijt te raken. Bewaar je team en favoriete spelers gratis in Following.
+
+STATSCOUT+
+Ontgrendel de rest van de app met StatScout+:
+- Trends: de hele competitie gerangschikt op wie op stoom komt en wie afkoelt
+- Recente vorm: de laatste 2 / 4 / 8 weken van elke speler, elk team of elke ranglijst
+- Spelers vergelijken: twee spelers naast elkaar, of één speler per seizoen
+- Teamscouting: geavanceerde en gewone statistieken voor alle 32 teams
+- Eerdere seizoenen: elk jaar terug tot 2008-09, plus carrièrepercentielen aller tijden
+
+Kies Maandelijks, Jaarlijks of Lifetime. Eén aankoop ontgrendelt alles.
+
+PRIVACY VOOROP
+Geen account. Geen registratie. Geen advertenties. Geen tracking door derden. De app doet alleen de netwerkverzoeken die nodig zijn voor NHL-statistieken en aankoopverificatie.
+
+Abonnementsgegevens
+StatScout+ is beschikbaar als automatisch verlengend abonnement (maandelijks of jaarlijks, elk met een gratis proefperiode voor nieuwe abonnees die daarvoor in aanmerking komen) of als eenmalige Lifetime-aankoop. Prijzen zie je in de app vóór je koopt en verschillen per regio. Google Play brengt de kosten in rekening zodra je bevestigt. Abonnementen worden automatisch verlengd tot je opzegt. Beheer of annuleer altijd in Google Play onder Betalingen en abonnementen.
+
+Privacybeleid: https://jackwallner.github.io/hockey/android-privacy.html
+Gebruiksvoorwaarden: https://jackwallner.github.io/hockey/android-terms.html
+
+Expected goals en schotdata komen van MoneyPuck.com. Speelschema, boxscores en spelersgegevens zijn openbare NHL-data. StatScout is niet gelieerd aan, geautoriseerd, onderschreven of gesponsord door de National Hockey League (NHL), een NHL-team, de NHLPA of MoneyPuck. Namen en statistieken worden alleen gebruikt ter identificatie en informatie.

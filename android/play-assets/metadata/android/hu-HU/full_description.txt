@@ -1,0 +1,42 @@
+Nézd meg, ki vezet a jegyzőkönyvön túl.
+Rangsorold az NHL játékosait várható gólok szerint, egy koppintással nyiss meg egy teljes percentilis profilt, és kövesd, ki van most formában és ki hűl le.
+
+Megjegyzés: maga az alkalmazás angol nyelvű.
+
+A StatScout egyetlen gyors Android-alkalmazásban hozza az ixG-t, a várakozás feletti gólokat, az xGF%-ot, a Corsit, a veszélyes helyzeteket, a várakozás feletti védéseket (GSAx) és a megszokott meccsstatisztikákat.
+
+PERCENTILISEK EGY PILLANTÁSRA
+Minden mutató vízszintes percentilis sávként jelenik meg színes jelölővel: a kék hideg, a piros forró, a liga elitje pedig azonnal kiugrik. A támadókat támadókkal, a védőket védőkkel, a kapusokat kapusokkal hasonlítjuk össze.
+
+TELJES JÁTÉKOSPROFILOK
+Koppints egy játékosra, és mindent látsz: percentiliseket gólszerzésben, lövésminőségben, játékirányításban és kapusteljesítményben, váltót a haladó mutatók és a hagyományos szezonstatisztikák között, valamint a friss formát meccsről meccsre.
+
+SZÁMOK, AMELYEK LÉPÉST TARTANAK A MECCSESTÉKKEL
+A szezonban a StatScout minden meccsest után új adatokat keres, és amint megjelennek, frissül. Minden képernyő mutatja, mely meccsek szerepelnek a számokban.
+
+MECCSEK ÉS CSAPATOK
+Az este összes meccse végeredménnyel, minden meccshez haladó jegyzőkönyv (várható gólok, lövéskísérletek, veszélyes helyzetek és az összesített xG-görbe), tabella, csapatok erőrangsora és várható különbségek.
+
+RANGLISTÁK ÉS KEDVENCEK
+Kezdd a megszokott ranglistákkal, mint a pontok és gólok, vagy válts haladó rangsorokra. Szűrj támadókra, védőkre vagy kapusokra, és keress rá bármelyik aktív játékosra a ligahelyezése elvesztése nélkül. Csapatodat és kedvenc játékosaidat ingyen tarthatod együtt a Following lapon.
+
+STATSCOUT+
+Oldd fel az alkalmazás többi részét a StatScout+ segítségével:
+- Trendek: az egész liga rangsorolva aszerint, ki melegszik és ki hűl
+- Friss forma: az utolsó 2 / 4 / 8 hét bármely játékosra, csapatra vagy ranglistára
+- Játékos-összehasonlítás: két játékos egymás mellett, vagy egy játékos évről évre
+- Csapatelemzés: haladó és hagyományos statisztikák mind a 32 csapatra
+- Korábbi szezonok: minden év 2008-09-ig visszamenőleg, plusz pályafutási percentilisek
+
+Válassz havi, éves vagy örökös opciót. Egy vásárlás mindent lefed.
+
+AZ ADATVÉDELEM AZ ELSŐ
+Nincs fiók. Nincs regisztráció. Nincs hirdetés. Nincs külső követés. Az alkalmazás csak az NHL-statisztikákhoz és a vásárlás ellenőrzéséhez szükséges hálózati kéréseket küldi.
+
+Az előfizetés részletei
+A StatScout+ automatikusan megújuló előfizetésként (havi vagy éves, mindkettő ingyenes próbaidővel a jogosult új előfizetőknek) vagy egyszeri örökös vásárlásként érhető el. Az árak vásárlás előtt megjelennek az alkalmazásban, és régiónként eltérnek. A Google Play a megerősítéskor terheli a fiókodat. Az előfizetések automatikusan megújulnak, amíg le nem mondod őket. Kezelheted vagy lemondhatod bármikor a Google Playen, a Fizetések és előfizetések menüben.
+
+Adatvédelmi irányelvek: https://jackwallner.github.io/hockey/android-privacy.html
+Felhasználási feltételek: https://jackwallner.github.io/hockey/android-terms.html
+
+A várható gólok és lövések adatai a MoneyPuck.com oldalról származnak. A menetrend, a jegyzőkönyvek és a játékosadatok nyilvános NHL-adatok. A StatScout nem áll kapcsolatban a National Hockey League-gel (NHL), egyetlen NHL-csapattal, az NHLPA-val vagy a MoneyPuckkal, és azok nem engedélyezték, nem támogatják és nem szponzorálják. A nevek és statisztikák kizárólag azonosítási és tájékoztatási célt szolgálnak.

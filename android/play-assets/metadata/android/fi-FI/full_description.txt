@@ -1,0 +1,42 @@
+Näe, kuka johtaa pöytäkirjan takana.
+Järjestä NHL-pelaajat odotettujen maalien mukaan, avaa täysi persentiiliprofiili yhdellä napautuksella ja seuraa, kuka on nyt kuumana ja kuka viilenee.
+
+Huom: itse sovellus on englanninkielinen.
+
+StatScout kokoaa ixG:n, maalit yli odotusten, xGF%:n, Corsin, vaaralliset maalipaikat, torjunnat yli odotusten (GSAx) ja tutut ottelutilastot yhteen nopeaan Android-sovellukseen.
+
+PERSENTIILIT YHDELLÄ SILMÄYKSELLÄ
+Jokainen mittari näkyy vaakasuorana persentiilipalkkina, jossa on värillinen merkki: sininen on kylmä, punainen kuuma, ja liigan eliitti erottuu heti. Hyökkääjiä verrataan hyökkääjiin, puolustajia puolustajiin ja maalivahteja maalivahteihin.
+
+TÄYDET PELAAJAPROFIILIT
+Napauta pelaajaa ja näet kaiken: persentiilit maalinteossa, laukausten laadussa, pelin hallinnassa ja maalivahtipelissä, kytkimen edistyneiden mittareiden ja tavallisten kausitilastojen välillä sekä viimeaikaisen vireen ottelu ottelulta.
+
+LUVUT PYSYVÄT PELI-ILLAN TAHDISSA
+Kauden aikana StatScout tarkistaa uudet luvut jokaisen peli-illan jälkeen ja päivittyy heti, kun ne julkaistaan. Jokainen näkymä kertoo, mitkä ottelut luvuissa ovat mukana.
+
+OTTELUT JA JOUKKUEET
+Illan kaikki ottelut lopputuloksineen, edistynyt pöytäkirja jokaisesta ottelusta (odotetut maalit, laukausyritykset, vaaralliset paikat ja kertyvä xG-käyrä), sarjataulukko, joukkueiden voimaluvut ja ennustetut erot.
+
+TILASTOJOHTAJAT JA SUOSIKIT
+Aloita tutuista listoista, kuten pisteistä ja maaleista, tai vaihda edistyneisiin rankingeihin. Suodata hyökkääjiin, puolustajiin tai maalivahteihin ja hae mitä tahansa aktiivista pelaajaa menettämättä tämän sijoitusta. Kokoa joukkueesi ja suosikkipelaajasi ilmaiseksi Following-näkymään.
+
+STATSCOUT+
+Avaa loput sovelluksesta StatScout+:lla:
+- Trendit: koko liiga järjestettynä sen mukaan, kuka kuumenee ja kuka viilenee
+- Viimeaikainen vire: viimeiset 2 / 4 / 8 viikkoa kenelle tahansa pelaajalle, joukkueelle tai listalle
+- Pelaajavertailu: kaksi pelaajaa rinnakkain tai yksi pelaaja kausi kaudelta
+- Joukkueanalyysi: edistyneet ja tavalliset tilastot kaikille 32 joukkueelle
+- Aiemmat kaudet: jokainen vuosi kaudesta 2008-09 alkaen sekä kaikkien aikojen urapersentiilit
+
+Valitse Kuukausi, Vuosi tai Elinikäinen. Yksi osto kattaa kaiken.
+
+YKSITYISYYS ENSIN
+Ei tiliä. Ei rekisteröitymistä. Ei mainoksia. Ei kolmansien osapuolten seurantaa. Sovellus tekee vain NHL-tilastoihin ja ostojen vahvistamiseen tarvittavat verkkopyynnöt.
+
+Tilauksen tiedot
+StatScout+ on saatavilla automaattisesti uusiutuvana tilauksena (kuukausi tai vuosi, molemmissa ilmainen kokeilujakso kelpoisille uusille tilaajille) tai kertaostona Elinikäinen. Hinnat näkyvät sovelluksessa ennen ostoa ja vaihtelevat alueittain. Google Play veloittaa tiliäsi, kun vahvistat. Tilaukset uusiutuvat automaattisesti, kunnes ne perutaan. Hallitse tai peru milloin tahansa Google Playssa kohdassa Maksut ja tilaukset.
+
+Tietosuojakäytäntö: https://jackwallner.github.io/hockey/android-privacy.html
+Käyttöehdot: https://jackwallner.github.io/hockey/android-terms.html
+
+Odotettujen maalien ja laukausten data on peräisin MoneyPuck.comista. Otteluohjelma, pöytäkirjat ja pelaajatiedot ovat julkista NHL-dataa. StatScout ei ole sidoksissa National Hockey Leagueen (NHL), mihinkään NHL-joukkueeseen, NHLPA:han tai MoneyPuckiin, eivätkä ne ole valtuuttaneet, hyväksyneet tai sponsoroineet sitä. Nimiä ja tilastoja käytetään vain tunnistamiseen ja tiedottamiseen.

@@ -1,0 +1,42 @@
+Xem ai thực sự dẫn đầu, vượt xa bảng tỷ số.
+Xếp hạng cầu thủ NHL theo bàn thắng kỳ vọng, mở hồ sơ phân vị đầy đủ chỉ với một lần chạm và theo dõi ai đang lên phong độ, ai đang chững lại ngay lúc này.
+
+Lưu ý: bản thân ứng dụng dùng tiếng Anh.
+
+StatScout gom ixG, bàn thắng vượt kỳ vọng, xGF%, Corsi, cơ hội nguy hiểm, pha cứu thua vượt kỳ vọng (GSAx) và các thống kê trận đấu quen thuộc vào một ứng dụng Android nhanh gọn.
+
+PHÂN VỊ NHÌN LÀ HIỂU
+Mỗi chỉ số hiển thị dưới dạng thanh phân vị nằm ngang với điểm đánh dấu màu: xanh là lạnh, đỏ là nóng, và những cầu thủ xuất sắc nhất giải nổi bật ngay. Tiền đạo so với tiền đạo, hậu vệ so với hậu vệ, thủ môn so với thủ môn.
+
+HỒ SƠ CẦU THỦ ĐẦY ĐỦ
+Chạm vào bất kỳ cầu thủ nào để xem toàn cảnh: phân vị về ghi bàn, chất lượng cú sút, kiểm soát thế trận và bắt gôn, nút chuyển giữa chỉ số nâng cao và thống kê mùa giải thông thường, cùng phong độ gần đây theo từng trận.
+
+SỐ LIỆU THEO KỊP MỖI ĐÊM THI ĐẤU
+Trong mùa giải, StatScout kiểm tra số liệu mới sau mỗi đêm thi đấu và cập nhật ngay khi có. Mỗi màn hình đều cho biết số liệu đã tính đến những trận nào.
+
+TRẬN ĐẤU VÀ ĐỘI BÓNG
+Toàn bộ các trận trong đêm với tỷ số cuối cùng, bảng tỷ số nâng cao cho từng trận (bàn thắng kỳ vọng, số lần dứt điểm, cơ hội nguy hiểm và đường đua xG cộng dồn), bảng xếp hạng, chỉ số sức mạnh đội và cách biệt dự báo.
+
+BẢNG XẾP HẠNG VÀ YÊU THÍCH
+Bắt đầu từ các bảng quen thuộc như điểm và bàn thắng, hoặc chuyển sang xếp hạng nâng cao. Lọc theo tiền đạo, hậu vệ hoặc thủ môn và tìm bất kỳ cầu thủ đang thi đấu nào mà không mất thứ hạng trong giải. Lưu đội bóng và cầu thủ yêu thích của bạn trong Following, miễn phí.
+
+STATSCOUT+
+Mở khóa phần còn lại của ứng dụng với StatScout+:
+- Xu hướng: toàn giải xếp theo ai đang lên và ai đang xuống
+- Phong độ gần đây: 2 / 4 / 8 tuần gần nhất của bất kỳ cầu thủ, đội hay bảng xếp hạng nào
+- So sánh cầu thủ: hai cầu thủ cạnh nhau, hoặc một cầu thủ qua từng năm
+- Phân tích đội: thống kê nâng cao và thông thường của cả 32 đội
+- Các mùa trước: mọi năm từ 2008-09 trở lại đây, cùng phân vị toàn sự nghiệp
+
+Chọn Hằng tháng, Hằng năm hoặc Trọn đời. Một lần mua mở khóa tất cả.
+
+QUYỀN RIÊNG TƯ LÀ TRÊN HẾT
+Không tài khoản. Không đăng ký. Không quảng cáo. Không theo dõi của bên thứ ba. Ứng dụng chỉ gửi những yêu cầu mạng cần thiết cho thống kê NHL và xác minh giao dịch mua.
+
+Chi tiết gói đăng ký
+StatScout+ có dạng gói đăng ký tự động gia hạn (Hằng tháng hoặc Hằng năm, mỗi gói đều có dùng thử miễn phí cho người đăng ký mới đủ điều kiện) hoặc mua một lần Trọn đời. Giá hiển thị trong ứng dụng trước khi mua và khác nhau theo khu vực. Google Play trừ tiền vào tài khoản của bạn khi bạn xác nhận. Gói đăng ký tự động gia hạn cho đến khi bị hủy. Quản lý hoặc hủy bất cứ lúc nào trong Google Play, mục Thanh toán và gói thuê bao.
+
+Chính sách quyền riêng tư: https://jackwallner.github.io/hockey/android-privacy.html
+Điều khoản sử dụng: https://jackwallner.github.io/hockey/android-terms.html
+
+Dữ liệu bàn thắng kỳ vọng và cú sút lấy từ MoneyPuck.com. Lịch thi đấu, bảng tỷ số và thông tin cầu thủ là dữ liệu NHL công khai. StatScout không liên kết với, không được ủy quyền, chứng thực hay tài trợ bởi National Hockey League (NHL), bất kỳ đội NHL nào, NHLPA hay MoneyPuck. Tên và số liệu chỉ được dùng để nhận diện và cung cấp thông tin.

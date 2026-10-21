@@ -1,0 +1,42 @@
+Lihat siapa yang benar-benar mendahului, melangkaui kad skor perlawanan.
+Susun pemain NHL mengikut jangkaan gol, buka profil persentil penuh dengan satu ketikan, dan jejaki siapa yang sedang panas dan siapa yang semakin dingin sekarang.
+
+Nota: aplikasi ini sendiri dalam bahasa Inggeris.
+
+StatScout menghimpunkan ixG, gol melebihi jangkaan, xGF%, Corsi, peluang berbahaya, selamatan melebihi jangkaan (GSAx) dan statistik perlawanan biasa dalam satu aplikasi Android yang pantas.
+
+PERSENTIL SEKALI PANDANG
+Setiap metrik dipaparkan sebagai bar persentil mendatar dengan penanda berwarna: biru bermaksud sejuk, merah bermaksud panas, dan pemain elit liga terus menonjol. Penyerang dibandingkan dengan penyerang, pertahanan dengan pertahanan, dan penjaga gol dengan penjaga gol.
+
+PROFIL PEMAIN LENGKAP
+Ketik mana-mana pemain untuk melihat semuanya: persentil dalam menjaringkan gol, kualiti rembatan, kawalan permainan dan penjagaan gol, suis antara metrik lanjutan dan statistik musim biasa, serta prestasi terkini perlawanan demi perlawanan.
+
+ANGKA YANG SEIRING SETIAP MALAM PERLAWANAN
+Sepanjang musim, StatScout menyemak data baharu selepas setiap malam perlawanan dan dikemas kini sebaik sahaja data diterbitkan. Setiap skrin menunjukkan perlawanan yang dikira.
+
+PERLAWANAN DAN PASUKAN
+Semua perlawanan malam itu dengan skor akhir, kad skor lanjutan untuk setiap perlawanan (jangkaan gol, cubaan rembatan, peluang berbahaya dan perlumbaan xG kumulatif), kedudukan liga, penarafan kekuatan pasukan dan jurang unjuran.
+
+PAPAN PENDAHULU DAN KEGEMARAN
+Mulakan dengan pendahulu biasa seperti mata dan gol, atau tukar ke kedudukan lanjutan. Tapis mengikut penyerang, pertahanan atau penjaga gol dan cari mana-mana pemain aktif tanpa kehilangan kedudukannya dalam liga. Simpan pasukan dan pemain kegemaran anda dalam Following, percuma.
+
+STATSCOUT+
+Buka selebihnya aplikasi dengan StatScout+:
+- Trend: seluruh liga disusun mengikut siapa yang naik dan siapa yang turun
+- Prestasi terkini: 2 / 4 / 8 minggu terakhir bagi mana-mana pemain, pasukan atau papan pendahulu
+- Bandingkan pemain: dua pemain sebelah-menyebelah, atau seorang pemain dari tahun ke tahun
+- Analisis pasukan: statistik lanjutan dan biasa bagi kesemua 32 pasukan
+- Musim lalu: setiap tahun hingga 2008-09, serta persentil kerjaya sepanjang zaman
+
+Pilih Bulanan, Tahunan atau Seumur Hidup. Satu pembelian merangkumi semuanya.
+
+PRIVASI DIUTAMAKAN
+Tiada akaun. Tiada pendaftaran. Tiada iklan. Tiada penjejakan pihak ketiga. Aplikasi hanya membuat permintaan rangkaian yang diperlukan untuk statistik NHL dan pengesahan pembelian.
+
+Butiran langganan
+StatScout+ tersedia sebagai langganan yang diperbaharui secara automatik (Bulanan atau Tahunan, masing-masing dengan percubaan percuma untuk pelanggan baharu yang layak) atau sebagai pembelian sekali Seumur Hidup. Harga dipaparkan dalam aplikasi sebelum anda membeli dan berbeza mengikut rantau. Google Play mengecaj akaun anda apabila anda mengesahkan. Langganan diperbaharui secara automatik sehingga dibatalkan. Urus atau batalkan pada bila-bila masa di Google Play di bawah Pembayaran & langganan.
+
+Dasar Privasi: https://jackwallner.github.io/hockey/android-privacy.html
+Terma Penggunaan: https://jackwallner.github.io/hockey/android-terms.html
+
+Data jangkaan gol dan rembatan diperoleh daripada MoneyPuck.com. Jadual, kad skor dan biodata pemain ialah data awam NHL. StatScout tidak bergabung dengan, diberi kuasa, disokong atau ditaja oleh National Hockey League (NHL), mana-mana pasukan NHL, NHLPA atau MoneyPuck. Nama dan statistik digunakan hanya untuk tujuan pengenalan dan maklumat.

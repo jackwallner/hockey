@@ -1,0 +1,42 @@
+Descobreix qui mana més enllà de l'acta del partit.
+Classifica els jugadors de la NHL per gols esperats, obre un perfil complet en percentils amb un toc i segueix qui està en ratxa i qui es refreda ara mateix.
+
+Nota: l'aplicació és en anglès.
+
+StatScout reuneix ixG, gols per sobre de l'esperat, xGF%, Corsi, ocasions de perill, aturades per sobre de l'esperat (GSAx) i les estadístiques de sempre en una aplicació Android ràpida.
+
+PERCENTILS VISUALS
+Cada mètrica apareix com una barra de percentil amb un marcador de color: blau és fred, vermell és calent, i l'elit de la lliga salta a la vista. Els davanters es comparen amb davanters, els defenses amb defenses i els porters amb porters.
+
+PERFILS COMPLETS DE JUGADORS
+Toca qualsevol jugador per veure-ho tot: percentils en anotació, qualitat de xut, domini del joc i rendiment a la porteria, un selector entre mètriques avançades i estadístiques clàssiques de la temporada, i la forma recent partit a partit.
+
+DADES AL DIA CADA JORNADA
+Durant la temporada, StatScout busca dades noves després de cada nit de partits i s'actualitza tan bon punt es publiquen. Cada pantalla indica quins partits inclouen les xifres.
+
+PARTITS I EQUIPS
+Tots els partits de la nit amb resultats finals, una acta avançada de cada partit (gols esperats, intents de xut, ocasions de perill i la cursa acumulada d'xG), classificació, ràtings de poder dels equips i marges projectats.
+
+RÀNQUINGS I PREFERITS
+Comença pels líders de sempre, com punts i gols, o passa als rànquings avançats. Filtra per davanters, defenses o porters i cerca qualsevol jugador en actiu sense perdre la seva posició a la lliga. Desa gratis el teu equip i els teus jugadors preferits a Following.
+
+STATSCOUT+
+Desbloqueja la resta de l'aplicació amb StatScout+:
+- Tendències: tota la lliga ordenada segons qui puja i qui baixa
+- Forma recent: les últimes 2 / 4 / 8 setmanes de qualsevol jugador, equip o rànquing
+- Comparar jugadors: dos jugadors cara a cara, o un jugador temporada a temporada
+- Anàlisi d'equips: estadístiques avançades i clàssiques dels 32 equips
+- Temporades anteriors: cada any des del 2008-09, més percentils de carrera històrics
+
+Tria Mensual, Anual o Vitalici. Una sola compra ho inclou tot.
+
+LA PRIVADESA, PRIMER
+Sense comptes. Sense registre. Sense anuncis. Sense seguiment de tercers. L'aplicació només fa les connexions necessàries per a les estadístiques de la NHL i la verificació de compres.
+
+Detalls de la subscripció
+StatScout+ està disponible com a subscripció de renovació automàtica (mensual o anual, cadascuna amb prova gratuïta per als nous subscriptors que compleixin els requisits) o com a compra única Vitalícia. Els preus es mostren a l'aplicació abans de comprar i varien segons la regió. Google Play fa el càrrec al teu compte quan confirmes. Les subscripcions es renoven automàticament fins que les cancel·lis. Gestiona-les o cancel·la-les quan vulguis a Google Play, a Pagaments i subscripcions.
+
+Política de privadesa: https://jackwallner.github.io/hockey/android-privacy.html
+Condicions d'ús: https://jackwallner.github.io/hockey/android-terms.html
+
+Les dades de gols esperats i xuts provenen de MoneyPuck.com. Calendari, actes i fitxes de jugadors són dades públiques de la NHL. StatScout no està afiliat, autoritzat, avalat ni patrocinat per la National Hockey League (NHL), cap equip de la NHL, la NHLPA ni MoneyPuck. Els noms i les estadístiques s'utilitzen només amb finalitats d'identificació i informació.

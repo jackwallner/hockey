@@ -119,8 +119,15 @@ iOS fixture feed, `ScreenshotFixtureApi` plus `FixtureGames`), with
 1080x2400 captures to `/sdcard/Android/data/com.jackwallner.hockey/files/screens/`
 with System UI demo mode on. Pull them into `android/play-assets/raw/` and run
 `python3 scripts/play_screenshot_compositor.py` for the 1080x1920 frames (App
-Store headlines) and the 1024x500 feature graphic. Listing text and the
-changelog are in `android/play-assets/metadata/android/en-US/` (English only).
+Store headlines) and the 1024x500 feature graphic. Listing text lives in
+`android/play-assets/metadata/android/<play-locale>/` (fastlane supply layout)
+in Sober's 50 Play locales; en-US is the live listing, the changelog and
+graphics are en-US only. Titles are "<local NHL stats phrase>: StatScout" (en-US
+keeps "Hockey Edge: Puck StatScout"), search terms come from the iOS
+`fastlane/metadata/<locale>/keywords.txt`, and every non-English description
+says the app itself is in English. Check with `scripts/validate-play-listing.py`
+(limits 30/80/4000, no em dashes, prices or Apple wording, policy links,
+MoneyPuck/NHL attribution, the English notice).
 Privacy and terms pages are `docs/android-privacy.html` and
 `docs/android-terms.html` on GitHub Pages.
 
