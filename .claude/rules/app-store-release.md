@@ -33,11 +33,8 @@ paths:
   27M3333KDW (set over the RC v2 API, `rc api POST /projects/<p>/apps/<a>`).
 - Eleven locales the fleet's other apps carry (bn-BD gu-IN kn-IN ml-IN mr-IN
   or-IN pa-IN sl-SI ta-IN te-IN ur-PK) are translated in `fastlane/metadata/`
-  but not in ASC yet: 1.0 was in review when they were written. Add them on
-  the 1.0.1 draft with
-  `ASC_APP_VERSION=1.0.1 scripts/asc-add-missing-localizations.py --locales <the 11> --draft-only`;
-  Fastlane's `languages` list does not accept them, so the regular metadata
-  upload skips them.
+  and live in ASC since 1.0.1. Fastlane's `languages` list does not accept
+  them, so the regular metadata upload skips them.
 - Later products submit standalone over the API now that the first IAPs rode
   with a version.
 
@@ -53,11 +50,11 @@ the locales currently accepted by Fastlane; all 39 locales are listed.
   percentile board share card and the board performance fix (season row
   index, memoized board reads). What's New reuses football 1.2.7's
   translated notes; promotional text was copied forward from 1.0.
-- The eleven extra locales above are still not in ASC: the API refuses new
-  localizations while 1.0.1 is in review. Their `release_notes.txt` already
-  hold the 1.0.1 notes. Add them on the next draft with
-  `scripts/asc-add-missing-localizations.py` (source `~/.baseball_credentials`
-  first).
+- All 50 locales are in ASC from 1.0.1 on. The eleven extra locales above
+  were added after pulling 1.0.1 from review (the API refuses new
+  localizations while a version is in review), then it was resubmitted the
+  same day. Apple auto-creates their appInfo localizations with the en-US
+  name and subtitle; patch them from `fastlane/metadata/<locale>/` afterwards.
 
 ## Draft version helper
 
