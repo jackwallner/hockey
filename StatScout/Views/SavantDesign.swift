@@ -299,3 +299,12 @@ struct StatScoutTheme {
         RinkPalette.color(forPercentile: percentile)
     }
 }
+
+extension View {
+    /// Midnight disc behind a white toolbar glyph: invisible on the midnight
+    /// nav bar, but keeps the glyph legible when a vertical bar (iPhone Duo)
+    /// moves it onto the light canvas.
+    func toolbarGlyphDisc() -> some View {
+        padding(7).background(RinkPalette.midnight, in: Circle())
+    }
+}

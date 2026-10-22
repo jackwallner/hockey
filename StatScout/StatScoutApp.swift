@@ -31,6 +31,7 @@ struct StatScoutApp: App {
         #endif
         #if DEBUG
         if ScreenshotFixtureAPI.isEnabled {
+            DuoTour.start()
             ScreenshotFixtureAPI.prepareUserDefaults()
             self.api = ScreenshotFixtureAPI()
             StoreService.shared.start()
@@ -122,6 +123,7 @@ struct ContentView: View {
 
             if !hasCompletedOnboarding {
                 OnboardingCards(viewModel: viewModel, hasCompletedOnboarding: $hasCompletedOnboarding)
+                    .modifier(UnfoldedPrimaryPane())
                     .transition(.opacity)
                     .zIndex(1)
             }

@@ -277,7 +277,7 @@ struct DashboardView: View {
                             .fill(RinkPalette.divider)
                             .frame(height: RinkGeo.hairline)
                     }
-                    NavigationLink(value: TeamDestination(abbr: team)) {
+                    DetailPaneLink(value: TeamDestination(abbr: team)) {
                         HStack(spacing: 10) {
                             ZStack {
                                 Circle()
@@ -411,7 +411,7 @@ struct DashboardView: View {
                 let sortMetric = viewModel.currentSortMetricForDisplay
                 LazyVStack(spacing: 0) {
                     ForEach(Array(viewModel.leaderboard.enumerated()), id: \.element.id) { index, player in
-                        NavigationLink(value: player) {
+                        DetailPaneLink(value: player, marksSelection: true) {
                             LeaderboardTableRow(
                                 rank: index + 1,
                                 player: player,

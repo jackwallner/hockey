@@ -18,7 +18,7 @@ struct FollowingStatsView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 12) {
                 if let team = favorites.team, !StatScoutSeason.isAllTime(viewModel.selectedSeason) {
-                    NavigationLink(value: TeamDestination(abbr: team)) {
+                    DetailPaneLink(value: TeamDestination(abbr: team)) {
                         HStack(spacing: 12) {
                             TeamColorDot(abbr: team, size: 12)
                             VStack(alignment: .leading, spacing: 4) {
@@ -57,7 +57,7 @@ struct FollowingStatsView: View {
                 }
 
                 ForEach(players) { player in
-                    NavigationLink(value: player) { playerCard(player) }
+                    DetailPaneLink(value: player) { playerCard(player) }
                         .buttonStyle(.plain)
                         .contextMenu {
                             Button("Unfollow \(player.name)", systemImage: "star.slash") {

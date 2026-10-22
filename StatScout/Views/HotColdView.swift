@@ -527,7 +527,7 @@ struct HotColdView: View {
         .accessibilityLabel("\(rank). \(player?.name ?? "Player"), \(metric.label) \(value), \(volumeText(form))")
 
         if let player {
-            NavigationLink(value: player) { rowContent }
+            DetailPaneLink(value: player, marksSelection: true) { rowContent }
                 .buttonStyle(.plain)
                 .accessibilityHint("Opens \(player.name)'s profile")
         } else {
@@ -623,7 +623,7 @@ struct HotColdView: View {
 
         Group {
             if let player {
-                NavigationLink(value: player) {
+                DetailPaneLink(value: player, marksSelection: true) {
                     rowContent
                 }
                 .buttonStyle(.plain)

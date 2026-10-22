@@ -258,7 +258,7 @@ struct StandardStatsLeadersView: View {
     }
 
     private func playerRow(rank: Int, player: Player, peerValues: [String]) -> some View {
-        NavigationLink(value: player) {
+        DetailPaneLink(value: player, marksSelection: true) {
             HStack(spacing: 0) {
                 Text("\(rank)")
                     .font(RinkType.statSmall)

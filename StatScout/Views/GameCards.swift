@@ -16,7 +16,7 @@ struct TeamGameCard: View {
         if viewModel.currentGameDay != nil {
             VStack(spacing: 8) {
                 if let game = viewModel.currentGame(forTeam: team) {
-                    NavigationLink(value: GameRoute(gameId: game.id)) {
+                    DetailPaneLink(value: GameRoute(gameId: game.id)) {
                         content(game: game)
                     }
                     .buttonStyle(.plain)
@@ -158,7 +158,7 @@ struct TeamScheduleView: View {
                         let background = index.isMultiple(of: 2) ? RinkPalette.surface : RinkPalette.surfaceAlt
                         switch entry {
                         case .game(let game):
-                            NavigationLink(value: GameRoute(gameId: game.id)) {
+                            DetailPaneLink(value: GameRoute(gameId: game.id)) {
                                 row(game, number: index + 1).background(background)
                             }
                             .buttonStyle(.plain)
@@ -339,7 +339,7 @@ struct PlayerLastGameCard: View {
         .contentShape(Rectangle())
 
         if let game {
-            NavigationLink(value: GameRoute(gameId: game.id)) { content }
+            DetailPaneLink(value: GameRoute(gameId: game.id)) { content }
                 .buttonStyle(.plain)
                 .accessibilityHint("Opens the game")
         } else {
@@ -478,7 +478,7 @@ struct PlayerGameLogCard: View {
         .contentShape(Rectangle())
 
         if let game {
-            NavigationLink(value: GameRoute(gameId: game.id)) { content }
+            DetailPaneLink(value: GameRoute(gameId: game.id)) { content }
                 .buttonStyle(.plain)
                 .accessibilityHint("Opens the game")
         } else {

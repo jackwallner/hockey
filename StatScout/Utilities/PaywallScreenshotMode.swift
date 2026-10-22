@@ -27,3 +27,19 @@ enum PaywallScreenshotMode: String {
     static var isActive: Bool { current != nil }
 }
 #endif
+
+#if DEBUG
+extension Notification.Name {
+    /// Object: the two `Player`s the Compare tab should open side by side.
+    static let duoCompare = Notification.Name("statscout.duoCompare")
+}
+
+/// Clock for the `-DuoTour` capture routes (see `RootTabView.runDuoTour`),
+/// started from the app's init so offsets count from launch.
+@MainActor
+enum DuoTour {
+    private(set) static var launchedAt = Date()
+
+    static func start() { launchedAt = Date() }
+}
+#endif

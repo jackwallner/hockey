@@ -147,7 +147,7 @@ struct GameDetailView: View {
     }
 
     private func teamColumn(_ team: String, game: Game, label: String) -> some View {
-        NavigationLink(value: TeamDestination(abbr: normalizedTeamAbbreviation(team))) {
+        DetailPaneLink(value: TeamDestination(abbr: normalizedTeamAbbreviation(team))) {
             VStack(spacing: 6) {
                 ZStack {
                     Circle().fill(TeamColor.color(team))
@@ -744,7 +744,7 @@ struct GameDetailView: View {
         .contentShape(Rectangle())
         return Group {
             if let player {
-                NavigationLink(value: player) { row }
+                DetailPaneLink(value: player) { row }
                     .buttonStyle(.plain)
             } else {
                 row
@@ -905,7 +905,7 @@ struct GameDetailView: View {
         if !meetings.isEmpty {
             card(title: "Season series") {
                 ForEach(Array(meetings.enumerated()), id: \.element.id) { index, meeting in
-                    NavigationLink(value: GameRoute(gameId: meeting.id)) {
+                    DetailPaneLink(value: GameRoute(gameId: meeting.id)) {
                         HStack {
                             Text(meeting.dayLabel)
                                 .font(RinkType.small)

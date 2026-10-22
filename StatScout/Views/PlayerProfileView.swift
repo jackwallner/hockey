@@ -286,6 +286,7 @@ struct PlayerProfileView: View {
         } label: {
             Image(systemName: isFavorite ? "star.fill" : "star")
                 .foregroundStyle(isFavorite ? Color.yellow : .white)
+                .toolbarGlyphDisc()
         }
         .accessibilityLabel(isFavorite ? "Unfollow \(player.name)" : "Follow \(player.name)")
     }
@@ -302,6 +303,7 @@ struct PlayerProfileView: View {
             ) {
                 Image(systemName: "square.and.arrow.up")
                     .foregroundStyle(.white)
+                    .toolbarGlyphDisc()
             }
             .accessibilityLabel("Share \(displayedPlayer.name)'s percentiles")
             .accessibilityIdentifier("sharePlayerCard")
@@ -332,6 +334,7 @@ struct PlayerProfileView: View {
         } label: {
             Image(systemName: "person.2.fill")
                 .foregroundStyle(.white)
+                .toolbarGlyphDisc()
         }
         .accessibilityLabel("Compare with another player")
     }

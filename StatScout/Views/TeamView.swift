@@ -618,7 +618,7 @@ struct TeamView: View {
                 .buttonStyle(.plain)
 
                 ForEach(Array(filteredPlayers.enumerated()), id: \.element.id) { index, player in
-                    NavigationLink(value: player) {
+                    DetailPaneLink(value: player, marksSelection: true) {
                         LeaderboardTableRow(
                             rank: index + 1,
                             player: player,
@@ -659,7 +659,7 @@ struct TeamView: View {
     private var teamSwitcherMenu: some View {
         Menu {
             ForEach(allTeams, id: \.self) { abbr in
-                NavigationLink(value: TeamDestination(abbr: abbr)) {
+                DetailPaneLink(value: TeamDestination(abbr: abbr)) {
                     HStack {
                         Text(teamFullName(abbr))
                         if abbr == team {

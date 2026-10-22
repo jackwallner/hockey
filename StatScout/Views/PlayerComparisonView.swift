@@ -420,7 +420,7 @@ struct PlayerComparisonView: View {
 
     private func playerSummaryCard(player: Player, target: PickerTarget) -> some View {
         VStack(spacing: 8) {
-            NavigationLink(value: player) {
+            DetailPaneLink(value: player) {
                 VStack(spacing: 6) {
                     PlayerHeadshot(team: player.team, initials: player.initials, size: 56)
                     Text(player.name)
