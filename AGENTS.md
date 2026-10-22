@@ -58,6 +58,7 @@ an event-aware GitHub Actions refresh.
 | `.claude/rules/backend-pipeline.md` | sources, schema, refresh cadence, bundle regeneration | backend/, supabase/, data scripts |
 | `.claude/rules/app-store-release.md` | release state, draft-version helper, build numbers | project.yml, fastlane/, scripts/asc-* |
 | `.claude/rules/android.md` | Android port: products, RevenueCat, signing, deliberate iOS differences, MBP emulator, Play assets and state | android/, docs/android-*, scripts/play-*, Android scripts |
+| `.claude/rules/iphone-duo.md` | two panes unfolded (tabs beside the page they open), `DetailPaneLink`, capture tour | RootTabView, DetailPaneLink, UnfoldedSplit |
 
 ---
 Shared iOS conventions (build, simulator, release scripts, ASC key, review funnel, signing, gotchas):
