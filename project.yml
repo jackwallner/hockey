@@ -31,7 +31,7 @@ targets:
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         PRODUCT_NAME: "Hockey StatScout"
         MARKETING_VERSION: "1.0.2"
-        CURRENT_PROJECT_VERSION: "13"
+        CURRENT_PROJECT_VERSION: "14"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: StatScout/Info.plist
         CODE_SIGN_ENTITLEMENTS: StatScout/StatScout.entitlements
