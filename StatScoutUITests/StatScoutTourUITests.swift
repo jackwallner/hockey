@@ -849,3 +849,182 @@ final class StatScoutTourUITests: XCTestCase {
         (onScreen(rows, in: app).first ?? rows.firstMatch).tap()
     }
 }
+
+/// Newcomer audit: a first-time user who does not know hockey-analytics terms
+/// walks onboarding, the first board, a player, each tab, Settings and a
+/// return launch. Fixture data only; free tier; screenshots only.
+@MainActor
+final class NewcomerAuditUITests: XCTestCase {
+    private var step = 0
+    private var section = "N0"
+
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = true
+    }
+
+    private func launchFresh(reset: Bool = true) -> XCUIApplication {
+        let app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
+        app.launchEnvironment = ["SCREENSHOT_MODE": "1"]
+        var args = ["-ScreenshotData", "-FixtureFresh"]
+        if reset { args.append("-ResetUITestState") }
+        app.launchArguments = args
+        app.launch()
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30))
+        return app
+    }
+
+    private func shot(_ name: String, wait: TimeInterval = 1.0) {
+        Thread.sleep(forTimeInterval: wait)
+        step += 1
+        let a = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        a.name = "\(section)-\(String(format: "%02d", step))_\(name)"
+        a.lifetime = .keepAlways
+        add(a)
+    }
+
+    private func tap(_ label: String, in app: XCUIApplication, timeout: TimeInterval = 20) {
+        let matches = app.buttons.matching(NSPredicate(format: "label ==[c] %@", label))
+        let hit = matches.allElementsBoundByIndex.first(where: { $0.isHittable }) ?? matches.firstMatch
+        if hit.waitForExistence(timeout: timeout) {
+            hit.tap()
+            Thread.sleep(forTimeInterval: 0.8)
+        } else {
+            XCTFail("Button \(label) not found")
+        }
+    }
+
+    private func drag(_ app: XCUIApplication) {
+        let s = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.78))
+        let e = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.26))
+        s.press(forDuration: 0.1, thenDragTo: e, withVelocity: .default, thenHoldForDuration: 0.3)
+        Thread.sleep(forTimeInterval: 0.8)
+    }
+
+    private func firstRow(in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label MATCHES %@", "^[0-9]+, .*")).firstMatch
+    }
+
+    func testN1FirstRunToPlayer() throws {
+        section = "N1"
+        let app = launchFresh()
+        XCTAssertTrue(app.buttons["Skip"].waitForExistence(timeout: 60))
+        shot("onb1")
+        tap("Continue", in: app)
+        shot("onb2")
+        tap("Continue", in: app)
+        shot("onb3", wait: 3)
+        tap("Get Started", in: app)
+        shot("landing_stats", wait: 3)
+        drag(app)
+        shot("landing_stats_scrolled")
+        drag(app)
+        shot("landing_stats_scrolled2")
+        // Back to top and open the first player
+        for _ in 0..<4 {
+            let s = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
+            let e = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))
+            s.press(forDuration: 0.05, thenDragTo: e, withVelocity: .fast, thenHoldForDuration: 0.1)
+        }
+        let row = firstRow(in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 60), "leader row")
+        XCTContext.runActivity(named: "first row label: \(row.label)") { _ in }
+        row.tap()
+        shot("player_open", wait: 3)
+        for i in 1...4 {
+            drag(app)
+            shot("player_scroll\(i)")
+        }
+    }
+
+    func testN2StatsControlsAndMetric() throws {
+        section = "N2"
+        let app = launchFresh()
+        tap("Skip", in: app, timeout: 60)
+        shot("stats_default", wait: 3)
+        // Newcomer pokes at the obvious controls
+        tap("Stat", in: app, timeout: 10)
+        shot("stat_menu")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.01)).tap()
+        Thread.sleep(forTimeInterval: 0.6)
+        tap("View options", in: app, timeout: 10)
+        shot("view_menu")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.01)).tap()
+        Thread.sleep(forTimeInterval: 0.6)
+        tap("Following", in: app, timeout: 10)
+        shot("following_empty")
+        tap("League leaders", in: app, timeout: 10)
+        tap("Defensemen", in: app, timeout: 10)
+        shot("defensemen")
+        tap("Goalies", in: app, timeout: 10)
+        shot("goalies")
+    }
+
+    func testN3TabsAndSettings() throws {
+        section = "N3"
+        let app = launchFresh()
+        tap("Skip", in: app, timeout: 60)
+        Thread.sleep(forTimeInterval: 3)
+        for tab in ["Games", "Trends", "Teams", "Compare"] {
+            tap(tab, in: app, timeout: 15)
+            shot("tab_\(tab.lowercased())", wait: 2.5)
+            drag(app)
+            shot("tab_\(tab.lowercased())_scrolled")
+        }
+        tap("Stats", in: app, timeout: 15)
+        tap("Settings", in: app, timeout: 15)
+        shot("settings", wait: 2)
+        drag(app)
+        shot("settings_scrolled")
+        drag(app)
+        shot("settings_scrolled2")
+    }
+
+    func testN4GlossaryAndUpgrade() throws {
+        section = "N4"
+        let app = launchFresh()
+        tap("Skip", in: app, timeout: 60)
+        Thread.sleep(forTimeInterval: 3)
+        tap("Settings", in: app, timeout: 15)
+        let gloss = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Glossary")).firstMatch
+        if gloss.waitForExistence(timeout: 10) {
+            gloss.tap()
+            shot("glossary", wait: 2)
+            drag(app)
+            shot("glossary_scrolled")
+        } else {
+            XCTFail("No glossary row")
+        }
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        Thread.sleep(forTimeInterval: 1)
+        // upgrade CTA in nav bar
+        let up = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "unlock all features")).firstMatch
+        if up.waitForExistence(timeout: 10) {
+            up.tap()
+            shot("upgrade_sheet", wait: 3)
+            drag(app)
+            shot("upgrade_sheet_scrolled")
+        } else {
+            XCTFail("No upgrade CTA")
+        }
+    }
+
+    func testN5ReturnVisit() throws {
+        section = "N5"
+        var app = launchFresh()
+        tap("Skip", in: app, timeout: 60)
+        Thread.sleep(forTimeInterval: 3)
+        let row = firstRow(in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 60))
+        row.tap()
+        Thread.sleep(forTimeInterval: 2)
+        app.terminate()
+        // return visit, no reset, not fresh: fixture defaults apply
+        app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
+        app.launchEnvironment = ["SCREENSHOT_MODE": "1"]
+        app.launchArguments = ["-ScreenshotData", "-FixtureFresh"]
+        app.launch()
+        shot("return_launch", wait: 5)
+    }
+}
