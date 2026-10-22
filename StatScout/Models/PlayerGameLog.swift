@@ -159,9 +159,9 @@ extension RecentFormWindow {
     /// first. The league board anchors on the league's latest game; a card
     /// that holds one player's or one club's logs anchors on the latest game
     /// in them.
-    static func logs(_ logs: [PlayerGameLog], weeks: Int) -> [PlayerGameLog] {
+    static func logs(_ logs: [PlayerGameLog], weeks: Int, calendar: Calendar = .current) -> [PlayerGameLog] {
         guard let anchor = logs.map(\.gameDate).max() else { return [] }
-        let start = Calendar.current.date(byAdding: .day, value: -(weeks * 7), to: anchor) ?? anchor
+        let start = calendar.date(byAdding: .day, value: -(weeks * 7), to: anchor) ?? anchor
         return logs.filter { $0.gameDate > start }.sorted { $0.gameDate > $1.gameDate }
     }
 

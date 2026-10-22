@@ -144,8 +144,10 @@ struct Player: Identifiable, Codable, Hashable, Sendable {
         latestGame?.percentileDelta ?? 0
     }
 
-    var weeklyDelta: Int {
-        let cutoff = Date().addingTimeInterval(-7 * 24 * 3600)
+    var weeklyDelta: Int { weeklyDelta(asOf: .now) }
+
+    func weeklyDelta(asOf now: Date) -> Int {
+        let cutoff = now.addingTimeInterval(-7 * 24 * 3600)
         return games.filter { $0.date >= cutoff }
             .map(\.percentileDelta)
             .reduce(0, +)

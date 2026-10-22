@@ -208,8 +208,7 @@ struct GameDay: Hashable, Identifiable, Sendable {
     var id: String { "\(phase.rawValue)-\(Self.key(date))" }
 
     /// "Today", "Yesterday", "Tomorrow", else "Tue, Oct 7".
-    func label(now: Date = .now) -> String {
-        let calendar = Calendar.current
+    func label(now: Date = .now, calendar: Calendar = .current) -> String {
         if calendar.isDate(date, inSameDayAs: now) { return "Today" }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
            calendar.isDate(date, inSameDayAs: yesterday) { return "Yesterday" }
@@ -240,14 +239,14 @@ struct GameDay: Hashable, Identifiable, Sendable {
     /// The local calendar day a game belongs to, from its start time when
     /// known. A 7:00 PM Pacific start is the same night everywhere in North
     /// America, which is what the schedule date already says.
-    static func day(of game: Game) -> Date {
-        Calendar.current.startOfDay(for: game.kickoff ?? game.gameDate)
+    static func day(of game: Game, calendar: Calendar = .current) -> Date {
+        calendar.startOfDay(for: game.kickoff ?? game.gameDate)
     }
 
-    static func days(in games: [Game]) -> [GameDay] {
+    static func days(in games: [Game], calendar: Calendar = .current) -> [GameDay] {
         var seen: [String: GameDay] = [:]
         for game in games {
-            let day = GameDay(date: day(of: game), phase: game.seasonPhase)
+            let day = GameDay(date: day(of: game, calendar: calendar), phase: game.seasonPhase)
             seen[day.id] = day
         }
         return seen.values.sorted { $0.date < $1.date }
@@ -260,14 +259,13 @@ struct GameDay: Hashable, Identifiable, Sendable {
     /// yesterday's games stay on the front door if nothing has started yet
     /// today. With no games today, the most recent day with games; before
     /// the season, the first.
-    static func current(in games: [Game], now: Date = .now) -> GameDay? {
-        let days = days(in: games)
+    static func current(in games: [Game], now: Date = .now, calendar: Calendar = .current) -> GameDay? {
+        let days = days(in: games, calendar: calendar)
         guard !days.isEmpty else { return nil }
-        let calendar = Calendar.current
         let today = calendar.startOfDay(for: now)
         let hour = calendar.component(.hour, from: now)
         if let todays = days.first(where: { calendar.isDate($0.date, inSameDayAs: today) }) {
-            let started = todays.games(from: games).contains { ($0.kickoff ?? $0.gameDate) <= now }
+            let started = todays.games(from: games, calendar: calendar).contains { ($0.kickoff ?? $0.gameDate) <= now }
             if started || hour >= 14 { return todays }
             if let yesterday = days.last(where: { $0.date < today }) { return yesterday }
             return todays
@@ -275,8 +273,8 @@ struct GameDay: Hashable, Identifiable, Sendable {
         return days.last { $0.date < today } ?? days.first
     }
 
-    func games(from games: [Game]) -> [Game] {
-        games.filter { Self.day(of: $0) == date && $0.seasonPhase == phase }
+    func games(from games: [Game], calendar: Calendar = .current) -> [Game] {
+        games.filter { Self.day(of: $0, calendar: calendar) == date && $0.seasonPhase == phase }
     }
 }
 
