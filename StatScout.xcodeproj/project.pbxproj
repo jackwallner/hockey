@@ -53,6 +53,7 @@
 		66670610EABB11F11ED386D7 /* DataFreshnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E6311BEAB77DDDB89F25222 /* DataFreshnessView.swift */; };
 		6C9C8F6436C494C96CD05A41 /* AppStoreReviewLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B545E98CC346F651DBE948 /* AppStoreReviewLinks.swift */; };
 		6CA89104D9DFA86F1773C83C /* PlayerShareCardUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8742D48A80166C1A9F4F905A /* PlayerShareCardUITests.swift */; };
+		A0D1000000000000000000B1 /* StatScoutExperiencedAuditUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0D1000000000000000000F1 /* StatScoutExperiencedAuditUITests.swift */; };
 		6E2C32BBB0EB793230693961 /* YearComparisonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A4C751088FF846CA40BB91 /* YearComparisonTests.swift */; };
 		6F02D50458D1CB07ABF1E446 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3472ECB1AEDAC645F39334C8 /* Assets.xcassets */; };
 		71DFA98C72F18DEFBEC07100 /* RecentFormCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D4BEC37C8EF5436239336D /* RecentFormCard.swift */; };
@@ -196,6 +197,7 @@
 		80FA4CA4AA0C875123767D0C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		82D4BEC37C8EF5436239336D /* RecentFormCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentFormCard.swift; sourceTree = "<group>"; };
 		8742D48A80166C1A9F4F905A /* PlayerShareCardUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerShareCardUITests.swift; sourceTree = "<group>"; };
+		A0D1000000000000000000F1 /* StatScoutExperiencedAuditUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatScoutExperiencedAuditUITests.swift; sourceTree = "<group>"; };
 		8E9C629EF1C253BCEAF314EF /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		90C79D4B6DD51D2FFCEE7E45 /* ConversionDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionDiagnostics.swift; sourceTree = "<group>"; };
 		91414B3D597831487B630032 /* MetricLeadersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricLeadersView.swift; sourceTree = "<group>"; };
@@ -354,6 +356,7 @@
 			children = (
 				D8A66FC0340626BB4D22AA18 /* PaywallFunnelUITests.swift */,
 				8742D48A80166C1A9F4F905A /* PlayerShareCardUITests.swift */,
+				A0D1000000000000000000F1 /* StatScoutExperiencedAuditUITests.swift */,
 				7D6EF83C10DB1C4887277F68 /* SeasonPickerUITests.swift */,
 				5BC5EE3CB654E37FE99FE844 /* StatScoutComprehensiveUITests.swift */,
 				5EEF7E714946970EF597A433 /* StatScoutPaywallReviewUITests.swift */,
@@ -756,6 +759,7 @@
 			files = (
 				F3563F2B7F48DF97E111BC47 /* PaywallFunnelUITests.swift in Sources */,
 				6CA89104D9DFA86F1773C83C /* PlayerShareCardUITests.swift in Sources */,
+				A0D1000000000000000000B1 /* StatScoutExperiencedAuditUITests.swift in Sources */,
 				7FB54B900D718DB5EA583C97 /* SeasonPickerUITests.swift in Sources */,
 				AB2B246F8DF32AF7AF3AEE0B /* StatScoutComprehensiveUITests.swift in Sources */,
 				0F1814132B1F2AD13EDAC2E1 /* StatScoutPaywallReviewUITests.swift in Sources */,
