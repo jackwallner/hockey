@@ -34,6 +34,9 @@ extension EnvironmentValues {
     @Entry var openInDetailPane: (@MainActor (PaneDetail) -> Void)? = nil
     /// The trailing pane's page, so the row that opened it can show it.
     @Entry var detailPaneSelection: PaneDetail? = nil
+    /// True inside the trailing pane, where the status bar shares the toolbar
+    /// row and a page's hero already names what it shows.
+    @Entry var isInDetailPane = false
 }
 
 /// A player, team or game link. On a phone it is a `NavigationLink`; in the

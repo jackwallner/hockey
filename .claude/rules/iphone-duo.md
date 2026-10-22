@@ -28,8 +28,14 @@ paths:
 - White toolbar glyphs carry `toolbarGlyphDisc()`: the Duo vertical bar moves
   them off the midnight nav bar onto the light canvas.
 - Ported from Gridiron StatScout (football), same chassis; keep the two in step.
-- Capture (gh-sim relaunches the app after unfolding): `-ScreenshotData
-  -stats.board advanced -DuoTour -DuoRoutes stats,trends,games,teams,compare
-  -DuoAt 0,32,54,76,98 -DuoOuterRoutes stats -DuoOuterAt 0` with `--env
-  FORCE_PRO=1 --env SCREENSHOT_MODE=1` and nine `--url noop://N` for a shot
-  every ~11 s. Routes are in `RootTabView.openDuoRoute`.
+- The trailing pane sets `isInDetailPane`; the player page drops its inline
+  title there (the status bar shares that row and the hero names the player).
+- Capture: never pass `--url` (custom-scheme `simctl openurl` raises an "Open
+  in" alert, and fake schemes fail the open). gh-sim shoots each display once,
+  after `--wait`, so one run captures one route per display: the tour's last
+  route is the shot and earlier ones give the recording real transitions, e.g.
+  `--wait 24 --record-seconds 60 --env FORCE_PRO=1 --env SCREENSHOT_MODE=1
+  --args "-ScreenshotData -ResetUITestState -hasCompletedOnboarding YES
+  -stats.board advanced -DuoTour -DuoRoutes trends,games,stats -DuoAt 0,8,16
+  -DuoOuterRoutes games,stats -DuoOuterAt 0,10"`. Routes are in
+  `RootTabView.openDuoRoute`.

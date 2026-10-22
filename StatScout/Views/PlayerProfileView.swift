@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PlayerProfileView: View {
     @EnvironmentObject private var store: StoreService
+    @Environment(\.isInDetailPane) private var isInDetailPane
     let player: Player
     let history: [Player]
     var allPlayers: [Player] = []
@@ -214,7 +215,9 @@ struct PlayerProfileView: View {
         // at 2 per session so repeat taps don't re-prompt. The old full-page
         // .activation PaywallView was removed for being too intrusive - this
         // is the Vitals-style soft pitch that replaced it.
-        .navigationTitle(player.name)
+        // Beside the fold the name would truncate next to the status bar, and
+        // the hero right below already carries it.
+        .navigationTitle(isInDetailPane ? "" : player.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if #available(iOS 26.0, *) {

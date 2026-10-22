@@ -174,6 +174,7 @@ struct RootTabView: View {
         let leading: CGFloat = split?.secondaryX ?? 0
         return detailPane
             .environment(\.horizontalSizeClass, .compact)
+            .environment(\.isInDetailPane, true)
             .frame(maxWidth: width, maxHeight: .infinity)
             .padding(.leading, leading)
             .opacity(isSplit ? 1 : 0)
