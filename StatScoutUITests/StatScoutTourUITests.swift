@@ -1023,7 +1023,7 @@ final class NewcomerAuditUITests: XCTestCase {
         // return visit, no reset, not fresh: fixture defaults apply
         app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
         app.launchEnvironment = ["SCREENSHOT_MODE": "1"]
-        app.launchArguments = ["-ScreenshotData", "-FixtureFresh"]
+        app.launchArguments = ["-ScreenshotData"]
         app.launch()
         shot("return_launch", wait: 5)
     }
