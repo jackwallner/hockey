@@ -1028,3 +1028,190 @@ final class NewcomerAuditUITests: XCTestCase {
         shot("return_launch", wait: 5)
     }
 }
+
+/// Accessibility audit: larger text, hit targets and one-handed reach. Runs on
+/// the fixture provider. `-UIPreferredContentSizeCategoryName` forces the
+/// Dynamic Type size; frames are dumped as text attachments so target sizes
+/// and reach zones are measured, not eyeballed.
+@MainActor
+final class AccessibilityAuditUITests: XCTestCase {
+    private var step = 0
+    private var section = "A0"
+
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = true
+    }
+
+    private func launch(size: String?, fresh: Bool = true) -> XCUIApplication {
+        let app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
+        app.launchEnvironment = ["SCREENSHOT_MODE": "1"]
+        var args = ["-ScreenshotData", "-ResetUITestState"]
+        if fresh { args.append("-FixtureFresh") }
+        if let size { args += ["-UIPreferredContentSizeCategoryName", size] }
+        app.launchArguments = args
+        app.launch()
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30))
+        return app
+    }
+
+    private func shot(_ name: String, wait: TimeInterval = 1.0) {
+        Thread.sleep(forTimeInterval: wait)
+        step += 1
+        let a = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        a.name = "\(section)-\(String(format: "%02d", step))_\(name)"
+        a.lifetime = .keepAlways
+        add(a)
+    }
+
+    private func note(_ name: String, _ text: String) {
+        let a = XCTAttachment(string: text)
+        a.name = "\(section)-\(name).txt"
+        a.lifetime = .keepAlways
+        add(a)
+    }
+
+    /// Every on-screen button: frame, plus flags for targets under 44 pt and
+    /// for controls in the top third of the screen (out of thumb reach).
+    private func dumpTargets(_ app: XCUIApplication, _ name: String) {
+        let screen = app.frame
+        var lines = ["screen \(Int(screen.width))x\(Int(screen.height))"]
+        for b in app.buttons.allElementsBoundByIndex where b.exists && b.frame.width > 0 {
+            let f = b.frame
+            guard f.maxY > 0, f.minY < screen.height else { continue }
+            var flags: [String] = []
+            if f.width < 44 || f.height < 44 { flags.append("SMALL") }
+            if f.midY < screen.height / 3 { flags.append("TOPZONE") }
+            lines.append(String(format: "%@ | x%.0f y%.0f w%.0f h%.0f | %@",
+                                b.label.prefix(60) as CVarArg, f.minX, f.minY, f.width, f.height,
+                                flags.joined(separator: ",")))
+        }
+        note(name, lines.joined(separator: "\n"))
+    }
+
+    private func tap(_ label: String, in app: XCUIApplication, timeout: TimeInterval = 20) {
+        let matches = app.buttons.matching(NSPredicate(format: "label ==[c] %@", label))
+        let hit = matches.allElementsBoundByIndex.first(where: { $0.isHittable }) ?? matches.firstMatch
+        if hit.waitForExistence(timeout: timeout) {
+            hit.tap()
+            Thread.sleep(forTimeInterval: 0.8)
+        } else {
+            XCTFail("Button \(label) not found")
+        }
+    }
+
+    private func drag(_ app: XCUIApplication) {
+        let s = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.78))
+        let e = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.26))
+        s.press(forDuration: 0.1, thenDragTo: e, withVelocity: .default, thenHoldForDuration: 0.3)
+        Thread.sleep(forTimeInterval: 0.8)
+    }
+
+    private func firstRow(in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label MATCHES %@", "^[0-9]+, .*")).firstMatch
+    }
+
+    /// Onboarding at the largest accessibility text size, then the board.
+    func testA1LargestTextOnboardingAndBoard() throws {
+        section = "A1"
+        let app = launch(size: "UICTContentSizeCategoryAccessibilityXXXL")
+        XCTAssertTrue(app.buttons["Skip"].waitForExistence(timeout: 60))
+        shot("onb1")
+        dumpTargets(app, "onb1_targets")
+        tap("Continue", in: app)
+        shot("onb2")
+        tap("Continue", in: app)
+        shot("onb3", wait: 3)
+        dumpTargets(app, "onb3_targets")
+        tap("Get Started", in: app)
+        shot("stats_board", wait: 3)
+        dumpTargets(app, "stats_targets")
+        drag(app)
+        shot("stats_board_scrolled")
+        tap("Stat", in: app, timeout: 10)
+        shot("stat_menu")
+    }
+
+    /// First useful result (a player profile) at AX3 and at the default size.
+    func testA2PlayerProfileLargeAndDefault() throws {
+        section = "A2"
+        var app = launch(size: "UICTContentSizeCategoryAccessibilityXXXL")
+        tap("Skip", in: app, timeout: 60)
+        Thread.sleep(forTimeInterval: 3)
+        let row = firstRow(in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 60), "leader row")
+        row.tap()
+        shot("ax_player", wait: 3)
+        dumpTargets(app, "ax_player_targets")
+        for i in 1...3 {
+            drag(app)
+            shot("ax_player_scroll\(i)")
+        }
+        app.terminate()
+        app = launch(size: nil)
+        tap("Skip", in: app, timeout: 60)
+        Thread.sleep(forTimeInterval: 3)
+        let row2 = firstRow(in: app)
+        XCTAssertTrue(row2.waitForExistence(timeout: 60), "leader row default")
+        row2.tap()
+        shot("def_player", wait: 3)
+        dumpTargets(app, "def_player_targets")
+    }
+
+    /// Tabs and Settings at AX3: tab bar labels, the toolbar, the gear.
+    func testA3TabsAndSettingsLargeText() throws {
+        section = "A3"
+        let app = launch(size: "UICTContentSizeCategoryAccessibilityXXXL")
+        tap("Skip", in: app, timeout: 60)
+        Thread.sleep(forTimeInterval: 3)
+        for tab in ["Games", "Trends", "Teams", "Compare"] {
+            tap(tab, in: app, timeout: 15)
+            shot("tab_\(tab.lowercased())", wait: 2.5)
+            dumpTargets(app, "tab_\(tab.lowercased())_targets")
+        }
+        tap("Stats", in: app, timeout: 15)
+        tap("Settings", in: app, timeout: 15)
+        shot("settings", wait: 2)
+        drag(app)
+        shot("settings_scrolled")
+        drag(app)
+        shot("settings_scrolled2")
+    }
+
+    /// Default size: hit target sizes and reach on every tab, plus settings.
+    func testA4DefaultSizeTargetsAndReach() throws {
+        section = "A4"
+        let app = launch(size: nil)
+        tap("Skip", in: app, timeout: 60)
+        Thread.sleep(forTimeInterval: 3)
+        shot("stats_default")
+        dumpTargets(app, "stats_targets")
+        for tab in ["Games", "Trends", "Teams", "Compare"] {
+            tap(tab, in: app, timeout: 15)
+            shot("tab_\(tab.lowercased())", wait: 2)
+            dumpTargets(app, "tab_\(tab.lowercased())_targets")
+        }
+        tap("Stats", in: app, timeout: 15)
+        tap("Settings", in: app, timeout: 15)
+        shot("settings", wait: 2)
+        dumpTargets(app, "settings_targets")
+    }
+
+    /// Mid-size (AX1) player board: the smallest accessibility step.
+    func testA5SmallestAccessibilityStep() throws {
+        section = "A5"
+        let app = launch(size: "UICTContentSizeCategoryAccessibilityM")
+        tap("Skip", in: app, timeout: 60)
+        shot("stats_ax1", wait: 3)
+        dumpTargets(app, "stats_ax1_targets")
+        tap("Goalies", in: app, timeout: 10)
+        shot("goalies_ax1", wait: 2)
+        let row = firstRow(in: app)
+        if row.waitForExistence(timeout: 30) {
+            row.tap()
+            shot("goalie_profile_ax1", wait: 3)
+            drag(app)
+            shot("goalie_profile_ax1_scrolled")
+        }
+    }
+}
