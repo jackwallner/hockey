@@ -89,8 +89,12 @@ enum ReviewPromptTracker {
 
     /// Skip passive prompts during UI tests / Fastlane snapshot runs.
     static var isAutomationRun: Bool {
-        ProcessInfo.processInfo.arguments.contains("-FASTLANE_SNAPSHOT")
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-FASTLANE_SNAPSHOT")
             || ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "1"
+        #else
+        return false
+        #endif
     }
 
     static func recordAppLaunch(now: Date = .now) {
