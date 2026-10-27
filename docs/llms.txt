@@ -1,0 +1,19 @@
+# Hockey Edge: Puck StatScout
+
+> Puck StatScout is an NHL stats app for iPhone with expected goals and advanced percentile rankings for skaters and goalies: ixG, GSAx and Corsi. No account.
+
+## App
+
+- [NHL Stats App for iPhone | Hockey Edge: Puck StatScout](https://jackwallner.com/ios/hockey/index.html.md): Puck StatScout is an NHL stats app for iPhone with expected goals and advanced percentile rankings for skaters and goalies: ixG, GSAx and Corsi. No account.
+
+## Guides
+
+- [What Is xG in Hockey? Expected Goals and GSAx Explained](https://jackwallner.com/ios/hockey/what-is-xg-in-hockey.html.md): Expected goals (xG) give every NHL shot a probability of scoring. See how xG works, how goalies are judged with GSAx, and what good numbers look like.
+
+## Optional
+
+- [Hockey Edge: Puck StatScout for Android Privacy Policy](https://jackwallner.github.io/hockey/android-privacy.html.md): Hockey Edge: Puck StatScout for Android Privacy Policy
+- [Hockey Edge: Puck StatScout for Android Terms of Use](https://jackwallner.github.io/hockey/android-terms.html.md): Hockey Edge: Puck StatScout for Android Terms of Use
+- [Hockey Edge: Puck StatScout Privacy Policy](https://jackwallner.com/ios/hockey/privacy-policy.html.md): Hockey Edge: Puck StatScout Privacy Policy
+- [Support - Hockey Edge: Puck StatScout](https://jackwallner.com/ios/hockey/support.html.md): Get help with StatScout. Contact support, read FAQs, and learn more about NHL percentile rankings.
+- [Hockey Edge: Puck StatScout Terms of Use](https://jackwallner.com/ios/hockey/terms.html.md): Hockey Edge: Puck StatScout Terms of Use
