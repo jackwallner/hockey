@@ -10,7 +10,7 @@ Puck StatScout is an NHL stats app for iPhone: every player ranked on expected g
 
 iPhone · Fresh after every game · No account
 
-[Download on the App Store](https://apps.apple.com/app/id6820644691)
+[Download on the App Store](https://apps.apple.com/app/id6820644691?pt=128748779&ct=jw-hockey-home&mt=8)
 
 ## What does Puck StatScout show?
 
@@ -148,4 +148,4 @@ StatScout is not affiliated with, authorized, endorsed by, or sponsored by the N
 
 Free to use. No account required. StatScout+ optional.
 
-[Download on the App Store](https://apps.apple.com/app/id6820644691)
+[Download on the App Store](https://apps.apple.com/app/id6820644691?pt=128748779&ct=jw-hockey-home&mt=8)
