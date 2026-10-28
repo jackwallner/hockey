@@ -6,7 +6,7 @@ Web page: https://jackwallner.com/ios/hockey/what-is-xg-in-hockey.html
 
 ## What are expected goals (xG) in hockey? (And GSAx for goalies)
 
-By Jack Wallner. Last updated October 23, 2026.
+By Jack Wallner. Last updated October 28, 2026.
 
 Expected goals (xG) is a hockey stat that gives every unblocked shot a probability of becoming a goal, based on things like where it was taken from and what happened just before. Add up those probabilities and you get the number of goals an average shooter would have scored. Goals saved above expected (GSAx) flips it around for goalies: expected goals faced minus goals actually allowed.
 

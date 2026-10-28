@@ -33,7 +33,7 @@
   "@graph": [
     {
       "@type": "MobileApplication",
-      "dateModified": "2026-10-27",
+      "dateModified": "2026-10-28",
       "@id": "https://jackwallner.com/ios/hockey/#app",
       "name": "Hockey Edge: Puck StatScout",
       "alternateName": "StatScout",
@@ -570,7 +570,7 @@
             color: #6e6e73;
         }
 
-        footer a {
+        footer a { display: inline-block; padding: 6px 0;
             color: #6e6e73;
             text-decoration: none;
             margin: 0 10px;
@@ -610,8 +610,8 @@
 
     <nav>
         <div class="container">
-            <a class="nav-brand" href="./">
-                <img src="icon_256.png" alt="StatScout">
+            <a class="nav-brand" href="./" aria-label="StatScout">
+                <img src="icon_64.webp" alt="" width="32" height="32">
                 <span>StatScout</span>
             </a>
         </div>
@@ -627,22 +627,22 @@
     <section class="showcase">
         <div class="showcase-scroll">
             <div class="showcase-card">
-                <img src="appstore-screenshot-01.webp" alt="Rank the league. Forwards leaderboard sorted by ixG, with team and shots on goal" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-01.webp" srcset="appstore-screenshot-01-360.webp 360w, appstore-screenshot-01-540.webp 540w, appstore-screenshot-01.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Rank the league. Forwards leaderboard sorted by ixG, with team and shots on goal" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-02.webp" alt="Read the whole player in one scroll. Percentile bars for production, expected goals, shooting, and possession" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-02.webp" srcset="appstore-screenshot-02-360.webp 360w, appstore-screenshot-02-540.webp 540w, appstore-screenshot-02.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Read the whole player in one scroll. Percentile bars for production, expected goals, shooting, and possession" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-03.webp" alt="Rate goalies on the shots they faced. GSAx and high-danger save percentage as percentile bars" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-03.webp" srcset="appstore-screenshot-03-360.webp 360w, appstore-screenshot-03-540.webp 540w, appstore-screenshot-03.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Rate goalies on the shots they faced. GSAx and high-danger save percentage as percentile bars" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-04.webp" alt="Know who is hot before the box score. Forwards heating up over the last two weeks" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-04.webp" srcset="appstore-screenshot-04-360.webp 360w, appstore-screenshot-04-540.webp 540w, appstore-screenshot-04.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Know who is hot before the box score. Forwards heating up over the last two weeks" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-05.webp" alt="Settle any player debate. Two players compared side by side on season totals" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-05.webp" srcset="appstore-screenshot-05-360.webp 360w, appstore-screenshot-05-540.webp 540w, appstore-screenshot-05.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Settle any player debate. Two players compared side by side on season totals" loading="lazy" decoding="async" width="720" height="1564">
             </div>
             <div class="showcase-card">
-                <img src="appstore-screenshot-06.webp" alt="Scout every club in a tap. Team roster with scoring and advanced stats" loading="lazy" decoding="async" width="720" height="1564">
+                <img src="appstore-screenshot-06.webp" srcset="appstore-screenshot-06-360.webp 360w, appstore-screenshot-06-540.webp 540w, appstore-screenshot-06.webp 720w" sizes="(max-width: 480px) 166px, (max-width: 768px) 184px, 249px" alt="Scout every club in a tap. Team roster with scoring and advanced stats" loading="lazy" decoding="async" width="720" height="1564">
             </div>
         </div>
     </section>
@@ -807,7 +807,7 @@
     </section>
 
     <footer>
-        <div class="divider">&copy; 2026 Jack Wallner · Last updated <time datetime="2026-10-27" data-updated>October 27, 2026</time></div>
+        <div class="divider">&copy; 2026 Jack Wallner · Last updated <time datetime="2026-10-28" data-updated>October 28, 2026</time></div>
         <div>
             <a href="https://jackwallner.com/ios/">More apps by Jack Wallner</a>
             <a href="what-is-xg-in-hockey.html">What is xG in hockey?</a>
