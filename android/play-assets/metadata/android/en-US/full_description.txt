@@ -1,5 +1,4 @@
-See who leads beyond the box score.
-Rank NHL players by expected goals, read a full percentile profile in one tap, and track who is heating up or cooling off right now.
+Hockey Edge is an NHL advanced stats app. Rank players by expected goals, read a full percentile profile in one tap, and follow every night's games with an advanced box score. Leaderboards and Following are free, with no account and no ads.
 
 StatScout puts ixG, goals above expected, xGF%, Corsi, high-danger chances, goals saved above expected, and the familiar box-score totals in one fast Android app.
 
