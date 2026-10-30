@@ -190,6 +190,7 @@ struct TeamStandardCard: View {
             ZStack(alignment: .bottom) {
                 teaser
                     .blur(radius: 8)
+                    .accessibilityHidden(true)
                     .allowsHitTesting(false)
                 BlurGateUnlock(
                     headline: "See every club's last 2 / 4 / 8 weeks",
@@ -535,8 +536,17 @@ struct TeamStandardCard: View {
             // trailing weeks in `sideLogs`. Anchored to the
             // season's own end, not to today - see `gameLogWindowStart`.
             let since = StatScoutSeason.gameLogWindowStart(season: season)
-            logs = try await fetch(team, season, seasonPhase, since)
+            let fetched = try await fetch(team, season, seasonPhase, since)
+            // A season or phase switch mid-load cancels this task; the new
+            // one owns `logs` and `loadError` from here.
+            guard !Task.isCancelled else { return }
+            logs = fetched
+            loadError = nil
         } catch {
+            // A cancelled request is not a failure: it used to write the
+            // error after the new request had cleared it, and nothing
+            // cleared it again.
+            guard !isTaskCancellation(error) else { return }
             loadError = "Couldn't load team form. Pull to refresh."
         }
         loading = false

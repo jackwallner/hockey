@@ -350,6 +350,36 @@ final class DashboardViewModelTests: XCTestCase {
         XCTAssertTrue(vm.players.contains { $0.season == StatScoutSeason.current })
     }
 
+    /// The Advanced board ranked the searched rows, so the first match always
+    /// read rank 1 (football audit F3, same code). Search narrows the drawn
+    /// rows; the rank stays the player's place on the whole board.
+    @MainActor
+    func testSearchKeepsTheLeagueRankOnTheAdvancedBoard() async {
+        UserDefaults.standard.removeObject(forKey: "stats.qualifier")
+        defer { UserDefaults.standard.removeObject(forKey: "stats.qualifier") }
+        func forward(_ id: Int, _ name: String, _ value: String, _ pct: Int) -> Player {
+            Player(
+                playerId: id, name: name, team: "SEA", position: "C", handedness: "",
+                updatedAt: Date(), season: StatScoutSeason.current, playerType: "f",
+                metrics: [Metric(id: "x\(id)", label: "ixG", value: value, percentile: pct, category: .shotQuality, qualified: true)],
+                standardStats: [], games: []
+            )
+        }
+        let players = [forward(1, "Alpha", "9.0", 95), forward(2, "Bravo", "6.0", 80), forward(3, "Charlie", "3.0", 60)]
+        let vm = DashboardViewModel(provider: MockProvider(players: players))
+        await vm.load()
+        vm.qualifierLevel = .all
+        vm.setUserSortMetric("ixG")
+
+        XCTAssertEqual(vm.leaderboard.map(\.name), ["Alpha", "Bravo", "Charlie"])
+        XCTAssertEqual(vm.leaderboardRanks, [1, 2, 3])
+
+        vm.searchText = "Charlie"
+        XCTAssertEqual(vm.leaderboard.map(\.name), ["Charlie"])
+        XCTAssertEqual(vm.leaderboardRanks, [3])
+        XCTAssertEqual(vm.filteredPlayers.count, 1)
+    }
+
     /// The live season ships players under the bar. All Players (the default)
     /// keeps them dimmed below qualified players; Qualified hides them.
     @MainActor
@@ -708,5 +738,153 @@ struct MockProvider: StatcastProviding, @unchecked Sendable {
     func fetchDataCoverage(season: Int) async throws -> DataCoverage? {
         if let error { throw error }
         return nil
+    }
+}
+
+// MARK: History load during a refresh
+
+/// Parks `fetchDataCoverage` until the test opens it, so a history load can
+/// land between the snapshot fetch and the ingest of a refresh.
+final class CoverageGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var parked: CheckedContinuation<Void, Never>?
+    private var opened = false
+    private var arrived = false
+
+    func wait() async {
+        await withCheckedContinuation { continuation in
+            let resumeNow = lock.withLock { () -> Bool in
+                arrived = true
+                if opened { return true }
+                parked = continuation
+                return false
+            }
+            if resumeNow { continuation.resume() }
+        }
+    }
+
+    var hasArrived: Bool { lock.withLock { arrived } }
+
+    func open() {
+        let continuation = lock.withLock { () -> CheckedContinuation<Void, Never>? in
+            opened = true
+            defer { parked = nil }
+            return parked
+        }
+        continuation?.resume()
+    }
+}
+
+/// Live rows the test can swap between loads, and an optional coverage gate.
+private final class RaceProvider: StatcastProviding, @unchecked Sendable {
+    private let lock = NSLock()
+    private var currentRows: [Player]
+    let history: [Player]
+    let gate: CoverageGate?
+
+    init(current: [Player], history: [Player], gate: CoverageGate? = nil) {
+        self.currentRows = current
+        self.history = history
+        self.gate = gate
+    }
+
+    var current: [Player] {
+        get { lock.withLock { currentRows } }
+        set { lock.withLock { currentRows = newValue } }
+    }
+
+    func fetchPlayers() async throws -> [Player] { current + history }
+    func fetchHistoricalPlayers() async throws -> [Player] { history }
+    func fetchCurrentPlayers() async throws -> [Player] { current }
+    func fetchGameLogs(playerId: Int, season: Int, seasonPhase: SeasonPhase) async throws -> [PlayerGameLog] { [] }
+    func fetchTeamGameLogs(team: String, season: Int, seasonPhase: SeasonPhase, sinceDate: Date) async throws -> [PlayerGameLog] { [] }
+    func fetchRecentForm(season: Int, seasonPhase: SeasonPhase, windowWeeks: Int) async throws -> [RecentForm] { [] }
+    func fetchDataCoverage(season: Int) async throws -> DataCoverage? {
+        await gate?.wait()
+        return nil
+    }
+}
+
+final class HistoryRefreshRaceTests: XCTestCase {
+    private func player(_ id: Int, season: Int, team: String = "SEA", type: String = "f") -> Player {
+        let metric = type == "g"
+            ? Metric(id: "gsax\(id)", label: "GSAx", value: "+3.1", percentile: 80, category: .goaltending)
+            : Metric(id: "ixg\(id)", label: "ixG", value: "4.0", percentile: 80, category: .shotQuality)
+        return Player(
+            playerId: id, name: "P\(id)", team: team, position: type == "g" ? "G" : (type == "d" ? "D" : "C"),
+            handedness: "", updatedAt: Date(), season: season, playerType: type,
+            metrics: [metric], standardStats: [], games: []
+        )
+    }
+
+    @MainActor
+    private func seasons(_ vm: DashboardViewModel) -> Set<Int> {
+        Set(vm.playerHistories.values.flatMap { $0 }.compactMap(\.season))
+    }
+
+    /// Overnight audit 2026-10-30 (H2): the refresh built its ingest set
+    /// before awaiting coverage and the status bracket, then replaced
+    /// `playerHistories` with it, dropping every past season a history load
+    /// had added in between. `hasLoadedHistorical` stayed true, so nothing
+    /// reloaded them until relaunch. Also H9: fetched rows waiting on that
+    /// bracket read as an empty, finished board.
+    @MainActor
+    func testHistoryThatLandsDuringTheLiveLoadSurvivesIt() async throws {
+        let past = StatScoutSeason.current - 1
+        let gate = CoverageGate()
+        let provider = RaceProvider(
+            current: [player(1, season: StatScoutSeason.current), player(2, season: StatScoutSeason.current)],
+            history: [player(1, season: past), player(3, season: past)],
+            gate: gate
+        )
+        let vm = DashboardViewModel(provider: provider)
+        vm.isPro = true
+
+        let load = Task { await vm.load() }
+        for _ in 0..<500 where !gate.hasArrived {
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertTrue(gate.hasArrived, "refresh never reached the coverage fetch")
+        XCTAssertFalse(!vm.isLoading && vm.players.isEmpty, "an empty board that is not loading reads \"No data available\"")
+
+        await vm.loadHistoricalIfNeeded()
+        XCTAssertTrue(vm.hasLoadedHistorical)
+        XCTAssertTrue(seasons(vm).contains(past))
+
+        gate.open()
+        await load.value
+
+        XCTAssertTrue(seasons(vm).contains(past), "past season dropped by the live ingest")
+        XCTAssertTrue(seasons(vm).contains(StatScoutSeason.current))
+        XCTAssertEqual(vm.playerHistories[3]?.count, 1)
+    }
+
+    /// H2, second trigger: a refresh whose live rows fail the completeness
+    /// check falls back to the cached live season, and used to ingest that
+    /// alone, replacing every loaded past season.
+    @MainActor
+    func testRefreshThatKeepsTheCachedLiveRowsKeepsHistory() async throws {
+        let current = StatScoutSeason.current
+        let past = current - 1
+        var complete: [Player] = []
+        for id in 1...21 {
+            let type = id % 3 == 0 ? "g" : (id % 3 == 1 ? "f" : "d")
+            complete.append(player(id, season: current, team: id.isMultiple(of: 2) ? "SEA" : "BOS", type: type))
+        }
+        XCTAssertTrue(PlayerSnapshotValidator.isCompleteCurrent(complete))
+        let provider = RaceProvider(current: complete, history: [player(100, season: past), player(1, season: past)])
+        let vm = DashboardViewModel(provider: provider, cache: InMemoryPlayerCache())
+        vm.isPro = true
+
+        await vm.load()
+        await vm.loadHistoricalIfNeeded()
+        XCTAssertTrue(seasons(vm).contains(past))
+
+        provider.current = Array(complete.prefix(5))
+        await vm.load()
+
+        XCTAssertTrue(seasons(vm).contains(past), "past season dropped by the fallback ingest")
+        XCTAssertEqual(vm.playerHistories[100]?.count, 1)
+        XCTAssertEqual(vm.playerHistories.values.flatMap { $0 }.filter { $0.season == current }.count, 21)
     }
 }

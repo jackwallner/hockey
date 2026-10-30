@@ -61,7 +61,8 @@ struct DashboardView: View {
             NavigationStack {
                 AboutView(
                     lastUpdated: viewModel.lastUpdated,
-                    dataCoverage: viewModel.dataCoverage
+                    dataCoverage: viewModel.dataCoverage,
+                    freshness: viewModel.dataFreshness
                 )
                     .navigationTitle("About")
                     .navigationBarTitleDisplayMode(.inline)
@@ -409,11 +410,12 @@ struct DashboardView: View {
             } else {
                 sortHeader
                 let sortMetric = viewModel.currentSortMetricForDisplay
+                let ranks = viewModel.leaderboardRanks
                 LazyVStack(spacing: 0) {
                     ForEach(Array(viewModel.leaderboard.enumerated()), id: \.element.id) { index, player in
                         NavigationLink(value: player) {
                             LeaderboardTableRow(
-                                rank: index + 1,
+                                rank: ranks[index],
                                 player: player,
                                 metricLabel: sortMetric.label,
                                 metricCategory: sortMetric.category,

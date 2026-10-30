@@ -17,7 +17,7 @@ final class StatScoutComprehensiveUITests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func launch(tab: String = "stats", pro: Bool = false) -> XCUIApplication {
+    private func launch(tab: String = "stats", pro: Bool = false, extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
         app.launchArguments += [
             "-ScreenshotData",
@@ -30,7 +30,7 @@ final class StatScoutComprehensiveUITests: XCTestCase {
             // first visit.
             "-profileOpenCount", "0",
             "-StartTab", tab,
-        ]
+        ] + extraArguments
         if pro {
             app.launchEnvironment["FORCE_PRO"] = "1"
             app.launchEnvironment["STATSCOUT_FORCE_PRO"] = "1"
@@ -129,6 +129,28 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         let app = launch(pro: true)
         XCTAssertTrue(openProfile("Callum Therrien", in: app), "A player profile should open from the leaderboard")
         XCTAssertTrue(app.staticTexts["ADVANCED PERCENTILES"].waitForExistence(timeout: 30))
+    }
+
+    /// Overnight audit 2026-10-30 (H3): Recent, then a window, before the
+    /// games arrived left "No games in the last 2 weeks" over season bars.
+    /// The second tap re-keyed the card's task, the new task found the fetch
+    /// "loading" and returned, and the cancelled first fetch cleared the key.
+    func testRecentFormSurvivesAWindowChangeMidLoad() throws {
+        let app = launch(pro: true, extraArguments: ["-SlowGameLogs"])
+        XCTAssertTrue(openProfile("Callum Therrien", in: app), "A player profile should open from the leaderboard")
+        let recent = app.buttons["Recent"].firstMatch
+        XCTAssertTrue(recent.waitForExistence(timeout: 30))
+        recent.tap()
+        let twoWeeks = app.buttons["2 wks"].firstMatch
+        XCTAssertTrue(twoWeeks.waitForExistence(timeout: 5))
+        twoWeeks.tap()
+
+        let loading = app.staticTexts["Loading recent games…"]
+        let deadline = Date().addingTimeInterval(20)
+        while loading.exists, Date() < deadline { usleep(200_000) }
+        XCTAssertFalse(loading.exists, "the recent games never arrived")
+        XCTAssertFalse(app.staticTexts["No games in the last 2 weeks"].exists,
+                       "a quick second tap stranded the Recent card empty")
     }
 
     func testYearCompareShowsSeasonTotals() throws {

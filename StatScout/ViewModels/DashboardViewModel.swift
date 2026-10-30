@@ -895,18 +895,25 @@ final class DashboardViewModel {
     }
 
     var filteredPlayers: [Player] {
+        boardPlayers(searching: true)
+    }
+
+    private func matchesSearch(_ player: Player) -> Bool {
+        searchText.isEmpty
+            || player.name.searchMatches(searchText)
+            || player.team.searchMatches(searchText)
+            || teamFullName(player.team).searchMatches(searchText)
+    }
+
+    /// The board's players before sorting, with or without the search.
+    private func boardPlayers(searching: Bool) -> [Player] {
         // Resolved once: it walks every metric in the season.
         let gateLabel = qualifierLevel == .qualified ? currentSortMetricLabelForGate : nil
         // Cheapest test first: position alone rules out most of the season.
         return seasonPlayers.filter { player in
             guard player.positionGroup == selectedPosition,
                   matchesBoardFilters(player) else { return false }
-            if !searchText.isEmpty,
-               !player.name.searchMatches(searchText),
-               !player.team.searchMatches(searchText),
-               !teamFullName(player.team).searchMatches(searchText) {
-                return false
-            }
+            if searching, !matchesSearch(player) { return false }
             let matchingMetrics = player.metrics.filter {
                 HockeyMetricRegistry.isSupported($0, by: selectedPosition)
             }
@@ -1017,7 +1024,7 @@ final class DashboardViewModel {
         let profilesGeneration: Int
     }
 
-    @ObservationIgnored private var leaderboardCache: (key: LeaderboardKey, board: [Player])?
+    @ObservationIgnored private var leaderboardCache: (key: LeaderboardKey, board: [Player], ranks: [Int])?
 
     /// The ranked board. The view reads it several times per render, and
     /// every loading-progress tick re-renders, so it is built once per change
@@ -1035,18 +1042,32 @@ final class DashboardViewModel {
             profilesGeneration: profilesGeneration
         )
         if let cached = leaderboardCache, cached.key == key { return cached.board }
-        let board = buildLeaderboard()
-        leaderboardCache = (key, board)
+        // Search narrows the drawn rows, never the ranking: a searched player
+        // keeps their place on the whole board instead of reading rank 1.
+        var board: [Player] = []
+        var ranks: [Int] = []
+        for (index, player) in buildLeaderboard().enumerated() where matchesSearch(player) {
+            board.append(player)
+            ranks.append(index + 1)
+        }
+        leaderboardCache = (key, board, ranks)
         return board
     }
 
+    /// Ranks for `leaderboard`, row for row, taken from the unsearched board.
+    var leaderboardRanks: [Int] {
+        _ = leaderboard
+        return leaderboardCache?.ranks ?? []
+    }
+
     private func buildLeaderboard() -> [Player] {
+        let players = boardPlayers(searching: false)
         guard let label = currentSortMetric,
               let referenceMetric = eligibleMetrics.first(where: { $0.label == label }) else {
-            return filteredPlayers.sorted { $0.name < $1.name }
+            return players.sorted { $0.name < $1.name }
         }
         let sorted = Self.sortedByMetric(
-            filteredPlayers,
+            players,
             label: label,
             category: referenceMetric.category,
             descending: sortDescending
@@ -1431,7 +1452,11 @@ final class DashboardViewModel {
 
         var acceptedCurrent: [Player] = []
         var loadedCurrentData = false
-        var playersToIngest: [Player] = []
+        // The rows this load replaces, merged into `playerHistories` only at
+        // ingest time. A merged set built here went stale across the coverage
+        // and status awaits below: a history load that landed in between was
+        // overwritten, and every past season stayed empty until relaunch.
+        var replacementsToIngest: [Player]?
 
         do {
             let current = try await provider.fetchCurrentPlayers()
@@ -1450,9 +1475,11 @@ final class DashboardViewModel {
                hasUnsafeSnapshotRegression(current, against: fallbackPlayers) {
                 acceptedCurrent = []
             }
-            let allPlayers = acceptedCurrent.isEmpty ? fallbackPlayers : mergePlayers(replacing: acceptedCurrent)
+            // Merge either way: ingesting the cached live season alone
+            // replaced every loaded past season until the next launch.
+            let replacements = acceptedCurrent.isEmpty ? fallbackPlayers : acceptedCurrent
 
-            if allPlayers.isEmpty {
+            if replacements.isEmpty, playerHistories.isEmpty {
                 // No current data (offseason / cold cache / offline). Fall back to
                 // bundled historical so the app is usable instead of trapped on an
                 // empty state; season gating still applies via isSeasonLocked.
@@ -1471,7 +1498,7 @@ final class DashboardViewModel {
             } else {
                 loadingMessage = "Preparing leaderboard…"
                 loadingProgress = 0.85
-                playersToIngest = allPlayers
+                replacementsToIngest = replacements
                 if !acceptedCurrent.isEmpty {
                     loadedCurrentData = true
                 } else if !current.isEmpty {
@@ -1491,8 +1518,10 @@ final class DashboardViewModel {
             errorMessage = players.isEmpty ? "Something went wrong loading player data." : "Showing saved data. Pull to refresh to try again."
             lastFetchFailed = true
         }
-        isLoading = false
-        loadingProgress = 1
+        // An empty board with rows still waiting on the bracket below is
+        // loading, not "No data available".
+        isLoading = players.isEmpty && replacementsToIngest != nil
+        loadingProgress = replacementsToIngest == nil ? 1 : 0.9
 
         // Off the critical path on purpose: a single row that only the About
         // sheet reads, fetched once the leaderboard is already on screen. A
@@ -1513,7 +1542,7 @@ final class DashboardViewModel {
             && revisionAtEnd != nil
             && revisionAtEnd != revisionAtStart
         if revisionDrifted {
-            playersToIngest = []
+            replacementsToIngest = nil
             acceptedCurrent = []
             loadedCurrentData = false
             if let current = dataFreshness {
@@ -1523,9 +1552,11 @@ final class DashboardViewModel {
                     isCached: .some(true)
                 )
             }
-        } else if !playersToIngest.isEmpty {
-            ingestPlayers(playersToIngest)
+        } else if let replacementsToIngest {
+            ingestPlayers(mergePlayers(replacing: replacementsToIngest))
         }
+        isLoading = false
+        loadingProgress = 1
         if loadedCurrentData {
             dataCoverage = dataFreshness?.coverage ?? candidateCoverage
             try? cache?.savePlayers(acceptedCurrent)

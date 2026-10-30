@@ -78,6 +78,11 @@ struct ScreenshotFixtureAPI: StatcastProviding {
         season: Int,
         seasonPhase: SeasonPhase
     ) async throws -> [PlayerGameLog] {
+        // A network round trip, for UI tests of what a tap does while the
+        // games are still on their way. Cancellable, like URLSession.
+        if ProcessInfo.processInfo.arguments.contains("-SlowGameLogs") {
+            try await Task.sleep(nanoseconds: 4_000_000_000)
+        }
         guard seasonPhase == .regular,
               season == Self.season,
               let player = Self.playersBySeason[season]?.first(where: { $0.playerId == playerId })

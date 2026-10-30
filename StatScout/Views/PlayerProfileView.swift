@@ -48,7 +48,10 @@ struct PlayerProfileView: View {
     /// the same season share one fetch.
     @State private var recentLogsKey: String?
     @State private var recentLoading = false
-    @State private var recentLoadingKey: String?
+    /// The one game-log request both Recent cards share, keyed like
+    /// `recentLogsKey`. Its own task, so a card whose view task is cancelled
+    /// by a quick second tap stops waiting without stranding the fetch.
+    @State private var recentFetch: (key: String, task: Task<[PlayerGameLog], Error>)?
     @State private var recentLoadError: String?
     @State private var recentCurves: LeaguePercentileCurves?
     @State private var standardMode: FormDisplayMode = .season
@@ -1014,18 +1017,28 @@ struct PlayerProfileView: View {
         // Both cards ask at once; share one request per key. A different key
         // (the season or phase changed mid-load) gets its own request, and the
         // stale one discards its result instead of labelling last season's
-        // games with this season's heading.
-        guard recentLoadingKey != key else { return }
-        recentLoadingKey = key
+        // games with this season's heading. A card re-keyed mid-load (Recent,
+        // then a window, before the games arrive) awaits the same request; it
+        // used to find the key "loading", return, and leave the card empty
+        // once the cancelled first request cleared the key.
+        let request: Task<[PlayerGameLog], Error>
+        if let inFlight = recentFetch, inFlight.key == key {
+            request = inFlight.task
+        } else {
+            let playerId = player.playerId
+            let phase = activePhase
+            request = Task { try await fetch(playerId, season, phase) }
+            recentFetch = (key, request)
+        }
         recentLoading = true
         recentLoadError = nil
         do {
-            let logs = try await fetch(player.playerId, season, activePhase)
-            guard recentLoadingKey == key else { return }
+            let logs = try await request.value
+            guard recentFetch?.key == key else { return }
             recentLogs = logs
             recentLogsKey = key
         } catch {
-            guard recentLoadingKey == key else { return }
+            guard recentFetch?.key == key else { return }
             // Distinguish "no games" from "fetch failed" - otherwise a network
             // error renders as an honest-looking "No games in the last N weeks".
             if !isTaskCancellation(error), recentLogs.isEmpty || recentLogsKey != key {
@@ -1034,7 +1047,7 @@ struct PlayerProfileView: View {
                 recentLoadError = "Couldn't load recent games. Check your connection and try again."
             }
         }
-        recentLoadingKey = nil
+        recentFetch = nil
         recentLoading = false
     }
 
