@@ -313,10 +313,7 @@ struct DataFreshness: Codable, Equatable, Sendable {
         plainISO.formatOptions = [.withInternetDateTime]
         if let date = plainISO.date(from: raw) { return date }
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/New_York")
-        return formatter.date(from: raw)
+        return DateFormatter.feedDay.date(from: raw)
     }
 }
 

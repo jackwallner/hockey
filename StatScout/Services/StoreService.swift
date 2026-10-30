@@ -56,8 +56,11 @@ enum StatScoutSeason {
 
     /// The season `date` falls in under `current`'s rule, read in `calendar`'s
     /// zone. Split out so the September flip can be tested at a fixed clock.
+    ///
+    /// Only the zone is taken from `calendar`: the rule is Gregorian, and a
+    /// phone set to region Thailand (Buddhist calendar) resolved season 2569.
     static func season(on date: Date, calendar: Calendar = .current) -> Int {
-        let parts = calendar.dateComponents([.year, .month], from: date)
+        let parts = calendar.gregorian.dateComponents([.year, .month], from: date)
         guard let year = parts.year, let month = parts.month else { return 2026 }
         return max(2026, month >= 9 ? year : year - 1)
     }
@@ -124,9 +127,22 @@ enum StatScoutSeason {
         now: Date = .now,
         calendar: Calendar = .current
     ) -> Date {
+        let calendar = calendar.gregorian
         let seasonEnd = calendar.date(from: DateComponents(year: season + 1, month: 7, day: 1)) ?? now
         let anchor = min(now, seasonEnd)
         return calendar.date(byAdding: .day, value: -days, to: anchor) ?? anchor
+    }
+}
+
+extension Calendar {
+    /// A Gregorian calendar in this calendar's zone. Seasons, ages and feed
+    /// dates are Gregorian whatever calendar the viewer has chosen, and only
+    /// the zone decides which day it is.
+    var gregorian: Calendar {
+        guard identifier != .gregorian else { return self }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        return calendar
     }
 }
 

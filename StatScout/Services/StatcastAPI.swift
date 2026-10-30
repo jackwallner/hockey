@@ -144,10 +144,7 @@ struct StatcastAPI: StatcastProviding {
         seasonPhase: SeasonPhase,
         sinceDate: Date
     ) async throws -> [PlayerGameLog] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/New_York")
-        let sinceString = formatter.string(from: sinceDate)
+        let sinceString = DateFormatter.feedDay.string(from: sinceDate)
 
         var all: [PlayerGameLog] = []
         let pageSize = 1000

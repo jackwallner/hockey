@@ -58,7 +58,7 @@ struct PlayerGameLog: Codable, Hashable, Sendable {
 
         // game_date arrives as "YYYY-MM-DD" from Supabase (date column, not timestamptz).
         let raw = try c.decode(String.self, forKey: .gameDate)
-        guard let parsed = Self.gameDateFormatter.date(from: raw) else {
+        guard let parsed = DateFormatter.feedDay.date(from: raw) else {
             throw DecodingError.dataCorruptedError(forKey: .gameDate, in: c, debugDescription: "Invalid game_date: \(raw)")
         }
         gameDate = parsed
@@ -70,17 +70,6 @@ struct PlayerGameLog: Codable, Hashable, Sendable {
             metrics = [:]
         }
     }
-
-    /// Shared: a team's season of logs is hundreds of rows, and building a
-    /// formatter per row was most of their decode time. DateFormatter is
-    /// thread-safe for parsing and formatting once configured.
-    private static let gameDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/New_York")
-        return formatter
-    }()
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
@@ -94,7 +83,7 @@ struct PlayerGameLog: Codable, Hashable, Sendable {
         try c.encode(plays, forKey: .plays)
         try c.encode(touches, forKey: .touches)
 
-        try c.encode(Self.gameDateFormatter.string(from: gameDate), forKey: .gameDate)
+        try c.encode(DateFormatter.feedDay.string(from: gameDate), forKey: .gameDate)
         try c.encode(metrics, forKey: .metrics)
     }
 }
@@ -209,4 +198,22 @@ extension RecentFormWindow {
             ? ["SV%", "GSAx/60", "GAA", "HD SV%"]
             : ["P/60", "ixG/60", "Shots/60", "Sh%"]
     }
+}
+
+extension DateFormatter {
+    /// The feed's date-only `yyyy-MM-dd` values, read as Eastern days.
+    ///
+    /// Shared: a team's season of logs is hundreds of rows, and building a
+    /// formatter per row was most of their decode time. DateFormatter is
+    /// thread-safe for parsing and formatting once configured. The POSIX
+    /// locale and Gregorian calendar are required: on a Thai-region phone the
+    /// device's Buddhist calendar read "2026-10-26" as a date in 1483.
+    nonisolated(unsafe) static let feedDay: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "America/New_York")
+        return formatter
+    }()
 }

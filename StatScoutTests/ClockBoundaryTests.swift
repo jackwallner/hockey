@@ -324,4 +324,90 @@ final class ClockBoundaryTests: XCTestCase {
         )
         XCTAssertEqual(player.weeklyDelta(asOf: now), 3)
     }
+
+    // MARK: Non-Gregorian device calendars
+
+    private func calendar(_ id: Calendar.Identifier, zone: String = "America/Los_Angeles") -> Calendar {
+        var calendar = Calendar(identifier: id)
+        calendar.timeZone = TimeZone(identifier: zone)!
+        return calendar
+    }
+
+    /// Overnight audit 2026-10-30 (H1): a phone set to region Thailand uses the
+    /// Buddhist calendar, so the season resolved to 2569 and nothing loaded;
+    /// Hebrew gave 5786, and Japanese hid behind the 2026 floor until the
+    /// rollover, then stuck. The season rule is Gregorian whatever calendar
+    /// the viewer uses.
+    func testSeasonIsGregorianOnEveryDeviceCalendar() {
+        let date = local(la, 2026, 10, 30, 12)
+        let ids: [Calendar.Identifier] = [.buddhist, .japanese, .islamicUmmAlQura, .persian, .hebrew, .republicOfChina]
+        for id in ids {
+            XCTAssertEqual(StatScoutSeason.season(on: date, calendar: calendar(id)), 2026, "\(id)")
+            XCTAssertEqual(StatScoutSeason.season(on: local(la, 2027, 10, 15), calendar: calendar(id)), 2027, "\(id)")
+        }
+        XCTAssertEqual(StatScoutSeason.season(on: local(la, 2028, 8, 31, 23), calendar: calendar(.buddhist)), 2027)
+    }
+
+    /// H1: the zone of the device calendar still decides the day.
+    func testSeasonKeepsTheDeviceZoneOnANonGregorianCalendar() {
+        let instantAfterUTCMidnight = instant("2027-09-01T00:30:00Z")
+        XCTAssertEqual(StatScoutSeason.season(on: instantAfterUTCMidnight, calendar: calendar(.buddhist, zone: "UTC")), 2027)
+        XCTAssertEqual(StatScoutSeason.season(on: instantAfterUTCMidnight, calendar: calendar(.buddhist)), 2026)
+    }
+
+    /// H1: team game logs were requested "since 2569-...".
+    func testGameLogWindowIsGregorianOnABuddhistCalendar() {
+        let now = local(la, 2026, 10, 30, 12)
+        let buddhist = StatScoutSeason.gameLogWindowStart(season: 2026, days: 10, now: now, calendar: calendar(.buddhist))
+        let gregorian = StatScoutSeason.gameLogWindowStart(season: 2026, days: 10, now: now, calendar: la)
+        XCTAssertEqual(buddhist, gregorian)
+        XCTAssertEqual(la.component(.year, from: buddhist), 2026)
+    }
+
+    /// H1: a 1997 birthday read 572 under Buddhist and -1989 under Japanese.
+    func testAgeIsGregorianOnEveryDeviceCalendar() throws {
+        let player = try profile(born: "1997-01-13")
+        let date = local(la, 2026, 10, 30, 12)
+        for id in [Calendar.Identifier.buddhist, .japanese, .islamicUmmAlQura, .hebrew] {
+            XCTAssertEqual(player.age(on: date, calendar: calendar(id)), 29, "\(id)")
+        }
+    }
+
+    /// H1: fixed-format feed dates parsed into 1483 on a Thai-region phone.
+    /// Meaningful under `-testRegion TH` as well as on a Gregorian host.
+    func testFeedDayParsesAsGregorianOnAnyRegion() throws {
+        var eastern = Calendar(identifier: .gregorian)
+        eastern.timeZone = TimeZone(identifier: "America/New_York")!
+        let parsed = try XCTUnwrap(DataFreshness.parseDate("2026-10-29"))
+        XCTAssertEqual(eastern.dateComponents([.year, .month, .day], from: parsed),
+                       DateComponents(year: 2026, month: 10, day: 29))
+    }
+
+    /// H1: `RecentForm.asOf` landed in 1483 too.
+    func testRecentFormAsOfIsGregorianEastern() throws {
+        let json = #"{"player_id":1,"season":2026,"season_type":"REG","player_type":"f","window_weeks":4,"as_of":"2026-10-28"}"#
+        let row = try JSONDecoder.statScout.decode(RecentForm.self, from: Data(json.utf8))
+        let asOf = try XCTUnwrap(row.asOf)
+        var eastern = Calendar(identifier: .gregorian)
+        eastern.timeZone = TimeZone(identifier: "America/New_York")!
+        XCTAssertEqual(eastern.dateComponents([.year, .month, .day, .hour], from: asOf),
+                       DateComponents(year: 2026, month: 10, day: 28, hour: 0))
+    }
+
+    /// H1: the shared feed-day formatter cannot fall back to the device's
+    /// calendar or locale.
+    func testFeedDayFormatterIsGregorianAndPOSIX() {
+        let formatter = DateFormatter.feedDay
+        XCTAssertEqual(formatter.calendar.identifier, .gregorian)
+        XCTAssertEqual(formatter.locale.identifier, "en_US_POSIX")
+        XCTAssertEqual(formatter.timeZone.identifier, "America/New_York")
+    }
+
+    /// H1: `StatScoutSeason.current` itself, on whatever host runs the suite.
+    func testCurrentSeasonIsAGregorianYear() {
+        var eastern = Calendar(identifier: .gregorian)
+        eastern.timeZone = TimeZone(identifier: "America/New_York")!
+        let year = eastern.component(.year, from: .now)
+        XCTAssertTrue((year - 1...year).contains(StatScoutSeason.current), "\(StatScoutSeason.current)")
+    }
 }

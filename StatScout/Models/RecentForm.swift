@@ -79,7 +79,11 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
             let bits = raw.split(separator: "-").compactMap { Int($0) }
             if bits.count == 3 {
                 parts.year = bits[0]; parts.month = bits[1]; parts.day = bits[2]
-                asOf = Calendar.current.date(from: parts)
+                // Gregorian Eastern, the feed's calendar: the device's own
+                // calendar put a Thai-region phone's dates in 1483.
+                var eastern = Calendar(identifier: .gregorian)
+                eastern.timeZone = TimeZone(identifier: "America/New_York") ?? .current
+                asOf = eastern.date(from: parts)
             } else {
                 asOf = nil
             }
