@@ -148,6 +148,7 @@ private struct BestWorstBoard: View {
                 ZStack(alignment: .bottom) {
                     MetricLeadersView(metrics: viewModel.allMetrics)
                         .blur(radius: 8)
+                        .accessibilityHidden(true)
                         .allowsHitTesting(false)
                     BlurGateUnlock(
                         headline: "See who leads and who trails on every metric in the league",

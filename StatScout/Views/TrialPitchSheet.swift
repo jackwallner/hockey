@@ -207,7 +207,7 @@ struct TrialPitchSheet: View {
             // its own auto-renew disclosure and "See all plans" escape hatch.
             // The billed amount sits on its own line above the button, louder
             // than the trial named on it (Apple 3.1.2(c)).
-            PlusDirectCTA(trigger: trigger)
+            PlusDirectCTA(trigger: trigger, showsLegalLinks: false)
 
             // Legal links and the way out share a row, because three stacked
             // secondary lines under a button is three lines of nothing.

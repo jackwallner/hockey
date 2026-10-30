@@ -895,6 +895,9 @@ struct PlusDirectCTA: View {
     var style: Style = .bar
     /// Hidden where the surrounding screen already offers plan choice.
     var showsAllPlansLink: Bool = true
+    /// Hidden where the surrounding screen already links Terms and Privacy.
+    /// Every blurred gate needs them: this button is the purchase (3.1.2).
+    var showsLegalLinks: Bool = true
 
     @State private var isPurchasing = false
     @State private var statusMessage: String?
@@ -943,11 +946,19 @@ struct PlusDirectCTA: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if showsAllPlansLink {
-                Button("See all plans") { showingPlans = true }
-                    .font(RinkType.micro)
-                    .tracking(0.3)
-                    .foregroundStyle(RinkPalette.inkSecondary)
+            if showsLegalLinks || showsAllPlansLink {
+                HStack(spacing: 14) {
+                    if showsLegalLinks {
+                        Link("Terms", destination: StatScoutLegal.termsURL)
+                        Link("Privacy", destination: StatScoutLegal.privacyURL)
+                    }
+                    if showsAllPlansLink {
+                        Button("See all plans") { showingPlans = true }
+                    }
+                }
+                .font(RinkType.micro)
+                .tracking(0.3)
+                .foregroundStyle(RinkPalette.inkSecondary)
             }
         }
         .frame(maxWidth: .infinity)

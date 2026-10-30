@@ -12,6 +12,7 @@ struct YearComparePreview: View {
             // Mock comparison content stays visible (blurred) as the hook.
             mockContent
                 .blur(radius: 5)
+                .accessibilityHidden(true)
                 .clipped()
 
             BlurGateUnlock(

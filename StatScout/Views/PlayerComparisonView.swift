@@ -141,6 +141,7 @@ struct PlayerComparisonView: View {
                 ZStack(alignment: .bottom) {
                     comparisonContent
                         .blur(radius: 8)
+                        .accessibilityHidden(true)
                         .overlay(
                             LinearGradient(
                                 colors: [.clear, RinkPalette.canvas.opacity(0.9)],

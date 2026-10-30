@@ -731,9 +731,18 @@ final class StoreService: NSObject, ObservableObject {
         }
         purchaseInFlight = true
         defer { purchaseInFlight = false }
+        // Callers show `lastError` when this throws; a message left by an
+        // earlier restore or refresh has nothing to do with this purchase.
+        lastError = nil
 
         let startedTrial = isEligibleForIntroOffer(product)
-        let result = try await Purchases.shared.purchase(package: product)
+        let result: PurchaseResultData
+        do {
+            result = try await Purchases.shared.purchase(package: product)
+        } catch {
+            if let state = Self.purchaseState(for: error) { return state }
+            throw error
+        }
         apply(customerInfo: result.customerInfo)
         if result.userCancelled {
             return .cancelled
@@ -747,6 +756,17 @@ final class StoreService: NSObject, ObservableObject {
             return .purchased
         } else {
             return .pending
+        }
+    }
+
+    /// RevenueCat throws for Ask to Buy (and, on some paths, for a cancelled
+    /// Apple sheet) rather than returning an entitlement-less result, so both
+    /// read as failures unless they are mapped back here.
+    nonisolated static func purchaseState(for error: Error) -> PurchaseState? {
+        switch error as? ErrorCode {
+        case .purchaseCancelledError?: .cancelled
+        case .paymentPendingError?: .pending
+        default: nil
         }
     }
 

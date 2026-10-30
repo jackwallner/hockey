@@ -314,6 +314,7 @@ struct TeamRankingsCard: View {
             ZStack(alignment: .bottom) {
                 recentTeaser
                     .blur(radius: 8)
+                    .accessibilityHidden(true)
                     .disabled(true)
                     .allowsHitTesting(false)
                 BlurGateUnlock(

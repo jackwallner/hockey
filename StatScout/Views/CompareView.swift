@@ -197,6 +197,7 @@ struct CompareView: View {
                         yearOverYearCard
                     }
                     .blur(radius: store.isPro ? 0 : 5)
+                    .accessibilityHidden(!store.isPro)
                     .disabled(!store.isPro)
                     .allowsHitTesting(store.isPro)
 

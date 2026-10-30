@@ -213,7 +213,7 @@ struct RootTabView: View {
                 .navigationTitle("Games · \(SeasonLabel.display(viewModel.freeSeason))")
                 .navigationBarTitleDisplayMode(.inline)
                 .modifier(RinkNavBar())
-                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
+                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage, freshness: viewModel.dataFreshness))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
     }
@@ -223,7 +223,7 @@ struct RootTabView: View {
             StatsView(viewModel: viewModel)
                 // Title and season pills come from SeasonPhaseNavBar.
                 .modifier(RinkNavBar())
-                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
+                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage, freshness: viewModel.dataFreshness))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
     }
@@ -236,7 +236,7 @@ struct RootTabView: View {
             )
                 // Title and season pills come from SeasonPhaseNavBar.
                 .modifier(RinkNavBar())
-                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
+                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage, freshness: viewModel.dataFreshness))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
     }
@@ -246,7 +246,7 @@ struct RootTabView: View {
             TeamsView(viewModel: viewModel, path: $teamsPath)
                 // Title and season pills come from SeasonPhaseNavBar.
                 .modifier(RinkNavBar())
-                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
+                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage, freshness: viewModel.dataFreshness))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
     }
@@ -264,7 +264,7 @@ struct RootTabView: View {
                 .navigationTitle("Compare")
                 .navigationBarTitleDisplayMode(.inline)
                 .modifier(RinkNavBar())
-                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage))
+                .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage, freshness: viewModel.dataFreshness))
                 .modifier(StandardDestinations(viewModel: viewModel))
         }
     }
@@ -328,6 +328,7 @@ private struct HomeTabToolbar: ViewModifier {
     @EnvironmentObject private var store: StoreService
     let lastUpdated: Date?
     var dataCoverage: DataCoverage?
+    var freshness: DataFreshness?
     /// Owned per tab, not shared. All four tabs stay alive in the ZStack, so a
     /// single shared flag would push Settings onto all four stacks at once.
     @State private var showingSettings = false
@@ -399,7 +400,8 @@ private struct HomeTabToolbar: ViewModifier {
             .navigationDestination(isPresented: $showingSettings) {
                 AboutView(
                     lastUpdated: lastUpdated,
-                    dataCoverage: dataCoverage
+                    dataCoverage: dataCoverage,
+                    freshness: freshness
                 )
                 .navigationTitle("Settings")
                 .navigationBarTitleDisplayMode(.inline)

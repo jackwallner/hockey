@@ -402,6 +402,7 @@ struct HotColdView: View {
                         }
                     }
                     .blur(radius: 8)
+                    .accessibilityHidden(true)
                     .allowsHitTesting(false)
                 }
                 .clipped()
