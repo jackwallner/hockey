@@ -34,7 +34,7 @@ Không tài khoản. Không đăng ký. Không quảng cáo. Không theo dõi b�
 Chi tiết đăng ký
 StatScout+ có dạng đăng ký tự động gia hạn (hàng tháng hoặc hàng năm, cả hai đều có dùng thử miễn phí 7 ngày) hoặc mua một lần trọn đời. Giá hiển thị trong ứng dụng trước khi mua và khác nhau theo khu vực. Thanh toán được tính vào Apple ID của bạn khi xác nhận. Gói đăng ký tự động gia hạn trừ khi bị hủy ít nhất 24 giờ trước khi kỳ hiện tại kết thúc. Bạn có thể quản lý hoặc hủy bất cứ lúc nào tại Cài đặt → Apple ID → Đăng ký.
 
-Chính sách quyền riêng tư: https://jackwallner.github.io/hockey/privacy-policy.html
+Chính sách quyền riêng tư: https://jackwallner.com/ios/hockey/privacy-policy.html
 Điều khoản sử dụng (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Dữ liệu bàn thắng kỳ vọng và cú sút lấy từ MoneyPuck.com. Lịch thi đấu, box score và tiểu sử cầu thủ là dữ liệu công khai của NHL. StatScout không liên kết với, không được ủy quyền, chứng thực, tài trợ bởi National Hockey League (NHL), bất kỳ đội NHL nào, NHLPA hay MoneyPuck. Tên cầu thủ, tên đội và số liệu thống kê chỉ được dùng để nhận diện và cung cấp thông tin.

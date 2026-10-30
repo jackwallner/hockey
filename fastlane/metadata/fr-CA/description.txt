@@ -34,7 +34,7 @@ Aucun compte. Aucune inscription. Aucune publicité. Aucun suivi par des tiers. 
 Détails de l'abonnement
 StatScout+ est offert en abonnement à renouvellement automatique (mensuel ou annuel, tous deux avec un essai gratuit de 7 jours) ou en achat unique à vie. Les prix sont affichés dans l'application avant l'achat et varient selon la région. Le paiement est débité de votre identifiant Apple à la confirmation. Les abonnements se renouvellent automatiquement sauf annulation au moins 24 heures avant la fin de la période en cours. Vous pouvez les gérer ou les annuler en tout temps dans Réglages → identifiant Apple → Abonnements.
 
-Politique de confidentialité : https://jackwallner.github.io/hockey/privacy-policy.html
+Politique de confidentialité : https://jackwallner.com/ios/hockey/privacy-policy.html
 Conditions d'utilisation (CLUF) : https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Les données de buts attendus et de tirs proviennent de MoneyPuck.com. Le calendrier, les feuilles de match et les biographies des joueurs sont des données publiques de la LNH. StatScout n'est pas affilié à la Ligue nationale de hockey (LNH), à une équipe de la LNH, à la NHLPA ou à MoneyPuck, et n'est ni autorisé, ni approuvé, ni commandité par ces organisations. Les noms des joueurs, des équipes et les statistiques servent uniquement à l'identification et à l'information.

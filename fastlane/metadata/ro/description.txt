@@ -34,7 +34,7 @@ Fără conturi. Fără înregistrare. Fără reclame. Fără urmărire de către
 Detalii despre abonament
 StatScout+ este disponibil ca abonament cu reînnoire automată (lunar sau anual, ambele cu perioadă de probă gratuită de 7 zile) sau ca achiziție unică pe viață. Prețurile sunt afișate în aplicație înainte de cumpărare și variază în funcție de regiune. Plata se taxează pe Apple ID la confirmare. Abonamentele se reînnoiesc automat, cu excepția cazului în care sunt anulate cu cel puțin 24 de ore înainte de sfârșitul perioadei curente. Le poți gestiona sau anula oricând din Setări → Apple ID → Abonamente.
 
-Politica de confidențialitate: https://jackwallner.github.io/hockey/privacy-policy.html
+Politica de confidențialitate: https://jackwallner.com/ios/hockey/privacy-policy.html
 Termenii de utilizare (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Datele despre golurile așteptate și șuturi provin de la MoneyPuck.com. Programul, box score-urile și biografiile jucătorilor sunt date publice ale NHL. StatScout nu este afiliat, autorizat, susținut sau sponsorizat de National Hockey League (NHL), de nicio echipă NHL, de NHLPA sau de MoneyPuck. Numele jucătorilor, numele echipelor și statisticile sunt folosite doar pentru identificare și informare.

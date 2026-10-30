@@ -34,7 +34,7 @@ Ei tilejä. Ei rekisteröitymistä. Ei mainoksia. Ei kolmansien osapuolten seura
 Tilauksen tiedot
 StatScout+ on saatavilla automaattisesti uusiutuvana tilauksena (kuukausi- tai vuositilaus, molemmissa 7 päivän ilmainen kokeilujakso) tai kertaostona Lifetime-tilauksena. Hinnat näkyvät sovelluksessa ennen ostamista ja vaihtelevat alueittain. Maksu veloitetaan Apple ID:stäsi vahvistuksen yhteydessä. Tilaukset uusiutuvat automaattisesti, ellei niitä peruuteta vähintään 24 tuntia ennen nykyisen jakson päättymistä. Voit hallita tai peruuttaa tilauksen milloin tahansa kohdassa Asetukset → Apple ID → Tilaukset.
 
-Tietosuojakäytäntö: https://jackwallner.github.io/hockey/privacy-policy.html
+Tietosuojakäytäntö: https://jackwallner.com/ios/hockey/privacy-policy.html
 Käyttöehdot (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Odotusarvomaali- ja laukausdata on peräisin MoneyPuck.comista. Ohjelma, pistetaulukot ja pelaajaprofiilit ovat julkista NHL-dataa. StatScout ei ole National Hockey Leaguen (NHL), minkään NHL-joukkueen, NHLPA:n tai MoneyPuckin kanssa yhteydessä, eivätkä ne hyväksy, tue tai sponsoroi sovellusta. Pelaajien ja joukkueiden nimiä sekä tilastoja käytetään vain tunnistamiseen ja tiedottamiseen.

@@ -34,7 +34,7 @@ Hesap yok. Kayıt yok. Reklam yok. Üçüncü taraf takibi yok. Uygulama yalnız
 Abonelik ayrıntıları
 StatScout+, otomatik yenilenen bir abonelik olarak (aylık veya yıllık, ikisinde de 7 günlük ücretsiz deneme) ya da tek seferlik ömür boyu satın alma olarak sunulur. Fiyatlar satın almadan önce uygulamada gösterilir ve bölgeye göre değişir. Ödeme onaylandığında Apple Kimliğinize yansıtılır. Abonelikler, geçerli dönemin bitiminden en az 24 saat önce iptal edilmediği sürece otomatik olarak yenilenir. Ayarlar → Apple Kimliği → Abonelikler bölümünden istediğiniz zaman yönetebilir veya iptal edebilirsiniz.
 
-Gizlilik Politikası: https://jackwallner.github.io/hockey/privacy-policy.html
+Gizlilik Politikası: https://jackwallner.com/ios/hockey/privacy-policy.html
 Kullanım Koşulları (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Beklenen gol ve şut verileri MoneyPuck.com kaynaklıdır. Fikstür, box score ve oyuncu biyografileri NHL'in herkese açık verileridir. StatScout; National Hockey League (NHL), herhangi bir NHL takımı, NHLPA veya MoneyPuck ile bağlantılı değildir ve bunlar tarafından onaylanmaz, desteklenmez veya sponsorluk almaz. Oyuncu adları, takım adları ve istatistikler yalnızca tanımlama ve bilgilendirme amacıyla kullanılır.

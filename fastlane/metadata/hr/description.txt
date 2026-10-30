@@ -34,7 +34,7 @@ Bez računa. Bez prijave. Bez oglasa. Bez praćenja trećih strana. Aplikacija �
 Detalji pretplate
 StatScout+ dostupan je kao automatski obnovljiva pretplata (mjesečna ili godišnja, obje s 7-dnevnim besplatnim probnim razdobljem) ili kao jednokratna doživotna kupnja. Cijene se prikazuju u aplikaciji prije kupnje i razlikuju se ovisno o regiji. Naplata se obavlja na vaš Apple ID pri potvrdi. Pretplate se automatski obnavljaju osim ako se ne otkažu najmanje 24 sata prije kraja tekućeg razdoblja. Upravljati ili otkazati ih možete u bilo kojem trenutku u Postavke → Apple ID → Pretplate.
 
-Pravila privatnosti: https://jackwallner.github.io/hockey/privacy-policy.html
+Pravila privatnosti: https://jackwallner.com/ios/hockey/privacy-policy.html
 Uvjeti korištenja (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Podaci o očekivanim golovima i udarcima dolaze s MoneyPuck.com. Raspored, box scoreovi i biografije igrača javni su podaci NHL-a. StatScout nije povezan s National Hockey League (NHL), nijednom momčadi NHL-a, NHLPA-om ili MoneyPuckom te ga oni ne odobravaju, ne podržavaju niti sponzoriraju. Imena igrača, nazivi momčadi i statistike koriste se samo za identifikaciju i informiranje.

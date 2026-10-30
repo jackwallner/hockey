@@ -34,7 +34,7 @@ STATSCOUT+
 订阅详情
 StatScout+提供自动续订订阅（月度或年度，均含7天免费试用）以及一次性终身买断。价格会在购买前显示在应用中，并因地区而异。确认购买后，费用将从你的Apple ID中扣除。除非在当前周期结束前至少24小时取消，否则订阅将自动续订。你可以随时在“设置”→“Apple ID”→“订阅”中管理或取消。
 
-隐私政策：https://jackwallner.github.io/hockey/privacy-policy.html
+隐私政策：https://jackwallner.com/ios/hockey/privacy-policy.html
 使用许可协议（EULA）：https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 预期进球和射门数据来自MoneyPuck.com。赛程、box score和球员资料是NHL公开数据。StatScout与National Hockey League（NHL）、任何NHL球队、NHLPA或MoneyPuck均无关联，也未获得其授权、认可或赞助。球员姓名、球队名称和统计数据仅用于识别和信息用途。

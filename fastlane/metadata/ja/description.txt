@@ -34,7 +34,7 @@ StatScout+で残りの機能をすべて使えます:
 サブスクリプションについて
 StatScout+は、自動更新サブスクリプション（月額または年額、どちらも7日間の無料トライアル付き）か、買い切りのLifetimeとしてご利用いただけます。価格は購入前にアプリ内に表示され、地域によって異なります。支払いは購入確定時にApple IDに請求されます。現在の期間が終わる24時間以上前に解約しない限り、サブスクリプションは自動的に更新されます。設定 → Apple ID → サブスクリプションから、いつでも管理・解約できます。
 
-プライバシーポリシー: https://jackwallner.github.io/hockey/privacy-policy.html
+プライバシーポリシー: https://jackwallner.com/ios/hockey/privacy-policy.html
 利用規約（EULA）: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 期待ゴールとシュートのデータはMoneyPuck.comによるものです。日程、ボックススコア、選手情報はNHLが公開しているデータです。StatScoutは、National Hockey League（NHL）、NHLの各チーム、NHLPA、MoneyPuckとは提携しておらず、これらによる承認、推奨、後援も受けていません。選手名、チーム名、統計は識別と情報提供の目的でのみ使用しています。

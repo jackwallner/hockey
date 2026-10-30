@@ -34,7 +34,7 @@ StatScout+로 나머지 기능을 모두 잠금 해제하세요:
 구독 세부 정보
 StatScout+는 자동 갱신 구독(월간 또는 연간, 모두 7일 무료 체험 포함) 또는 일회성 평생 구매로 제공됩니다. 가격은 구매 전에 앱에 표시되며 지역에 따라 다릅니다. 결제는 구매 확인 시 Apple ID로 청구됩니다. 현재 기간이 끝나기 24시간 전까지 해지하지 않으면 구독은 자동으로 갱신됩니다. 설정 → Apple ID → 구독에서 언제든지 관리하거나 해지할 수 있습니다.
 
-개인정보 처리방침: https://jackwallner.github.io/hockey/privacy-policy.html
+개인정보 처리방침: https://jackwallner.com/ios/hockey/privacy-policy.html
 이용 약관(EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 기대 득점 및 슈팅 데이터는 MoneyPuck.com에서 제공합니다. 일정, 박스스코어, 선수 정보는 공개된 NHL 데이터입니다. StatScout는 National Hockey League(NHL), 어떤 NHL 팀, NHLPA 또는 MoneyPuck과 제휴하거나 그들로부터 승인, 보증, 후원을 받지 않았습니다. 선수 이름, 팀 이름, 통계는 식별과 정보 제공 목적으로만 사용됩니다.

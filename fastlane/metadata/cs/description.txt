@@ -34,7 +34,7 @@ NEJPRVE SOUKROMÍ
 Podrobnosti o předplatném
 StatScout+ je k dispozici jako automaticky obnovované předplatné (měsíční nebo roční, obojí s 7denní bezplatnou zkušební dobou) nebo jako jednorázový doživotní nákup. Ceny se zobrazí v aplikaci před nákupem a liší se podle regionu. Platba se strhne z vašeho Apple ID po potvrzení. Předplatné se automaticky obnovuje, pokud ho nezrušíte nejméně 24 hodin před koncem aktuálního období. Spravovat nebo zrušit ho můžete kdykoli v Nastavení → Apple ID → Předplatné.
 
-Zásady ochrany osobních údajů: https://jackwallner.github.io/hockey/privacy-policy.html
+Zásady ochrany osobních údajů: https://jackwallner.com/ios/hockey/privacy-policy.html
 Smluvní podmínky (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Data o očekávaných gólech a střelách pochází z MoneyPuck.com. Rozpis, boxscore a životopisy hráčů jsou veřejná data NHL. StatScout není spojen s National Hockey League (NHL), žádným týmem NHL, NHLPA ani MoneyPuck, neschválila ho ani nepodporuje ani nesponzoruje žádný z nich. Jména hráčů, názvy týmů a statistiky slouží jen k identifikaci a informování.

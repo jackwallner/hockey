@@ -34,7 +34,7 @@ Brez računov. Brez registracije. Brez oglasov. Brez sledenja tretjih oseb. Apli
 Podrobnosti naročnine
 StatScout+ je na voljo kot samodejno obnovljiva naročnina (mesečna ali letna, obe s 7-dnevnim brezplačnim preizkusom) ali kot enkraten doživljenjski nakup. Cene so prikazane v aplikaciji pred nakupom in se razlikujejo glede na regijo. Plačilo se ob potrditvi zaračuna vašemu računu Apple ID. Naročnina se samodejno obnovi, razen če jo prekličete vsaj 24 ur pred koncem trenutnega obdobja. Upravljate ali prekličete jo lahko kadar koli v Nastavitve → Apple ID → Naročnine.
 
-Pravilnik o zasebnosti: https://jackwallner.github.io/hockey/privacy-policy.html
+Pravilnik o zasebnosti: https://jackwallner.com/ios/hockey/privacy-policy.html
 Pogoji uporabe (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Podatki o pričakovanih golih in strelih so z MoneyPuck.com. Spored, statistika tekem in biografije igralcev so javni podatki NHL. StatScout ni povezan z ligo National Hockey League (NHL), nobeno ekipo NHL, NHLPA ali MoneyPuck, niti ga ti ne pooblaščajo, podpirajo ali sponzorirajo. Imena igralcev, imena ekip in statistika se uporabljajo le za prepoznavanje in v informativne namene.

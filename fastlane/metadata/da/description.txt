@@ -34,7 +34,7 @@ Ingen konti. Ingen tilmelding. Ingen reklamer. Ingen tracking fra tredjeparter. 
 Abonnementsoplysninger
 StatScout+ fås som et automatisk fornyet abonnement (månedligt eller årligt, begge med 7 dages gratis prøveperiode) eller som et engangskøb med Lifetime. Priserne vises i appen før køb og varierer efter region. Betaling trækkes fra dit Apple-ID ved bekræftelse. Abonnementer fornyes automatisk, medmindre de annulleres mindst 24 timer før den aktuelle periode slutter. Du kan administrere eller annullere når som helst under Indstillinger → Apple-ID → Abonnementer.
 
-Privatlivspolitik: https://jackwallner.github.io/hockey/privacy-policy.html
+Privatlivspolitik: https://jackwallner.com/ios/hockey/privacy-policy.html
 Brugsvilkår (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Data for forventede mål og skud stammer fra MoneyPuck.com. Program, boxscore og spillerbiografier er offentlige NHL-data. StatScout er ikke tilknyttet, autoriseret, godkendt eller sponsoreret af National Hockey League (NHL), et NHL-hold, NHLPA eller MoneyPuck. Spillernavne, holdnavne og statistik bruges kun til identifikation og oplysning.

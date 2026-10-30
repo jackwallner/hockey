@@ -34,7 +34,7 @@ Nincs fiók. Nincs regisztráció. Nincs hirdetés. Nincs harmadik féltől szá
 Előfizetési részletek
 A StatScout+ automatikusan megújuló előfizetésként (havi vagy éves, mindkettő 7 napos ingyenes próbaidőszakkal) vagy egyszeri élettartamra szóló vásárlásként érhető el. Az árak a vásárlás előtt jelennek meg az alkalmazásban, és régiónként eltérőek. A fizetés a megerősítéskor terheli az Apple ID-t. Az előfizetések automatikusan megújulnak, hacsak nem mondja le őket legalább 24 órával az aktuális időszak vége előtt. Bármikor kezelheti vagy lemondhatja a Beállítások → Apple ID → Előfizetések menüpontban.
 
-Adatvédelmi szabályzat: https://jackwallner.github.io/hockey/privacy-policy.html
+Adatvédelmi szabályzat: https://jackwallner.com/ios/hockey/privacy-policy.html
 Felhasználási feltételek (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 A várható gól- és lövésadatok a MoneyPuck.com-tól származnak. A műsor, a box score-ok és a játékosprofilok nyilvános NHL-adatok. A StatScout nem áll kapcsolatban a National Hockey League-gel (NHL), egyetlen NHL-csapattal, az NHLPA-val vagy a MoneyPuck-kal, és ezek nem engedélyezik, nem támogatják és nem szponzorálják. A játékosnevek, a csapatnevek és a statisztikák kizárólag azonosítási és tájékoztatási célra szolgálnak.

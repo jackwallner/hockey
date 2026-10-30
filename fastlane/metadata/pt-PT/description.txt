@@ -34,7 +34,7 @@ Sem contas. Sem registo. Sem anúncios. Sem seguimento por terceiros. A aplicaç
 Detalhes da subscrição
 O StatScout+ está disponível como subscrição de renovação automática (mensal ou anual, ambas com teste gratuito de 7 dias) ou como compra única vitalícia. Os preços são apresentados na aplicação antes da compra e variam consoante a região. O pagamento é debitado no seu Apple ID na confirmação. As subscrições renovam-se automaticamente, a menos que sejam canceladas pelo menos 24 horas antes do fim do período atual. Pode gerir ou cancelar a qualquer momento em Definições → Apple ID → Subscrições.
 
-Política de Privacidade: https://jackwallner.github.io/hockey/privacy-policy.html
+Política de Privacidade: https://jackwallner.com/ios/hockey/privacy-policy.html
 Termos de Utilização (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Os dados de golos esperados e remates provêm do MoneyPuck.com. O calendário, as fichas de jogo e as biografias dos jogadores são dados públicos da NHL. O StatScout não é afiliado, autorizado, endossado nem patrocinado pela National Hockey League (NHL), por qualquer equipa da NHL, pela NHLPA ou pelo MoneyPuck. Os nomes dos jogadores, os nomes das equipas e as estatísticas são usados apenas para identificação e informação.

@@ -34,7 +34,7 @@ Tanpa akun. Tanpa pendaftaran. Tanpa iklan. Tanpa pelacakan pihak ketiga. Aplika
 Detail langganan
 StatScout+ tersedia sebagai langganan yang diperpanjang otomatis (bulanan atau tahunan, keduanya dengan uji coba gratis 7 hari) atau pembelian Lifetime sekali bayar. Harga ditampilkan di aplikasi sebelum Anda membeli dan berbeda menurut wilayah. Pembayaran dikenakan ke Apple ID Anda saat konfirmasi. Langganan diperpanjang otomatis kecuali dibatalkan setidaknya 24 jam sebelum periode saat ini berakhir. Anda dapat mengelola atau membatalkannya kapan saja di Pengaturan → Apple ID → Langganan.
 
-Kebijakan Privasi: https://jackwallner.github.io/hockey/privacy-policy.html
+Kebijakan Privasi: https://jackwallner.com/ios/hockey/privacy-policy.html
 Ketentuan Penggunaan (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Data expected goals dan tembakan berasal dari MoneyPuck.com. Jadwal, box score, dan biodata pemain adalah data publik NHL. StatScout tidak berafiliasi dengan, tidak diotorisasi, didukung, atau disponsori oleh National Hockey League (NHL), tim NHL mana pun, NHLPA, atau MoneyPuck. Nama pemain, nama tim, dan statistik hanya digunakan untuk identifikasi dan informasi.
