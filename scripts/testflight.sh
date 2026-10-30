@@ -42,5 +42,6 @@ export SUPABASE_URL SUPABASE_ANON_KEY
 # build in project.yml, xcodegen, archive Release signed with the App Store
 # Connect API key, upload, then commit and push the bump once Apple accepts it.
 # Flags (--upload-only, --no-bump, --clean, --post-archive) and credentials are
-# documented in ~/ios/release/testflight.sh.
-exec "$HOME/ios/release/testflight.sh" --project StatScout.xcodeproj --scheme StatScout --clean "$@"
+# documented in ~/ios/release/testflight.sh. --local: the Supabase keys must never
+# reach GitHub's public runner logs, and GitHub cannot build without them.
+exec "$HOME/ios/release/testflight.sh" --project StatScout.xcodeproj --scheme StatScout --clean --local "$@"
