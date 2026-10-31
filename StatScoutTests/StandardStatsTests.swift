@@ -12,6 +12,27 @@ final class StandardStatsTests: XCTestCase {
         XCTAssertFalse(StandardStatCatalog.stats(for: .forward).contains("SV%"))
     }
 
+    private func searchPlayer(_ name: String, team: String, type: String) -> Player {
+        Player(
+            playerId: 1, name: name, team: team, position: type.uppercased(), handedness: "",
+            updatedAt: Date(), season: StatScoutSeason.current, playerType: type,
+            metrics: [], standardStats: [], games: []
+        )
+    }
+
+    func testSearchFindsAPlayerOnAnotherPositionTab() {
+        let defenseman = searchPlayer("Erik Sandvik", team: "SEA", type: "d")
+        XCTAssertTrue(StandardBoardSearch.matches(defenseman, query: "sandvik"))
+        XCTAssertFalse(StandardBoardSearch.matches(defenseman, query: "Holloway"))
+        let scope = StandardBoardSearch.positions(selected: .forward, query: "sandvik")
+        XCTAssertEqual(scope.first, .forward)
+        XCTAssertEqual(Set(scope), Set(PlayerPositionGroup.allCases))
+    }
+
+    func testBlankSearchStaysOnTheSelectedPosition() {
+        XCTAssertEqual(StandardBoardSearch.positions(selected: .goalie, query: ""), [.goalie])
+    }
+
     func testWalkingThePositionTabsRanksEachPositionByItsOwnDefault() {
         var stat = StandardStatCatalog.defaultStat(for: .forward)
         var position = PlayerPositionGroup.forward

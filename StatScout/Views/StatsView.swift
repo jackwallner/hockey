@@ -103,10 +103,8 @@ struct StatsView: View {
     }
 
     private var standardBoardPlayers: [Player] {
-        viewModel.qualifiedSeasonPlayers.filter {
-            $0.positionGroup == viewModel.selectedPosition
-                && viewModel.matchesBoardFilters($0)
-        }
+        // Every position: the board picks its own, and search reaches the rest.
+        viewModel.qualifiedSeasonPlayers.filter { viewModel.matchesBoardFilters($0) }
     }
 
     private var selectedPositionBinding: Binding<PlayerPositionGroup> {
