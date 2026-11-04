@@ -30,7 +30,8 @@ class LandingPageTests(unittest.TestCase):
         for index, (tag, attributes) in enumerate(parser.buttons):
             with self.subTest(button=index):
                 self.assertEqual(tag, "a")
-                self.assertEqual(attributes.get("href"), APP_STORE_URL)
+                # The query carries the `ct` campaign tag, which may change.
+                self.assertEqual((attributes.get("href") or "").split("?")[0], APP_STORE_URL)
                 self.assertNotEqual(attributes.get("aria-disabled"), "true")
         self.assertNotIn("Coming soon to the App Store", html)
 
