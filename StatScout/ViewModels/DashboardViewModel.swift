@@ -454,6 +454,23 @@ final class DashboardViewModel {
         liveScores = fetched.filter { ids.contains($0.key) }
     }
 
+    /// Keeps one game's running score fresh for as long as a page shows it:
+    /// waits out puck drop, then reads the scoreboard every thirty seconds
+    /// until the final posts. `game` is re-read on every pass, so a schedule
+    /// reload that moves the puck drop is picked up.
+    func pollLiveScore(for game: () -> Game?) async {
+        while !Task.isCancelled {
+            guard let current = game(), current.status() != .final else { return }
+            if current.status() == .upcoming {
+                let untilPuckDrop = current.kickoff.map { $0.timeIntervalSinceNow + 1 } ?? 600
+                try? await Task.sleep(for: .seconds(min(max(untilPuckDrop, 1), 600)))
+                continue
+            }
+            await refreshLiveScores()
+            try? await Task.sleep(for: .seconds(30))
+        }
+    }
+
     // MARK: - Enrichment
 
     /// Bio and ice time for the live season, keyed by player.

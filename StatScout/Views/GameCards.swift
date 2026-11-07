@@ -24,17 +24,9 @@ struct TeamGameCard: View {
                 }
                 actions
             }
-            .task(id: viewModel.currentGame(forTeam: team)?.id) { await pollLiveScore() }
-        }
-    }
-
-    /// Keeps the running score fresh while the club's game is on.
-    private func pollLiveScore() async {
-        while !Task.isCancelled {
-            guard let game = viewModel.currentGame(forTeam: team),
-                  [.inProgress, .awaitingScore].contains(game.status()) else { return }
-            await viewModel.refreshLiveScores()
-            try? await Task.sleep(for: .seconds(30))
+            .task(id: viewModel.currentGame(forTeam: team)?.id) {
+                await viewModel.pollLiveScore { viewModel.currentGame(forTeam: team) }
+            }
         }
     }
 
