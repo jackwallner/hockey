@@ -29,14 +29,14 @@ struct HotColdView: View {
     @State private var selectedPhase: SeasonPhase
     @State private var paywallTrigger: PaywallTrigger?
 
-    init(viewModel: DashboardViewModel, isActive: Bool = true) {
+    init(viewModel: DashboardViewModel, isActive: Bool = true, season: Int? = nil) {
         self.viewModel = viewModel
         self.isActive = isActive
         // Trends is a recent-seasons board, not a season browser:
         // `player_recent_form` is only kept for the newest two seasons, so this
         // opens on the live one whatever the Stats tab is pointed at rather than
         // inheriting a 2017 selection that would render an empty board.
-        _selectedSeason = State(initialValue: viewModel.recentFormSeason)
+        _selectedSeason = State(initialValue: season ?? viewModel.recentFormSeason)
         _selectedPhase = State(initialValue: viewModel.selectedPhase)
     }
 
@@ -209,6 +209,11 @@ struct HotColdView: View {
         // once the first fetch lands (and again on the September rollover).
         .onChange(of: viewModel.recentFormSeason) { _, season in
             selectedSeason = season
+        }
+        // A lapse mid-session must not leave the board on a season it no
+        // longer unlocks.
+        .onChange(of: viewModel.isPro) { _, _ in
+            if viewModel.isSeasonLocked(selectedSeason) { selectedSeason = viewModel.recentFormSeason }
         }
         .sheet(item: $paywallTrigger) { trigger in
             TrialPitchSheet(trigger: trigger)
