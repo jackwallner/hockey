@@ -796,10 +796,6 @@ final class DashboardViewModel {
         recentFormError = nil
         let task = Task { @MainActor [weak self] in
             guard let self else { return }
-            defer {
-                self.recentFormLoadingWindows.remove(target.rawValue)
-                self.recentFormTasks.removeValue(forKey: target.rawValue)
-            }
             do {
                 let rows = try await self.provider.fetchRecentForm(
                     season: targetSeason,
@@ -826,6 +822,11 @@ final class DashboardViewModel {
         }
         recentFormTasks[target.rawValue] = task
         await task.value
+        // A superseded load must not clear the flag and entry of the load
+        // that replaced it under the same window key.
+        guard recentFormTasks[target.rawValue] == task else { return }
+        recentFormLoadingWindows.remove(target.rawValue)
+        recentFormTasks.removeValue(forKey: target.rawValue)
     }
 
     func loadRecentFormIfNeeded(
