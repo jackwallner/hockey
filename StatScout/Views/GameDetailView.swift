@@ -41,21 +41,12 @@ struct GameDetailView: View {
             await loadDetail()
         }
         .task { await viewModel.loadGames() }
-        .task(id: gameId) { await pollLiveScore() }
+        .task(id: gameId) { await viewModel.pollLiveScore { game } }
         .sheet(item: $paywallTrigger) { trigger in
             TrialPitchSheet(trigger: trigger)
         }
         .task(id: "\(gameId)-\(game.map(viewModel.hasStats) ?? false)-\(viewModel.freshnessRevision ?? "none")") {
             await loadDetail()
-        }
-    }
-
-    /// Keeps the running score fresh while the game is under way.
-    private func pollLiveScore() async {
-        while !Task.isCancelled {
-            guard let game, [.inProgress, .awaitingScore].contains(game.status()) else { return }
-            await viewModel.refreshLiveScores()
-            try? await Task.sleep(for: .seconds(30))
         }
     }
 
