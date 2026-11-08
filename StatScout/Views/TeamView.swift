@@ -72,16 +72,13 @@ struct TeamView: View {
     }
 
     private var sortMetric: (label: String, category: MetricCategory)? {
-        guard let category = selectedCategory else { return nil }
-        if let userSortLabel, availableSortLabels.contains(userSortLabel) {
-            return (userSortLabel, category)
-        }
-        for label in priorityMetrics(for: category) {
-            if players.contains(where: { p in p.metrics.contains { $0.label == label && $0.category == category } }) {
-                return (label, category)
-            }
-        }
-        return nil
+        guard let category = selectedCategory,
+              let label = Self.rosterSortLabel(
+                  userLabel: userSortLabel,
+                  available: availableSortLabels,
+                  category: category
+              ) else { return nil }
+        return (label, category)
     }
 
     private var availableSortLabels: [String] {
@@ -89,8 +86,22 @@ struct TeamView: View {
         let present = Set(players.flatMap { player in
             player.metrics.filter { $0.category == category }.map(\.label)
         })
+        return Self.rosterSortLabels(present: present, category: category, recentOnly: isRosterRecent)
+    }
+
+    /// The stats the roster can sort by. Recent ranks by the per-game feed,
+    /// which has no on-ice shares (xGF%, CF%), so those are left out there:
+    /// defaulting to one filtered every defenseman out of the Recent roster.
+    static func rosterSortLabels(present: Set<String>, category: MetricCategory, recentOnly: Bool) -> [String] {
         let ordered = category.metricPriorityOrder.filter { present.contains($0) }
-        return ordered + present.subtracting(category.metricPriorityOrder).sorted()
+        let all = ordered + present.subtracting(category.metricPriorityOrder).sorted()
+        guard recentOnly else { return all }
+        return all.filter { RecentMetricKey.key(for: $0) != nil }
+    }
+
+    static func rosterSortLabel(userLabel: String?, available: [String], category: MetricCategory) -> String? {
+        if let userLabel, available.contains(userLabel) { return userLabel }
+        return priorityMetrics(for: category).first { available.contains($0) }
     }
 
     private var sortLabel: String {
@@ -587,14 +598,11 @@ struct TeamView: View {
                     title: "No players tracked",
                     description: "No players are tracked for \(teamFullName(team)) in \(SeasonLabel.display(displaySeason))."
                 )
-            } else if filteredPlayers.isEmpty {
-                let noCategoryMatch = searchText.isEmpty && selectedCategory != nil
+            } else if isRosterRecent && !hasRecentData, let error = viewModel?.recentFormError {
                 emptyStateView(
-                    icon: "magnifyingglass",
-                    title: "No players found",
-                    description: noCategoryMatch
-                        ? "No players match the selected category for this team."
-                        : "Try a different search term."
+                    icon: "wifi.exclamationmark",
+                    title: "Recent form unavailable",
+                    description: error
                 )
             } else if isRosterRecent && !hasRecentData {
                 HStack(spacing: 10) {
@@ -605,6 +613,15 @@ struct TeamView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
+            } else if filteredPlayers.isEmpty {
+                let noCategoryMatch = searchText.isEmpty && selectedCategory != nil
+                emptyStateView(
+                    icon: "magnifyingglass",
+                    title: "No players found",
+                    description: noCategoryMatch
+                        ? "No players match the selected category for this team."
+                        : "Try a different search term."
+                )
             } else {
                 Button {
                     sortDescending.toggle()
@@ -728,7 +745,7 @@ struct TeamView: View {
         }
     }
 
-    private func priorityMetrics(for category: MetricCategory) -> [String] {
+    private static func priorityMetrics(for category: MetricCategory) -> [String] {
         switch category {
         case .scoring: return ["P", "G", "A", "P/60"]
         case .shotQuality: return ["ixG", "GAx", "ixG/60", "Shots/60"]
