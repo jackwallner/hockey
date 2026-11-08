@@ -337,6 +337,7 @@ struct TeamView: View {
                 fetchTeamGameLogs: fetchTeamGameLogs,
                 freshnessRevision: viewModel?.freshnessRevision,
                 freshnessStatus: viewModel?.freshnessStatus,
+                supportsRecent: supportsRecent,
                 onUpgradeTap: {
                     // Explicit tap, always answer it; the gate only caps
                     // automatic pop-ups.
