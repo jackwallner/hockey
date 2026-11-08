@@ -42,4 +42,4 @@ No P0 or P1 findings.
 
 ## Tests
 
-`gh-sim test --scheme StatScout` on `e3cb119`: see the commit that records the result below.
+`gh-sim test --scheme StatScout` on `e3cb119` (GitHub Actions run 42455118455, Xcode 27.1, iPhone 17 on iOS 27.2): passed, 283 passed, 0 failed, 0 skipped.
