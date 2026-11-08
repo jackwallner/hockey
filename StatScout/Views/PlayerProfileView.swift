@@ -793,29 +793,7 @@ struct PlayerProfileView: View {
 
             if formDisplayMode != .season, store.isPro, supportsRecentForm {
                 recentWindowPicker
-                if recentLoading {
-                    HStack(spacing: 10) {
-                        ProgressView().scaleEffect(0.75)
-                        Text("Loading recent games…")
-                            .font(RinkType.small)
-                            .foregroundStyle(RinkPalette.inkSecondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                } else if let recentLoadError {
-                    Text(recentLoadError)
-                        .font(RinkType.small)
-                        .foregroundStyle(RinkPalette.inkSecondary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                } else if recentWindow == nil {
-                    Text(recentEmptyStateText)
-                        .font(RinkType.small)
-                        .foregroundStyle(RinkPalette.inkSecondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                }
+                recentStatus(hasWindow: recentWindow != nil, weeks: recentWindowWeeks)
             }
 
             if groupedMetrics.isEmpty {
@@ -876,14 +854,43 @@ struct PlayerProfileView: View {
         return recentFormSeasons.contains(season)
     }
 
-    private var recentEmptyStateText: String {
+    private func recentEmptyStateText(weeks: Int) -> String {
         switch freshnessViewModel?.freshnessStatus {
         case .pending, .partial, .checking:
             return "Recent game data is still arriving"
         case .offline, .failed:
             return "Recent game data is unavailable right now"
         default:
-            return "No games in the last \(recentWindowWeeks) weeks"
+            return "No games in the last \(weeks) weeks"
+        }
+    }
+
+    /// Loading, failure or an empty window for the shared recent logs. Both
+    /// cards render it, so a Recent row never shows season totals unexplained.
+    @ViewBuilder
+    private func recentStatus(hasWindow: Bool, weeks: Int) -> some View {
+        if recentLoading {
+            HStack(spacing: 10) {
+                ProgressView().scaleEffect(0.75)
+                Text("Loading recent games…")
+                    .font(RinkType.small)
+                    .foregroundStyle(RinkPalette.inkSecondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+        } else if let recentLoadError {
+            Text(recentLoadError)
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+        } else if !hasWindow {
+            Text(recentEmptyStateText(weeks: weeks))
+                .font(RinkType.small)
+                .foregroundStyle(RinkPalette.inkSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
         }
     }
 
@@ -1242,6 +1249,8 @@ struct PlayerProfileView: View {
                 standardModePicker
                 if effectiveStandardMode != .season {
                     standardWindowPicker
+                    recentStatus(hasWindow: standardRecentWindow != nil, weeks: standardWindow.rawValue)
+                        .background(RinkPalette.surfaceAlt)
                 }
             }
 
