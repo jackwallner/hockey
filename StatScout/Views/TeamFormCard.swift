@@ -486,11 +486,14 @@ struct TeamRankingsCard: View {
             // can slice the most recent 2 / 4 / 8 weeks out of it. Anchored to the
             // season's own end, not to today - see `gameLogWindowStart`.
             let since = StatScoutSeason.gameLogWindowStart(season: season)
-            logs = try await fetch(team, season, seasonPhase, since)
+            let fetched = try await fetch(team, season, seasonPhase, since)
+            // A season, phase or mode switch mid-load cancels this task; the
+            // new one owns `logs` and `loading` from here.
+            guard !Task.isCancelled else { return }
+            logs = fetched
         } catch {
-            if !isTaskCancellation(error) {
-                loadError = "Couldn't load team form. Check your connection and try again."
-            }
+            guard !isTaskCancellation(error) else { return }
+            loadError = "Couldn't load team form. Check your connection and try again."
         }
         loading = false
     }
