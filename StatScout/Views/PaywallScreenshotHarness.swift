@@ -10,6 +10,8 @@ struct PaywallScreenshotHarness: View {
     var body: some View {
         Group {
             switch mode {
+            case .trial where isPad:
+                padSheet { TrialPitchSheet(trigger: .upgrade) }
             case .trial:
                 trialBackdrop {
                     TrialPitchSheet(trigger: .upgrade)
@@ -20,7 +22,11 @@ struct PaywallScreenshotHarness: View {
                     hasCompletedOnboarding: $onboardingComplete
                 )
             case .monthly, .yearly, .lifetime:
-                PaywallView(trigger: .upgrade)
+                if isPad {
+                    padSheet { PaywallView(trigger: .upgrade) }
+                } else {
+                    PaywallView(trigger: .upgrade)
+                }
             }
         }
         .environmentObject(store)
@@ -29,6 +35,17 @@ struct PaywallScreenshotHarness: View {
             // StoreKit) so it works headless on the simulator for screenshots.
             if store.products.isEmpty { store.loadScreenshotProducts() }
         }
+    }
+
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+
+    /// iPad presents these as real sheets, so the capture shows what ships.
+    private func padSheet<Content: View>(@ViewBuilder content: @escaping () -> Content) -> some View {
+        RinkPalette.canvas
+            .ignoresSafeArea()
+            .sheet(isPresented: .constant(true)) {
+                content().environmentObject(store)
+            }
     }
 
     private func trialBackdrop<Content: View>(@ViewBuilder content: () -> Content) -> some View {

@@ -105,7 +105,7 @@ struct RootTabView: View {
         ZStack(alignment: .bottom) {
             ForEach(Tab.allCases) { tab in
                 tabContent(tab)
-                    .frame(maxWidth: 900, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .opacity(selection == tab.rawValue ? 1 : 0)
                     .allowsHitTesting(selection == tab.rawValue)
                     .accessibilityHidden(selection != tab.rawValue)
@@ -307,14 +307,7 @@ private struct TabBarButton: View {
     }
 }
 
-private struct RinkNavBar: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .toolbarBackground(RinkPalette.midnight, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-    }
-}
+private typealias RinkNavBar = RinkNavBarPublic
 
 /// Trailing toolbar group shared by the four home tabs: a settings gear, then
 /// the upgrade CTA when the user isn't subscribed.

@@ -263,6 +263,7 @@ struct PlayerProfileView: View {
                 playerB: route.playerB,
                 catalog: comparisonCatalog
             )
+            .modifier(RinkNavBarPublic())
         }
         .onAppear {
             // Defer the first-impression pitch: a user verifying one stat from a

@@ -58,6 +58,7 @@
 		6F02D50458D1CB07ABF1E446 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3472ECB1AEDAC645F39334C8 /* Assets.xcassets */; };
 		71DFA98C72F18DEFBEC07100 /* RecentFormCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D4BEC37C8EF5436239336D /* RecentFormCard.swift */; };
 		74B3141C99DE044EECFC3928 /* MetricCoverageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918C7323DB9AE6711E8FB291 /* MetricCoverageTests.swift */; };
+		7720825B5D1D627977693DB4 /* StatScoutIPadUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF953E2EFD3F735A9DBD7E2D /* StatScoutIPadUITests.swift */; };
 		782034DA45CB4865169FAC3A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = ECC29156729E44AD4F7721D1 /* RevenueCat */; };
 		7FB54B900D718DB5EA583C97 /* SeasonPickerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D6EF83C10DB1C4887277F68 /* SeasonPickerUITests.swift */; };
 		87FCA2CBD23BD6254A28429E /* ConversionDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90C79D4B6DD51D2FFCEE7E45 /* ConversionDiagnostics.swift */; };
@@ -110,6 +111,7 @@
 		F6AE33EDC77A2F71DFC9A244 /* YearComparisonFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A722423BB05C1EA767098065 /* YearComparisonFeatureTests.swift */; };
 		F7175DB88FA0286F66E2A8ED /* players-historical.plist in Resources */ = {isa = PBXBuildFile; fileRef = 18DC891CB6C0193D0FAAE5FE /* players-historical.plist */; };
 		F87783F707F9A9C7CD06AD7F /* RecentFormWindowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348129804486AD22EB3D6517 /* RecentFormWindowTests.swift */; };
+		F9A0F89F22B3EA92C560F1D5 /* StateMachineRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805A95C39E62155991A73F6F /* StateMachineRegressionTests.swift */; };
 		F9CFA1F577A94864AB624B41 /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF12CF754F018EFD7BE7729 /* SampleData.swift */; };
 		FC0DF3B89E0E8C6152BC78CF /* YearComparePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A6D136EE3F7A2B36956CA4 /* YearComparePreview.swift */; };
 		FE17DDC74A43A910CD4A1CE8 /* SavantModules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C04FC271035959EFD5300A2 /* SavantModules.swift */; };
@@ -197,6 +199,7 @@
 		7D6EF83C10DB1C4887277F68 /* SeasonPickerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeasonPickerUITests.swift; sourceTree = "<group>"; };
 		7F1E5B14E20498B0CCD1D561 /* SearchMatching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchMatching.swift; sourceTree = "<group>"; };
 		7FCAA022DB7A039D9E5D4EC6 /* PlayerComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerComparisonView.swift; sourceTree = "<group>"; };
+		805A95C39E62155991A73F6F /* StateMachineRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateMachineRegressionTests.swift; sourceTree = "<group>"; };
 		80FA4CA4AA0C875123767D0C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		82D4BEC37C8EF5436239336D /* RecentFormCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentFormCard.swift; sourceTree = "<group>"; };
 		8742D48A80166C1A9F4F905A /* PlayerShareCardUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerShareCardUITests.swift; sourceTree = "<group>"; };
@@ -237,6 +240,7 @@
 		E2D1812126A525283A3CEC7F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		ECB59368024F23FBC63D833E /* StatScoutApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatScoutApp.swift; sourceTree = "<group>"; };
 		ED9E380CBE09D0F3E24B3203 /* FollowingStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowingStatsView.swift; sourceTree = "<group>"; };
+		EF953E2EFD3F735A9DBD7E2D /* StatScoutIPadUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatScoutIPadUITests.swift; sourceTree = "<group>"; };
 		F295F61E2CA38655A44AA926 /* GameCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCards.swift; sourceTree = "<group>"; };
 		F817C1759417F135E7CD20C2 /* StoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreService.swift; sourceTree = "<group>"; };
 		F9CBAD749A639F5A5ADCF10B /* StandardStatsLeadersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandardStatsLeadersView.swift; sourceTree = "<group>"; };
@@ -329,6 +333,7 @@
 				ABD86AFA956A34A31F84B507 /* ReviewPromptTrackerTests.swift */,
 				B2EAE4FBE4CF576F735F06C7 /* StandardStatsTests.swift */,
 				651F39025F6839FC272B2181 /* StatDirectionTests.swift */,
+				805A95C39E62155991A73F6F /* StateMachineRegressionTests.swift */,
 				6E057C00732D6D26EF3AFFEB /* StoreKitPurchaseTests.swift */,
 				157E8C62374F49106683CF14 /* TrendsTeaserTests.swift */,
 				E2672BD18743A7FADD069E5B /* UpgradeContextTests.swift */,
@@ -365,6 +370,7 @@
 				8742D48A80166C1A9F4F905A /* PlayerShareCardUITests.swift */,
 				7D6EF83C10DB1C4887277F68 /* SeasonPickerUITests.swift */,
 				5BC5EE3CB654E37FE99FE844 /* StatScoutComprehensiveUITests.swift */,
+				EF953E2EFD3F735A9DBD7E2D /* StatScoutIPadUITests.swift */,
 				5EEF7E714946970EF597A433 /* StatScoutPaywallReviewUITests.swift */,
 				61276D3E641C2DA5B9F0FC3F /* StatScoutScreenshotUITests.swift */,
 				0AFAF8C3339ED7D2929E776A /* StatScoutTourUITests.swift */,
@@ -683,6 +689,7 @@
 				8D59F7C29E73159B2CC488A4 /* ReviewPromptTrackerTests.swift in Sources */,
 				13627AAB67147D0AE5954433 /* StandardStatsTests.swift in Sources */,
 				A211C246D1B8BD2A42CF97B0 /* StatDirectionTests.swift in Sources */,
+				F9A0F89F22B3EA92C560F1D5 /* StateMachineRegressionTests.swift in Sources */,
 				285963B438317EEC3C0D84D0 /* StoreKitPurchaseTests.swift in Sources */,
 				17124CBBF816F46215922CCE /* TrendsTeaserTests.swift in Sources */,
 				3CB3B900460AE06C13D3A1A3 /* UpgradeCTATests.swift in Sources */,
@@ -770,6 +777,7 @@
 				6CA89104D9DFA86F1773C83C /* PlayerShareCardUITests.swift in Sources */,
 				7FB54B900D718DB5EA583C97 /* SeasonPickerUITests.swift in Sources */,
 				AB2B246F8DF32AF7AF3AEE0B /* StatScoutComprehensiveUITests.swift in Sources */,
+				7720825B5D1D627977693DB4 /* StatScoutIPadUITests.swift in Sources */,
 				0F1814132B1F2AD13EDAC2E1 /* StatScoutPaywallReviewUITests.swift in Sources */,
 				1E5428D4464116C80C479C4A /* StatScoutScreenshotUITests.swift in Sources */,
 				4CF9DDCF6D9D28D56C302E18 /* StatScoutTourUITests.swift in Sources */,
@@ -800,7 +808,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = StatScout/StatScout.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = YXG4MP6W39;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = StatScout/Info.plist;
@@ -808,13 +816,13 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jackwallner.hockey;
 				PRODUCT_NAME = "Hockey StatScout";
 				SDKROOT = iphoneos;
 				SUPABASE_ANON_KEY = "$(SUPABASE_ANON_KEY)";
 				SUPABASE_URL = "$(SUPABASE_URL)";
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -921,7 +929,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = StatScout/StatScout.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = YXG4MP6W39;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = StatScout/Info.plist;
@@ -929,14 +937,14 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jackwallner.hockey;
 				PRODUCT_NAME = "Hockey StatScout";
 				PROVISIONING_PROFILE_SPECIFIER = "$(PROVISIONING_PROFILE_SPECIFIER)";
 				SDKROOT = iphoneos;
 				SUPABASE_ANON_KEY = "$(SUPABASE_ANON_KEY)";
 				SUPABASE_URL = "$(SUPABASE_URL)";
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};

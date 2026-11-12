@@ -1585,12 +1585,36 @@ struct TeamComparisonView: View {
 
 /// Public mirror of RootTabView's private RinkNavBar so destinations pushed
 /// from this file keep the same midnight bar treatment.
+///
+/// It also holds the screen to a readable column on iPad. The cap sits on the
+/// content, inside the navigation stack, so the midnight bar still spans the
+/// whole window while the boards stay centred at 900pt.
 struct RinkNavBarPublic: ViewModifier {
     func body(content: Content) -> some View {
         content
+            .frame(maxWidth: RinkLayout.columnWidth, maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
             .toolbarBackground(RinkPalette.midnight, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+    }
+}
+
+enum RinkLayout {
+    /// Widest a board, profile or comparison gets. Phones never reach it.
+    static let columnWidth: CGFloat = 900
+}
+
+extension View {
+    /// Centred card on iPad instead of a full-width page sheet. No-op on iPhone
+    /// and before iOS 18.
+    @ViewBuilder
+    func rinkFormSheet() -> some View {
+        if #available(iOS 18.0, *) {
+            presentationSizing(.form)
+        } else {
+            self
+        }
     }
 }
 

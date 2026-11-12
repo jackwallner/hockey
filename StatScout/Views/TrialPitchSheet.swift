@@ -121,6 +121,7 @@ struct TrialPitchSheet: View {
         // two-thirds on the smallest, where it needs to be. Drags up to full
         // height for large accessibility text.
         .presentationDetents([.height(460), .large])
+        .rinkFormSheet()
         .presentationDragIndicator(.visible)
         // Tick the session cap on the *pitch* sheet too, not just the full
         // PaywallView. Otherwise PaywallGate.shouldPresent(.playerScouting)
