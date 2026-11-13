@@ -329,7 +329,17 @@ def _response_data(response: Any) -> Any:
 
 
 RPC_ATTEMPTS = 3
-TRANSIENT_MARKERS = ("504", "502", "503", "Gateway Timeout", "Bad Gateway", "Service Unavailable", "timed out")
+TRANSIENT_MARKERS = (
+    "504",
+    "502",
+    "503",
+    "Gateway Timeout",
+    "Bad Gateway",
+    "Service Unavailable",
+    "timed out",
+    "57014",
+    "statement timeout",
+)
 
 
 def _is_transient(error: Exception) -> bool:
@@ -344,6 +354,9 @@ def _rpc(client: Any, function: str, params: dict[str, Any], *, sleep=time.sleep
     Supabase gateway timeout and failed the whole refresh. The RPCs lock the
     run row, so a retry after a call that did commit is refused with "is
     already <status>"; that means the first attempt landed and counts as done.
+    On 2026-11-13 ``publish_data_refresh`` hit Postgres's statement timeout
+    (57014); the RPC runs in one transaction, so the cancel rolled it back and
+    a retry is safe.
     """
     for attempt in range(RPC_ATTEMPTS):
         try:

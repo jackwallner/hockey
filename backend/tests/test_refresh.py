@@ -225,6 +225,13 @@ def test_rpc_retries_gateway_timeouts():
     assert client.calls == 2
 
 
+def test_rpc_retries_statement_timeouts():
+    error = RuntimeError("{'message': 'canceling statement due to statement timeout', 'code': '57014'}")
+    client = _FlakyRPC([error])
+    assert refresh._rpc(client, "publish_data_refresh", {}, sleep=lambda _: None) == {"status": "unchanged"}
+    assert client.calls == 2
+
+
 def test_rpc_treats_already_applied_retry_as_done():
     client = _FlakyRPC([RuntimeError("504 Gateway Timeout"), RuntimeError("refresh x is already unchanged")])
     assert refresh._rpc(client, "mark_data_refresh_unchanged", {}, sleep=lambda _: None) == {"status": "already_applied"}
