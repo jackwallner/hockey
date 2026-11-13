@@ -23,6 +23,24 @@ final class StatScoutIPadUITests: XCTestCase {
     func testPortraitTour() throws { try tour(prefix: "portrait", orientation: .portrait) }
     func testLandscapeTour() throws { try tour(prefix: "landscape", orientation: .landscapeLeft) }
 
+    func testPortraitSheets() throws {
+        var app = launch(["-PaywallSnapshot", "yearly"], onboarding: false, tab: nil)
+        waitForText("$9.99 / year", in: app, timeout: 60)
+        attach(app, "portrait_paywall")
+        app.terminate()
+        app = launch(["-PaywallSnapshot", "trial"], onboarding: false, tab: nil)
+        Thread.sleep(forTimeInterval: 4)
+        attach(app, "portrait_trial_pitch")
+        app.terminate()
+    }
+
+    private func attach(_ app: XCUIApplication, _ name: String) {
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
     private func tour(prefix: String, orientation: UIDeviceOrientation) throws {
         var n = 0
         func shot(_ app: XCUIApplication, _ what: String) {
