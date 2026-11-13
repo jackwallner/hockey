@@ -1594,6 +1594,7 @@ struct RinkNavBarPublic: ViewModifier {
         content
             .frame(maxWidth: RinkLayout.columnWidth, maxHeight: .infinity)
             .frame(maxWidth: .infinity)
+            .background(RinkPalette.canvas.ignoresSafeArea())
             .toolbarBackground(RinkPalette.midnight, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
@@ -1608,6 +1609,15 @@ enum RinkLayout {
 extension View {
     /// Centred card on iPad instead of a full-width page sheet. No-op on iPhone
     /// and before iOS 18.
+    @ViewBuilder
+    func rinkPageSheet() -> some View {
+        if #available(iOS 18.0, *) {
+            presentationSizing(.page)
+        } else {
+            self
+        }
+    }
+
     @ViewBuilder
     func rinkFormSheet() -> some View {
         if #available(iOS 18.0, *) {

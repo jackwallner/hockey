@@ -23,7 +23,7 @@ readable column.
   the stack from outside: the bar then stops at the column edge and the status
   bar text runs over it.
 - Onboarding caps at 700pt, the paywall scroll content at 680pt.
-- The paywall and the trial pitch are form sheets on iPad (`rinkFormSheet()`,
+- The trial pitch is a form sheet and the paywall a page sheet on iPad (`rinkFormSheet()`, `rinkPageSheet()`,
   `presentationSizing(.form)`, iOS 18+, a no-op on iPhone). Detents alone
   produced a near full-width card with a huge empty middle.
 - The DEBUG `-PaywallSnapshot` harness presents the paywall and pitch as real
@@ -41,3 +41,8 @@ gh-sim test --scheme StatScoutUITests --only StatScoutUITests/StatScoutIPadUITes
 
 Attachments are named `<orientation>_<n>_<screen>`; read `manifest.json` in
 `~/.gh-sim/results/<id>/attachments` to map the UUID file names back.
+
+Landscape frames from the UI test come back turned 90 degrees. The
+`*_screen.png` attachments (XCUIScreen) turn upright with `sips -r 270`; the
+plain `app.screenshot()` copies do not come out right. Rotate before judging
+the layout.

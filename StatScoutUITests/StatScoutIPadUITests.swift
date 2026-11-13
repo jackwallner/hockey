@@ -101,7 +101,7 @@ final class StatScoutIPadUITests: XCTestCase {
         ).firstMatch
         if card2.waitForExistence(timeout: 60) {
             card2.tap()
-            waitForText("Expected goals", in: app, timeout: 30)
+            waitForText("EXPECTED GOALS", in: app, timeout: 30)
             shot(app, "game_detail")
         }
         app.terminate()
@@ -113,7 +113,10 @@ final class StatScoutIPadUITests: XCTestCase {
         tapContaining("Mikael Sandvik", in: app)
         Thread.sleep(forTimeInterval: 1)
         shot(app, "compare_slots_filled")
-        tap("Compare", in: app)
+        let compares = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Compare")).allElementsBoundByIndex
+        if let cta = compares.filter({ $0.exists }).min(by: { $0.frame.minY < $1.frame.minY }) {
+            cta.tap()
+        }
         Thread.sleep(forTimeInterval: 4)
         shot(app, "player_comparison")
         app.terminate()

@@ -182,7 +182,7 @@ struct PaywallView: View {
 
             closeButton
         }
-        .rinkFormSheet()
+        .rinkPageSheet()
         .onAppear { PaywallGate.shared.markPresented(trigger) }
         .onChange(of: store.isPro) { _, isPro in
             if isPro { dismissOnce() }
