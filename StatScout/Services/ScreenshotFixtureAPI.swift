@@ -24,6 +24,14 @@ struct ScreenshotFixtureAPI: StatcastProviding {
         // wrote with `defaults write`, and removing the app's domain does not
         // reach it.
         let defaults = UserDefaults.standard
+        // `-FixtureKeepState` seeds once per install and then leaves the fan
+        // context alone, so a release journey can prove that a follow survives
+        // a kill and relaunch. Without it every launch reseeds, which would
+        // hide a persistence bug.
+        if ProcessInfo.processInfo.arguments.contains(keepStateArgument) {
+            if defaults.bool(forKey: "fixture.seeded") { return }
+            defaults.set(true, forKey: "fixture.seeded")
+        }
         if ProcessInfo.processInfo.arguments.contains(freshLaunchArgument) {
             defaults.removeObject(forKey: "favorites.playerIds")
             defaults.removeObject(forKey: "favoriteTeam")
@@ -41,6 +49,7 @@ struct ScreenshotFixtureAPI: StatcastProviding {
     }
 
     static let freshLaunchArgument = "-FixtureFresh"
+    static let keepStateArgument = "-FixtureKeepState"
 
     static let season = StatScoutSeason.current
     private static let priorSeason = season - 1

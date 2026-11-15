@@ -1,0 +1,19 @@
+{
+  "project": "StatScout.xcodeproj",
+  "scheme": "StatScoutUITests",
+  "uitests_dir": "StatScoutUITests",
+  "journeys": [
+    "StatScoutUITests/ReleaseJourneysUITests"
+  ],
+  "personas": [
+    "newcomer",
+    "accessibility",
+    "reduce-motion",
+    "german",
+    "duo",
+    "ipad-portrait",
+    "ipad-landscape"
+  ],
+  "persona_overrides": {},
+  "slot": null
+}
