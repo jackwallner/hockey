@@ -15,6 +15,7 @@ final class ReleaseJourneysUITests: XCTestCase {
     /// the profile (the argument domain wins over what the app writes back).
     private let returning = [
         "-ScreenshotData",
+        "-MockProducts",
         "-FixtureKeepState",
         "-hasCompletedOnboarding", "YES",
         "-stats.board", "advanced",
@@ -33,7 +34,7 @@ final class ReleaseJourneysUITests: XCTestCase {
     /// Real first run: onboarding pages, the offer on the last page, then the
     /// free tier's first screen.
     func testFirstRunOnboardingToStats() {
-        QA.launch(app, arguments: ["-ScreenshotData", "-FixtureFresh", "-StartTab", "stats"])
+        QA.launch(app, arguments: ["-ScreenshotData", "-MockProducts", "-FixtureFresh", "-StartTab", "stats"])
         let continueButton = app.buttons["Continue"].firstMatch
         XCTAssertTrue(continueButton.waitForExistence(timeout: 30), "Onboarding should open")
         QA.checkpoint(app, "onboarding-first-page")
@@ -42,6 +43,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         while continueButton.exists, page < 8 {
             continueButton.tap()
             page += 1
+            QA.checkpoint(app, "onboarding-page-\(page)")
         }
 
         let getStarted = app.buttons["Get Started"].firstMatch
@@ -54,7 +56,7 @@ final class ReleaseJourneysUITests: XCTestCase {
     }
 
     func testOnboardingSkipReachesStats() {
-        QA.launch(app, arguments: ["-ScreenshotData", "-FixtureFresh", "-StartTab", "stats"])
+        QA.launch(app, arguments: ["-ScreenshotData", "-MockProducts", "-FixtureFresh", "-StartTab", "stats"])
         let skip = app.buttons["Skip"].firstMatch
         XCTAssertTrue(skip.waitForExistence(timeout: 30), "Onboarding should offer Skip")
         skip.tap()
