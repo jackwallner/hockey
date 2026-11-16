@@ -445,7 +445,9 @@ struct OnboardingCards: View {
     /// above the turf trial CTA so it never competes for the tap.
     private func getStartedButton(prominent: Bool) -> some View {
         Button {
-            withAnimation { hasCompletedOnboarding = true }
+            // No fade: the old page kept its trial button on screen, drawn
+            // smaller, while Stats appeared underneath it.
+            hasCompletedOnboarding = true
         } label: {
             if prominent {
                 Text("Get Started")
@@ -465,6 +467,7 @@ struct OnboardingCards: View {
                     .foregroundStyle(RinkPalette.ink)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
+                    .contentShape(Rectangle())
             }
         }
         .buttonStyle(.plain)

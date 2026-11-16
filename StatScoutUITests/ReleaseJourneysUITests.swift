@@ -85,7 +85,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         QA.launch(app, arguments: returning)
         XCTAssertTrue(boardLoaded(), "Stats should open")
 
-        QA.relaunch(app)
+        relaunch()
         XCTAssertTrue(boardLoaded(), "Stats should reopen without onboarding")
         QA.checkpoint(app, "stats-after-relaunch")
 
@@ -151,7 +151,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         XCTAssertTrue(followedRow(name).waitForExistence(timeout: 20), "\(name) should be listed under YOUR PLAYERS")
         QA.checkpoint(app, "compare-your-players")
 
-        QA.relaunch(app)
+        relaunch()
         XCTAssertTrue(boardLoaded(), "Stats should reopen after the relaunch")
         openTab("Compare")
         XCTAssertTrue(followedRow(name).waitForExistence(timeout: 20), "\(name) should still be followed after a relaunch")
@@ -171,10 +171,25 @@ final class ReleaseJourneysUITests: XCTestCase {
     /// buttons into a "More" menu; open it when the button is not on the bar.
     private func toolbarButtonExists(_ button: XCUIElement) -> Bool {
         if button.waitForExistence(timeout: 20) { return true }
-        let more = app.buttons["More"].firstMatch
+        // The overflow control is labelled "More" (or its German "Mehr"); fall
+        // back to the last button on the bar, which is where iOS draws it.
+        let named = app.buttons.matching(NSPredicate(format: "label IN %@", ["More", "Mehr"])).firstMatch
+        let barButtons = app.navigationBars.buttons
+        let more = named.exists ? named : barButtons.element(boundBy: max(barButtons.count - 1, 0))
         guard more.exists else { return false }
         more.tap()
         return button.waitForExistence(timeout: 10)
+    }
+
+    /// Kill and reopen. If the system already took the app down (a loaded
+    /// simulator can), `terminate()` throws for want of a process, so launch
+    /// the fresh copy directly; the state under test must survive either way.
+    private func relaunch(journey: String = #function) {
+        if app.state == .notRunning {
+            QA.system("relaunch", journey: journey) { app.launch() }
+        } else {
+            QA.relaunch(app, journey: journey)
+        }
     }
 
     private func boardLoaded() -> Bool {

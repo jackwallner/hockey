@@ -545,8 +545,13 @@ struct LeaderboardTableHeader: View {
     var onSelectMetric: (String) -> Void = { _ in }
     var onToggleDirection: () -> Void = {}
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
         HStack(spacing: 0) {
+            // Accessibility sizes stack each row, so the column titles no longer
+            // line up with anything; the sort control keeps the full width.
+            if !typeSize.isAccessibilitySize {
             Text("RANK")
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkTertiary)
@@ -561,6 +566,9 @@ struct LeaderboardTableHeader: View {
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkTertiary)
                 .frame(width: 44, alignment: .leading)
+            } else {
+                Spacer(minLength: 0)
+            }
 
             HStack(spacing: 2) {
                 Menu {
@@ -602,7 +610,7 @@ struct LeaderboardTableHeader: View {
             }
             .frame(width: 104, alignment: .trailing)
         }
-        .frame(height: RinkGeo.rowHeightHeader)
+        .frame(minHeight: RinkGeo.rowHeightHeader)
         .padding(.horizontal, RinkGeo.padInline)
         .background(RinkPalette.surfaceAlt)
         .overlay(Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline), alignment: .bottom)
@@ -695,6 +703,59 @@ struct LeaderboardTableRow: View {
     }
 
     var body: some View {
+        Group {
+            if typeSize.isAccessibilitySize { stackedRow } else { compactRow }
+        }
+        .padding(.horizontal, RinkGeo.padInline)
+        // Banded rows, the same white / near-white alternation the Trends board
+        // and the standard-stats board already use. Fifty rows of one flat
+        // surface is where the eye loses its place tracking a name across to a
+        // number; the band is what carries it. Keyed on `rank` (1-based) so the
+        // first row is the plain surface and the card's top edge stays clean.
+        .background(rank % 2 == 1 ? RinkPalette.surface : RinkPalette.surfaceAlt)
+        .contentShape(Rectangle())
+    }
+
+    /// Accessibility sizes: the columns no longer fit side by side, so the name
+    /// gets the full width and rank, team and value move to a second line.
+    private var stackedRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                PlayerHeadshot(team: player.team, initials: player.initials, size: 36)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(player.name)
+                        .font(RinkType.bodyBold)
+                        .foregroundStyle(RinkPalette.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(subtitle)
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            HStack(spacing: 12) {
+                Text("\(rank)")
+                    .font(RinkType.statSmall)
+                    .foregroundStyle(RinkPalette.inkSecondary)
+                    .monospacedDigit()
+                HStack(spacing: 4) {
+                    TeamColorDot(abbr: player.team, size: 6)
+                    Text(displayTeamAbbr(player.team))
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
+                }
+                Spacer(minLength: 0)
+                Text(displayValueText)
+                    .font(RinkType.statSmall)
+                    .foregroundStyle(displayValueColor)
+                    .monospacedDigit()
+            }
+        }
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, minHeight: RinkGeo.rowHeight, alignment: .leading)
+    }
+
+    private var compactRow: some View {
         HStack(spacing: 0) {
             Text("\(rank)")
                 .font(RinkType.statSmall)
@@ -770,14 +831,6 @@ struct LeaderboardTableRow: View {
             }
         }
         .frame(minHeight: RinkGeo.rowHeight)
-        .padding(.horizontal, RinkGeo.padInline)
-        // Banded rows, the same white / near-white alternation the Trends board
-        // and the standard-stats board already use. Fifty rows of one flat
-        // surface is where the eye loses its place tracking a name across to a
-        // number; the band is what carries it. Keyed on `rank` (1-based) so the
-        // first row is the plain surface and the card's top edge stays clean.
-        .background(rank % 2 == 1 ? RinkPalette.surface : RinkPalette.surfaceAlt)
-        .contentShape(Rectangle())
     }
 }
 
