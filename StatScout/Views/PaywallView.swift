@@ -432,12 +432,18 @@ struct PaywallView: View {
                     .font(RinkType.smallBold)
                     .foregroundStyle(RinkPalette.inkSecondary)
             }
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
             .buttonStyle(.plain)
             .disabled(isRestoring || isPurchasing)
 
             HStack(spacing: 12) {
                 Link("Terms", destination: StatScoutLegal.termsURL)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
                 Link("Privacy", destination: StatScoutLegal.privacyURL)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .font(RinkType.micro)
             .foregroundStyle(RinkPalette.inkTertiary)

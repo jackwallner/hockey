@@ -124,6 +124,21 @@ struct HotColdView: View {
     /// big phone, so the card stopped mid-screen with canvas under it and the
     /// unlock panel floating in the middle of nothing. There is also nothing
     /// below the fold to scroll *to* when the rows are a teaser.
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var lockedTop: some View {
+        VStack(spacing: 0) {
+            DataFreshnessView(
+                viewModel: viewModel,
+                season: selectedSeason,
+                phase: selectedPhase
+            )
+                .padding(.horizontal, 12)
+                .padding(.top, 10)
+            header
+        }
+    }
+
     var body: some View {
         Group {
             if store.isPro {
@@ -153,16 +168,21 @@ struct HotColdView: View {
                         .overlay(Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline), alignment: .bottom)
                 }
             } else {
-                VStack(spacing: 0) {
-                    DataFreshnessView(
-                        viewModel: viewModel,
-                        season: selectedSeason,
-                        phase: selectedPhase
-                    )
-                        .padding(.horizontal, 12)
-                        .padding(.top, 10)
-                    header
-                    lockedContent
+                if typeSize.isAccessibilitySize {
+                    // The fixed-height teaser card cannot hold the unlock
+                    // panel at these sizes, so the page scrolls instead.
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            lockedTop
+                            lockedContent
+                        }
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                } else {
+                    VStack(spacing: 0) {
+                        lockedTop
+                        lockedContent
+                    }
                 }
             }
         }
@@ -398,6 +418,14 @@ struct HotColdView: View {
             // the top and the unlock panel off the bottom. `Color.clear` has no
             // ideal height of its own, so it takes exactly the space left over;
             // the overlay fills it and the excess is clipped.
+            if typeSize.isAccessibilitySize {
+                BlurGateUnlock(
+                    headline: isEarlySeason
+                        ? "See the full board: every player's last \(viewModel.recentWindow.rawValue) weeks at every position, with movement once two windows of games exist"
+                        : "See the full board: every position ranked by how far they've moved",
+                    trigger: .recentForm
+                )
+            } else {
             Color.clear
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .overlay(alignment: .top) {
@@ -421,6 +449,7 @@ struct HotColdView: View {
                         trigger: .recentForm
                     )
                 }
+            }
         }
         .background(RinkPalette.surface)
         .clipShape(RoundedRectangle(cornerRadius: RinkGeo.radiusCard))
@@ -434,7 +463,7 @@ struct HotColdView: View {
         // not the screen edge, so this is the pill's height above the inset
         // plus a hair; the page doesn't scroll, so unlike every other screen
         // there's nothing to gain from running underneath it.
-        .padding(.bottom, 56)
+        .padding(.bottom, 12)
     }
 
     /// Row one of the locked board: the genuine leader once the rollup lands,

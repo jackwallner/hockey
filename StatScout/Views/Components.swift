@@ -650,6 +650,12 @@ struct LeaderboardTableRow: View {
     /// Under the playing-time bar for the ranked metric: value and bar dimmed.
     var isSmallSample: Bool = false
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @ScaledMetric(relativeTo: .body) private var rankWidth: CGFloat = 42
+    @ScaledMetric(relativeTo: .body) private var teamWidth: CGFloat = 44
+    @ScaledMetric(relativeTo: .body) private var valueWidth: CGFloat = 48
+    private var lineCap: Int? { typeSize.isAccessibilitySize ? nil : 1 }
+
     private var displayMetric: Metric? {
         guard let label = metricLabel else { return nil }
         // When no category is active (the all-categories leaderboard) fall back
@@ -693,7 +699,7 @@ struct LeaderboardTableRow: View {
             Text("\(rank)")
                 .font(RinkType.statSmall)
                 .foregroundStyle(RinkPalette.inkSecondary)
-                .frame(width: 42, alignment: .leading)
+                .frame(width: rankWidth, alignment: .leading)
                 .monospacedDigit()
 
             HStack(spacing: 10) {
@@ -702,13 +708,13 @@ struct LeaderboardTableRow: View {
                     Text(player.name)
                         .font(RinkType.bodyBold)
                         .foregroundStyle(RinkPalette.ink)
-                        .lineLimit(1)
+                        .lineLimit(lineCap)
                         .minimumScaleFactor(0.85)
                         .truncationMode(.tail)
                     Text(subtitle)
                         .font(RinkType.micro)
                         .foregroundStyle(RinkPalette.inkTertiary)
-                        .lineLimit(1)
+                        .lineLimit(lineCap)
                         .minimumScaleFactor(0.85)
                 }
             }
@@ -720,7 +726,7 @@ struct LeaderboardTableRow: View {
                     .font(RinkType.small)
                     .foregroundStyle(RinkPalette.inkSecondary)
             }
-            .frame(width: 44, alignment: .leading)
+            .frame(width: teamWidth, alignment: .leading)
 
             HStack(spacing: 8) {
                 // A player without the sorted metric gets no bar - drawing one
@@ -746,7 +752,7 @@ struct LeaderboardTableRow: View {
                         .foregroundStyle(displayValueColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
-                        .frame(width: 48, alignment: .trailing)
+                        .frame(width: valueWidth, alignment: .trailing)
                         .monospacedDigit()
                 } else {
                     Text("-")
@@ -756,14 +762,14 @@ struct LeaderboardTableRow: View {
                         .monospacedDigit()
                 }
             }
-            .frame(width: trendDelta == nil ? 92 : 56, alignment: .trailing)
+            .frame(width: (trendDelta == nil ? 92 : 56) + (valueWidth - 48), alignment: .trailing)
 
             if let trendDelta {
                 TrendArrow(delta: trendDelta, decimals: trendDecimals)
                     .frame(width: 46, alignment: .trailing)
             }
         }
-        .frame(height: RinkGeo.rowHeight)
+        .frame(minHeight: RinkGeo.rowHeight)
         .padding(.horizontal, RinkGeo.padInline)
         // Banded rows, the same white / near-white alternation the Trends board
         // and the standard-stats board already use. Fifty rows of one flat

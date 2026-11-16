@@ -102,19 +102,22 @@ struct RootTabView: View {
     /// away and back. Inactive tabs are hidden from VoiceOver too: at
     /// `opacity(0)` they are still perfectly reachable via the rotor.
     private var tabView: some View {
-        ZStack(alignment: .bottom) {
-            ForEach(Tab.allCases) { tab in
-                tabContent(tab)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .opacity(selection == tab.rawValue ? 1 : 0)
-                    .allowsHitTesting(selection == tab.rawValue)
-                    .accessibilityHidden(selection != tab.rawValue)
+        // The bar sits below the tabs in a stack, not over them: a scroll view
+        // clips at its own frame, so no row is ever drawn under the tab labels.
+        VStack(spacing: 0) {
+            ZStack {
+                ForEach(Tab.allCases) { tab in
+                    tabContent(tab)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .opacity(selection == tab.rawValue ? 1 : 0)
+                        .allowsHitTesting(selection == tab.rawValue)
+                        .accessibilityHidden(selection != tab.rawValue)
+                }
             }
-
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
+            floatingTabBar
         }
-        // The bar is an inset, not an overlay: boards end above it, so no row
-        // ever sits under the tab labels.
-        .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(RinkPalette.canvas.ignoresSafeArea())
         #if DEBUG
@@ -191,6 +194,9 @@ struct RootTabView: View {
                 }
             }
         }
+        // Fixed 68pt slots: like the system tab bar, labels stop growing at
+        // the largest standard size instead of cutting off.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
         // Near-opaque: the old 0.8 ultra-thin material let the two rows

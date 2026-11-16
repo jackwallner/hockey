@@ -69,7 +69,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         QA.launch(app, arguments: returning)
         XCTAssertTrue(boardLoaded(), "Stats should open")
         let upgrade = app.buttons.matching(NSPredicate(format: "label ENDSWITH %@", "unlock all features")).firstMatch
-        XCTAssertTrue(upgrade.waitForExistence(timeout: 30), "A free user should see the upgrade button")
+        XCTAssertTrue(toolbarButtonExists(upgrade), "A free user should see the upgrade button")
         QA.checkpoint(app, "stats-free")
         upgrade.tap()
 
@@ -78,7 +78,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         QA.checkpoint(app, "paywall")
         close.tap()
 
-        XCTAssertTrue(upgrade.waitForExistence(timeout: 10), "Closing the paywall should return to Stats")
+        XCTAssertTrue(app.staticTexts["RANK"].waitForExistence(timeout: 10), "Closing the paywall should return to Stats")
     }
 
     func testReturnVisitAcrossTabs() {
@@ -104,7 +104,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         QA.launch(app, arguments: returning)
         XCTAssertTrue(boardLoaded(), "Stats should open")
         let gear = app.buttons["Settings"].firstMatch
-        XCTAssertTrue(gear.waitForExistence(timeout: 20), "Stats should offer Settings")
+        XCTAssertTrue(toolbarButtonExists(gear), "Stats should offer Settings")
         gear.tap()
 
         XCTAssertTrue(app.staticTexts["REFERENCE"].firstMatch.waitForExistence(timeout: 30), "Settings should open")
@@ -166,6 +166,16 @@ final class ReleaseJourneysUITests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// At accessibility text sizes the navigation bar folds its trailing
+    /// buttons into a "More" menu; open it when the button is not on the bar.
+    private func toolbarButtonExists(_ button: XCUIElement) -> Bool {
+        if button.waitForExistence(timeout: 20) { return true }
+        let more = app.buttons["More"].firstMatch
+        guard more.exists else { return false }
+        more.tap()
+        return button.waitForExistence(timeout: 10)
+    }
 
     private func boardLoaded() -> Bool {
         app.staticTexts["RANK"].waitForExistence(timeout: loadTimeout)

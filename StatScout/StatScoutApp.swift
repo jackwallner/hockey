@@ -228,11 +228,13 @@ struct OnboardingCards: View {
                     }
                     .font(RinkType.bodyBold)
                     .foregroundStyle(RinkPalette.turf)
-                    .padding(.trailing, 20)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+                    .padding(.trailing, 12)
                     .opacity(isLastPage ? 0 : 1)
                     .allowsHitTesting(!isLastPage)
                 }
-                .frame(height: 32)
+                .frame(height: 44)
 
                 TabView(selection: $currentPage) {
                     ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
@@ -310,7 +312,7 @@ struct OnboardingCards: View {
                     .foregroundStyle(RinkPalette.performanceLow)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 32, alignment: .top)
+                    .frame(height: 12, alignment: .top)
 
                 if let disclosure = trialDisclosure {
                     Text(disclosure)
@@ -324,7 +326,11 @@ struct OnboardingCards: View {
                 // buy the trial directly, no PaywallView handoff).
                 HStack(spacing: 12) {
                     Link("Terms", destination: StatScoutLegal.termsURL)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                     Link("Privacy", destination: StatScoutLegal.privacyURL)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .font(RinkType.micro)
                 .foregroundStyle(RinkPalette.inkTertiary)
@@ -420,13 +426,15 @@ struct OnboardingCards: View {
                             .font(RinkType.micro)
                             .foregroundStyle(RinkPalette.inkTertiary)
                     }
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
                     .buttonStyle(.plain)
                     .disabled(isRestoring)
                 } else {
                     Color.clear
                 }
             }
-            .frame(height: 24)
+            .frame(height: 44)
         }
         .frame(maxWidth: .infinity, alignment: .bottom)
     }
