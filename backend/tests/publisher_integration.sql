@@ -1,5 +1,5 @@
 -- Run only against a disposable database initialized with every migration in
--- supabase/migrations (through 20261008010000_hockey_refresh_status.sql). Every fixture change is rolled back at the end.
+-- supabase/migrations. Every fixture change is rolled back at the end.
 begin;
 create function pg_temp.candidate(
   fingerprint text, yr integer default 2026, broken boolean default false,
@@ -25,6 +25,21 @@ end $$;
 do $$
 declare good uuid; bad uuid; next_id uuid; result jsonb; before_count integer;
 begin
+  if not exists (
+    select 1 from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'player_game_logs_refresh'
+      and indexname = 'player_game_logs_refresh_game_id_idx'
+  ) then
+    raise exception 'staged game identity lookup is missing its index';
+  end if;
+  if not exists (
+    select 1 from pg_proc
+    where oid = 'public.publish_data_refresh(uuid)'::regprocedure
+      and proconfig @> array['statement_timeout=60s']
+  ) then
+    raise exception 'publisher statement timeout is not 60 seconds';
+  end if;
   if has_function_privilege('anon','public.publish_data_refresh(uuid)','execute') then
     raise exception 'anon can publish';
   end if;
