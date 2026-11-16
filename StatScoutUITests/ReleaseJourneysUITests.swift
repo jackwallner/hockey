@@ -42,7 +42,6 @@ final class ReleaseJourneysUITests: XCTestCase {
         while continueButton.exists, page < 8 {
             continueButton.tap()
             page += 1
-            QA.checkpoint(app, "onboarding-page-\(page)")
         }
 
         let getStarted = app.buttons["Get Started"].firstMatch
@@ -78,13 +77,11 @@ final class ReleaseJourneysUITests: XCTestCase {
         close.tap()
 
         XCTAssertTrue(upgrade.waitForExistence(timeout: 10), "Closing the paywall should return to Stats")
-        QA.checkpoint(app, "paywall-dismissed")
     }
 
     func testReturnVisitAcrossTabs() {
         QA.launch(app, arguments: returning)
         XCTAssertTrue(boardLoaded(), "Stats should open")
-        QA.checkpoint(app, "stats-return")
 
         QA.relaunch(app)
         XCTAssertTrue(boardLoaded(), "Stats should reopen without onboarding")
@@ -109,7 +106,6 @@ final class ReleaseJourneysUITests: XCTestCase {
         gear.tap()
 
         XCTAssertTrue(app.staticTexts["REFERENCE"].firstMatch.waitForExistence(timeout: 30), "Settings should open")
-        QA.checkpoint(app, "settings")
 
         let attribution = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "MoneyPuck")).firstMatch
         var swipes = 0
@@ -124,7 +120,6 @@ final class ReleaseJourneysUITests: XCTestCase {
     func testInterruptionOnPlayerProfile() {
         QA.launch(app, arguments: returning)
         openProfile("Holloway", as: "Rasmus Holloway")
-        QA.checkpoint(app, "profile-before-interrupt")
 
         QA.interrupt(app)
         XCTAssertEqual(app.state, .runningForeground, "The app should come back to the foreground")
@@ -138,20 +133,17 @@ final class ReleaseJourneysUITests: XCTestCase {
         let name = "Rasmus Holloway"
         QA.launch(app, arguments: returning)
         XCTAssertTrue(boardLoaded(), "Stats should open")
-        QA.checkpoint(app, "stats")
 
-        openProfile("Holloway", as: name)
+        openProfile("Holloway", as: name, checkpoint: true)
         // Earlier runs share this install; start from not following.
         if unfollow(name).exists {
             unfollow(name).tap()
         }
         let follow = app.buttons["Follow \(name)"].firstMatch
         XCTAssertTrue(follow.waitForExistence(timeout: 10), "An unfollowed player should offer Follow")
-        QA.checkpoint(app, "profile-not-following")
 
         follow.tap()
         XCTAssertTrue(unfollow(name).waitForExistence(timeout: 10), "Following should flip the button to Unfollow")
-        QA.checkpoint(app, "profile-following")
 
         openTab("Compare")
         XCTAssertTrue(followedRow(name).waitForExistence(timeout: 20), "\(name) should be listed under YOUR PLAYERS")
@@ -166,11 +158,9 @@ final class ReleaseJourneysUITests: XCTestCase {
         openTab("Stats")
         openProfile("Holloway", as: name)
         XCTAssertTrue(unfollow(name).waitForExistence(timeout: 10), "The profile should still show Unfollow after a relaunch")
-        QA.checkpoint(app, "profile-following-after-relaunch")
 
         unfollow(name).tap()
         XCTAssertTrue(app.buttons["Follow \(name)"].firstMatch.waitForExistence(timeout: 10), "Unfollow should flip the button back")
-        QA.checkpoint(app, "profile-unfollowed")
     }
 
     // MARK: - Helpers
@@ -187,7 +177,7 @@ final class ReleaseJourneysUITests: XCTestCase {
 
     /// Searches Stats for `query`, opens the matching player and clears the
     /// trial pitch if one covers the profile.
-    private func openProfile(_ query: String, as name: String, journey: String = #function) {
+    private func openProfile(_ query: String, as name: String, checkpoint: Bool = false, journey: String = #function) {
         let chip = app.buttons["Search players or teams"]
         XCTAssertTrue(chip.waitForExistence(timeout: 20), "Stats should offer Search")
         chip.tap()
@@ -206,7 +196,7 @@ final class ReleaseJourneysUITests: XCTestCase {
             XCTAssertTrue(maybeLater.waitForNonExistence(timeout: 10), "The trial pitch should dismiss")
         }
         XCTAssertTrue(followButton(name).waitForExistence(timeout: 30), "\(name)'s profile should open")
-        QA.checkpoint(app, "profile", journey: journey)
+        if checkpoint { QA.checkpoint(app, "profile", journey: journey) }
     }
 
     private func unfollow(_ name: String) -> XCUIElement {
