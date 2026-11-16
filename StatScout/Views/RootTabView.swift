@@ -111,11 +111,12 @@ struct RootTabView: View {
                     .accessibilityHidden(selection != tab.rawValue)
             }
 
-            floatingTabBar
         }
+        // The bar is an inset, not an overlay: boards end above it, so no row
+        // ever sits under the tab labels.
+        .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(RinkPalette.canvas.ignoresSafeArea())
-        .ignoresSafeArea(edges: .bottom)
         #if DEBUG
         .onAppear {
             if let tab = Tab.launchArgument { selection = tab.rawValue }
@@ -201,7 +202,7 @@ struct RootTabView: View {
         }
         .overlay(Capsule().stroke(RinkPalette.hairline, lineWidth: 0.5))
         .shadow(color: .black.opacity(0.10), radius: 12, y: 4)
-        .padding(.bottom, 12)
+        .padding(.vertical, 4)
     }
 
     private var gamesTab: some View {
@@ -416,10 +417,10 @@ private struct HomeTabToolbar: ViewModifier {
                 // spacing between them is ours. Same reasoning as the leading
                 // pill above.
                 if #available(iOS 26.0, *) {
-                    ToolbarItem(placement: .topBarTrailing) { trailingControls }
+                    ToolbarItem(placement: .topBarTrailing) { trailingControls.dynamicTypeSize(...DynamicTypeSize.xxxLarge) }
                         .sharedBackgroundVisibility(.hidden)
                 } else {
-                    ToolbarItem(placement: .topBarTrailing) { trailingControls }
+                    ToolbarItem(placement: .topBarTrailing) { trailingControls.dynamicTypeSize(...DynamicTypeSize.xxxLarge) }
                 }
             }
             // The one place that opens the full plan picker. Every other pitch

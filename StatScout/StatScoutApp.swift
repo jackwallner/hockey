@@ -552,32 +552,46 @@ struct OnboardingCard: View {
     /// truncate if a larger one pushes them over. Losing 20pt of illustration is
     /// nothing next to losing the copy.
     var body: some View {
+        // Drops the art when the slot is short (an unfolded Duo, landscape):
+        // the copy must be set in full, never truncated.
+        ViewThatFits(in: .vertical) {
+            cardContent(showsArt: true)
+            cardContent(showsArt: false)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func cardContent(showsArt: Bool) -> some View {
         VStack(spacing: 16) {
             Spacer(minLength: 0)
 
-            ZStack {
-                StatcastBarBackdrop()
-                    .frame(width: 200, height: 104)
+            if showsArt {
                 ZStack {
-                    Circle()
-                        .fill(RinkPalette.midnight)
-                        .frame(width: 84, height: 84)
-                    Image(systemName: icon)
-                        .font(.system(size: 36, weight: .semibold))
-                        .foregroundStyle(.white)
+                    StatcastBarBackdrop()
+                        .frame(width: 200, height: 104)
+                    ZStack {
+                        Circle()
+                            .fill(RinkPalette.midnight)
+                            .frame(width: 84, height: 84)
+                        Image(systemName: icon)
+                            .font(.system(size: 36, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .shadow(color: RinkPalette.midnight.opacity(0.25), radius: 12, y: 4)
                 }
-                .shadow(color: RinkPalette.midnight.opacity(0.25), radius: 12, y: 4)
             }
 
             Text(title)
                 .font(RinkType.playerName)
                 .foregroundStyle(RinkPalette.ink)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text(description)
                 .font(RinkType.body)
                 .foregroundStyle(RinkPalette.inkSecondary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 32)
 
             VStack(alignment: .leading, spacing: 10) {
@@ -586,14 +600,10 @@ struct OnboardingCard: View {
                         Image(systemName: bullet.icon)
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(bullet.color)
-                            // One width for every glyph, so the text of the four
-                            // bullets starts on one edge.
                             .frame(width: 22)
                         Text(bullet.text)
                             .font(RinkType.body)
                             .foregroundStyle(RinkPalette.ink)
-                            // Wrap, never truncate. A benefit that ends in an
-                            // ellipsis is worse than one set on two lines.
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 0)
                     }
@@ -601,13 +611,11 @@ struct OnboardingCard: View {
             }
             .padding(.horizontal, 24)
             .padding(.top, 4)
-            // Clears the page-index dots, which the `TabView` draws inside its
-            // own bottom edge and so on top of whatever the card put there.
+            // Clears the page-index dots drawn inside the TabView's bottom edge.
             .padding(.bottom, 28)
 
             Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
