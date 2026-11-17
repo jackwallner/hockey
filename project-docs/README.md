@@ -13,6 +13,7 @@ Developer notes for this repository. The published site remains in the docs dire
 - [state-machines-2026-11-06-fixes.md](audits/state-machines-2026-11-06-fixes.md): fixes for that review, B2, B3 and B4 fixed with regression tests, nothing held or skipped
 - [state-machines-2026-11-06-verify.md](audits/state-machines-2026-11-06-verify.md): independent verification of those fixes, PASS, with revert proof and full suite runs
 - [presubmit-review-2026-11-07.md](audits/presubmit-review-2026-11-07.md): pre-submit review of 1.0.3 (build 17) against live 1.0.2 (build 16), no P0 or P1, nothing fixed
+- [presubmit-review-2026-11-08-deep.md](audits/presubmit-review-2026-11-08-deep.md): pre-submit deep review of 1.0.3, no P0, 3 P1 and 1 P2 fixed, 5 P2 risks open
 
 ## Marketing
 
