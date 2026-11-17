@@ -199,7 +199,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         // At accessibility sizes the header folds into one "RANK, ALL PLAYERS, ..." button
         // and the sort control may sit in it; a ranked row proves the board too.
         let sort = app.buttons.matching(NSPredicate(
-            format: "label IN {'Highest first','Lowest first'} OR label BEGINSWITH 'RANK' OR label MATCHES '^[0-9]+, .*'")).firstMatch
+            format: "label IN {'Highest first','Lowest first'} OR label BEGINSWITH 'RANK' OR label CONTAINS 'percentile'")).firstMatch
         let deadline = Date().addingTimeInterval(timeout ?? loadTimeout)
         while Date() < deadline {
             if rank.exists || sort.exists { return true }
