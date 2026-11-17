@@ -465,7 +465,7 @@ struct OnboardingCards: View {
                 Text("Get Started")
                     .font(RinkType.bodyBold)
                     .foregroundStyle(RinkPalette.ink)
-                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 32)
                     .frame(height: 52)
                     .contentShape(Rectangle())
             }

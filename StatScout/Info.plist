@@ -40,10 +40,7 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>UILaunchScreen</key>
-	<dict>
-		<key>UILaunchScreen</key>
-		<dict/>
-	</dict>
+	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

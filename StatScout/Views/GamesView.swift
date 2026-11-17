@@ -101,7 +101,7 @@ struct GamesView: View {
     private var daySelector: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
+                HStack(spacing: 4) {
                     ForEach(days) { day in
                         let isSelected = day.id == selectedDay?.id
                         Button {
@@ -111,7 +111,7 @@ struct GamesView: View {
                             Text(day.label)
                                 .font(RinkType.smallBold)
                                 .foregroundStyle(isSelected ? .white : RinkPalette.inkSecondary)
-                                .padding(.horizontal, 12)
+                                .padding(.horizontal, 10)
                                 .frame(height: RinkControl.height)
                                 .background(isSelected ? RinkPalette.turf : RinkPalette.surface)
                                 .clipShape(Capsule())

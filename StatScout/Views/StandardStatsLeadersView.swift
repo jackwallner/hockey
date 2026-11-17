@@ -29,6 +29,7 @@ struct StandardStatsLeadersView: View {
     var viewModel: DashboardViewModel? = nil
     @State private var isSearching = false
     @State private var searchText = ""
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private var availableStats: [String] {
         StandardStatCatalog.stats(for: selectedPosition)
@@ -214,6 +215,23 @@ struct StandardStatsLeadersView: View {
                 sortDescending.toggle()
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             } label: {
+                Group {
+                if typeSize.isAccessibilitySize {
+                    HStack(spacing: 8) {
+                        Text(sampleLabel)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.inkTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(selectedStat)
+                            .font(RinkType.micro)
+                            .foregroundStyle(RinkPalette.turf)
+                        Image(systemName: sortDescending ? "arrow.down" : "arrow.up")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(RinkPalette.turf)
+                    }
+                    .padding(.vertical, 8)
+                } else {
                 HStack(spacing: 0) {
                     Text("RANK")
                         .font(RinkType.micro)
@@ -245,6 +263,9 @@ struct StandardStatsLeadersView: View {
                     .frame(width: 100, alignment: .trailing)
                 }
                 .frame(height: RinkGeo.rowHeightHeader)
+                }
+                }
+                .frame(minHeight: RinkGeo.rowHeightHeader)
                 .padding(.horizontal, RinkGeo.padInline)
                 .background(RinkPalette.surfaceAlt)
                 .overlay(
@@ -335,8 +356,60 @@ struct StandardStatsLeadersView: View {
             .background(RinkPalette.surfaceAlt)
     }
 
+    /// Accessibility sizes: the name takes the full width and wraps; rank,
+    /// team and the stat move to a second line.
+    private func stackedPlayerRow(rank: Int, player: Player, peerValues: [String]) -> some View {
+        let pct = percentile(for: player, peerValues: peerValues)
+        let isZero = numericStat(for: player) == 0
+            && StandardStatSemantics.higherIsBetter(label: statLabel(for: player.positionGroup))
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                PlayerHeadshot(team: player.team, initials: player.initials, size: 36)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(player.name)
+                        .font(RinkType.bodyBold)
+                        .foregroundStyle(RinkPalette.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text([player.displayPosition, volumeText(for: player)].compactMap { $0 }.joined(separator: " · "))
+                        .font(RinkType.micro)
+                        .foregroundStyle(RinkPalette.inkTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            HStack(spacing: 12) {
+                Text("\(rank)")
+                    .font(RinkType.statSmall)
+                    .foregroundStyle(RinkPalette.inkSecondary)
+                    .monospacedDigit()
+                HStack(spacing: 4) {
+                    TeamColorDot(abbr: player.team, size: 6)
+                    Text(displayTeamAbbr(player.team))
+                        .font(RinkType.small)
+                        .foregroundStyle(RinkPalette.inkSecondary)
+                }
+                Spacer(minLength: 0)
+                Text(statDisplay(for: player))
+                    .font(RinkType.statMed)
+                    .foregroundStyle(isZero ? RinkPalette.inkTertiary : RinkPalette.turf)
+                    .monospacedDigit()
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(
+                        isZero
+                            ? "\(statLabel(for: player.positionGroup)): \(statDisplay(for: player)), not ranked"
+                            : "\(statLabel(for: player.positionGroup)): \(statDisplay(for: player)), \(pct.ordinalString) percentile"
+                    )
+            }
+        }
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private func playerRow(rank: Int, player: Player, peerValues: [String]) -> some View {
         NavigationLink(value: player) {
+            Group {
+            if typeSize.isAccessibilitySize {
+                stackedPlayerRow(rank: rank, player: player, peerValues: peerValues)
+            } else {
             HStack(spacing: 0) {
                 Text("\(rank)")
                     .font(RinkType.statSmall)
@@ -404,6 +477,9 @@ struct StandardStatsLeadersView: View {
                 )
             }
             .frame(height: RinkGeo.rowHeight)
+            }
+            }
+            .frame(minHeight: RinkGeo.rowHeight)
             .padding(.horizontal, RinkGeo.padInline)
             .background(
                 rank.isMultiple(of: 2)

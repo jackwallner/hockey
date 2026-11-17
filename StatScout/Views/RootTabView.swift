@@ -333,6 +333,7 @@ private struct HomeTabToolbar: ViewModifier {
     /// single shared flag would push Settings onto all four stacks at once.
     @State private var showingSettings = false
     @State private var paywallTrigger: PaywallTrigger?
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     /// Yellow crown + short action verb on a filled pill. The old version was
     /// a bare yellow "Pro" label that read as a status badge rather than a
@@ -385,10 +386,29 @@ private struct HomeTabToolbar: ViewModifier {
     /// Gear then CTA, in the order they were declared as separate items.
     @ViewBuilder
     private var trailingControls: some View {
-        HStack(spacing: 10) {
-            settingsButton
-            if !store.isPro {
-                upgradeButton
+        if typeSize.isAccessibilitySize {
+            // The bar has no room for both at accessibility sizes and iOS
+            // would fold them into an unlabelled overflow; name the menu.
+            Menu {
+                Button("Settings", systemImage: "gearshape") {
+                    showingSettings = true
+                }
+                if !store.isPro {
+                    Button("\(ctaLabel), unlock all features", systemImage: "crown.fill") {
+                        paywallTrigger = store.defaultUpgradeTrigger
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .foregroundStyle(.white.opacity(0.85))
+            }
+            .accessibilityLabel("More")
+        } else {
+            HStack(spacing: 10) {
+                settingsButton
+                if !store.isPro {
+                    upgradeButton
+                }
             }
         }
     }
