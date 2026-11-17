@@ -78,7 +78,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         QA.checkpoint(app, "paywall")
         close.tap()
 
-        XCTAssertTrue(app.staticTexts["RANK"].waitForExistence(timeout: 10), "Closing the paywall should return to Stats")
+        XCTAssertTrue(boardLoaded(timeout: 10), "Closing the paywall should return to Stats")
     }
 
     func testReturnVisitAcrossTabs() {
@@ -192,8 +192,17 @@ final class ReleaseJourneysUITests: XCTestCase {
         }
     }
 
-    private func boardLoaded() -> Bool {
-        app.staticTexts["RANK"].waitForExistence(timeout: loadTimeout)
+    /// The leaderboard header: "RANK" at regular sizes, the sort direction
+    /// button at accessibility sizes (where the column titles are hidden).
+    private func boardLoaded(timeout: TimeInterval? = nil) -> Bool {
+        let rank = app.staticTexts["RANK"]
+        let sort = app.buttons.matching(NSPredicate(format: "label IN {'Highest first','Lowest first'}")).firstMatch
+        let deadline = Date().addingTimeInterval(timeout ?? loadTimeout)
+        while Date() < deadline {
+            if rank.exists || sort.exists { return true }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        return rank.exists || sort.exists
     }
 
     private func openTab(_ title: String) {
