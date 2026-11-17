@@ -1,1 +1,1 @@
-NHL冰球数据: StatScout
+冰球数据: StatScout

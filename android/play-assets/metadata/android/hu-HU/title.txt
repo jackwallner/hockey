@@ -1,1 +1,1 @@
-NHL statisztika: StatScout
+Jégkorong-adatok: StatScout

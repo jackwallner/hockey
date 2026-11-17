@@ -1,1 +1,1 @@
-NHL-statistik: StatScout
+Ishockeystatistik: StatScout

@@ -18,6 +18,11 @@ import sys
 import unicodedata
 from pathlib import Path
 
+# Play suspended Football on 2026-11-16 (Impersonation) for league names in localized
+# titles and short descriptions. Keep marks out of both; the full description may name
+# the league only in the non-affiliation line and factual copy.
+LEAGUE_MARK = re.compile(r"NFL|NBA|MLB|NHL|NFLPA|NBPA|MLBPA|NHLPA|НХЛ|Statcast|스탯캐스트")
+
 ROOT = Path(__file__).resolve().parent.parent / "android/play-assets/metadata/android"
 LIMITS = {"title.txt": 30, "short_description.txt": 80, "full_description.txt": 4000}
 # Play language codes accepted by the Publishing API (fastlane supply list).
@@ -66,6 +71,11 @@ def check(locale_dir: Path) -> list[str]:
     loc = locale_dir.name
     if loc not in PLAY_LANGS:
         errs.append(f"unknown Play language code {loc}")
+    for name in ("title.txt", "short_description.txt"):
+        p = locale_dir / name
+        hit = LEAGUE_MARK.search(p.read_text(encoding="utf-8")) if p.exists() else None
+        if hit:
+            errs.append(f"{name} names a league or league trademark: {hit.group(0)!r}")
     for name, limit in LIMITS.items():
         p = locale_dir / name
         if not p.exists():

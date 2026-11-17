@@ -1,1 +1,1 @@
-Ice hockey stats for the NHL: every player ranked by expected goals, percentiles
+Ice hockey stats: every player ranked by expected goals, with percentiles

@@ -1,1 +1,1 @@
-Stats hockey NHL : StatScout
+Stats hockey : StatScout

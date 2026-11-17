@@ -153,3 +153,5 @@ when this app's pacing slot comes. Review codes: `~/docs/android/tools/play_hand
 credentials were uploaded with `play_handoff.py rc-credentials --apply`
 on  2026-10-17. The RevenueCat service account already has
 account-wide Play permissions, so no per-app grant is needed.
+
+- 2026-11-16: Football was suspended on Play (Impersonation) for league names in localized titles and short descriptions. This app's titles and shorts were stripped of league marks and Statcast the same day by API and sent for review; `scripts/validate-play-listing.py` now fails on any league name there. Never put the league acronym in a title or short description.
