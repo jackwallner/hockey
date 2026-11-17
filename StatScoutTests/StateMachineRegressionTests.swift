@@ -96,6 +96,8 @@ final class StateMachineRegressionTests: XCTestCase {
         await waitFor(kickoff.timeIntervalSinceNow + 10) { provider.liveCalls > 0 }
         XCTAssertEqual(g.status(), .inProgress, "precondition: the game is under way")
         XCTAssertGreaterThan(provider.liveCalls, 0, "a team card held across puck drop reads the scoreboard")
+        // The call counts before its result lands, so give the score a moment on a slow runner.
+        await waitFor(5) { vm.liveScore(for: g) != nil }
         XCTAssertNotNil(vm.liveScore(for: g))
     }
 
