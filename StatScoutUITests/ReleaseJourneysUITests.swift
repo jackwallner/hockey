@@ -224,7 +224,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "The search field should open")
         field.typeText(query)
 
-        let row = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", name)).firstMatch
+        let row = app.buttons.matching(NSPredicate(format: "label MATCHES %@", "^([0-9]+, )?\(name),.*")).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 20), "Search should find \(name)")
         row.tap()
 
