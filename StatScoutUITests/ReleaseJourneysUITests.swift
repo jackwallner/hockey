@@ -224,9 +224,25 @@ final class ReleaseJourneysUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "The search field should open")
         field.typeText(query)
 
-        let row = app.buttons.matching(NSPredicate(format: "label MATCHES %@", "^([0-9]+, )?\(name),.*")).firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 20), "Search should find \(name)")
-        row.tap()
+        // The name also labels the Stats board row behind the search (and a hidden copy of it),
+        // so tap the first match that is on screen.
+        let rows = app.buttons.matching(NSPredicate(format: "label MATCHES %@", "^([0-9]+, )?\(name),.*"))
+        var row: XCUIElement?
+        let deadline = Date().addingTimeInterval(20)
+        while row == nil, Date() < deadline {
+            for i in 0..<rows.count {
+                let candidate = rows.element(boundBy: i)
+                let frame = candidate.frame
+                if candidate.exists, !frame.isEmpty, app.frame.contains(CGPoint(x: frame.midX, y: frame.midY)),
+                   candidate.isHittable {
+                    row = candidate
+                    break
+                }
+            }
+            if row == nil { Thread.sleep(forTimeInterval: 0.5) }
+        }
+        XCTAssertNotNil(row, "Search should find \(name)")
+        row?.tap()
 
         let maybeLater = app.buttons["Maybe later"].firstMatch
         if maybeLater.waitForExistence(timeout: 4) {
