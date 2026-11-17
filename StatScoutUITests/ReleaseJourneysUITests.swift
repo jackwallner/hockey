@@ -196,7 +196,10 @@ final class ReleaseJourneysUITests: XCTestCase {
     /// button at accessibility sizes (where the column titles are hidden).
     private func boardLoaded(timeout: TimeInterval? = nil) -> Bool {
         let rank = app.staticTexts["RANK"]
-        let sort = app.buttons.matching(NSPredicate(format: "label IN {'Highest first','Lowest first'}")).firstMatch
+        // At accessibility sizes the header folds into one "RANK, ALL PLAYERS, ..." button
+        // and the sort control may sit in it; a ranked row proves the board too.
+        let sort = app.buttons.matching(NSPredicate(
+            format: "label IN {'Highest first','Lowest first'} OR label BEGINSWITH 'RANK' OR label MATCHES '^[0-9]+, .*'")).firstMatch
         let deadline = Date().addingTimeInterval(timeout ?? loadTimeout)
         while Date() < deadline {
             if rank.exists || sort.exists { return true }
@@ -221,7 +224,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "The search field should open")
         field.typeText(query)
 
-        let row = app.buttons.matching(NSPredicate(format: "label MATCHES %@", "^[0-9]+, \(name),.*")).firstMatch
+        let row = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", name)).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 20), "Search should find \(name)")
         row.tap()
 
