@@ -209,9 +209,7 @@ final class ReleaseJourneysUITests: XCTestCase {
     }
 
     private func openTab(_ title: String) {
-        let tab = app.buttons.matching(NSPredicate(format: "label ==[c] %@", title)).firstMatch
-        XCTAssertTrue(tab.waitForExistence(timeout: 20), "\(title) tab should exist")
-        tab.tap()
+        QA.openTab(app, title)
     }
 
     /// Searches Stats for `query`, opens the matching player and clears the
@@ -222,7 +220,7 @@ final class ReleaseJourneysUITests: XCTestCase {
         chip.tap()
         let field = app.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 10), "The search field should open")
-        field.typeText(query)
+        QA.type(query, into: field, in: app)
 
         // The name also labels the Stats board row behind the search (and a hidden copy of it),
         // so tap the first match that is on screen.
