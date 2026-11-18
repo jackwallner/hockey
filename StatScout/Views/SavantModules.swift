@@ -62,6 +62,9 @@ struct PlayerIdentityStrip: View {
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
+    @Environment(\.dynamicTypeSize) private var typeSize
+    private var wraps: Bool { typeSize.isAccessibilitySize }
+
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
             PlayerHeadshot(team: player.team, initials: player.initials, size: 72)
@@ -70,23 +73,23 @@ struct PlayerIdentityStrip: View {
                 Text(player.name)
                     .font(RinkType.playerName)
                     .foregroundStyle(RinkPalette.inkOnDark)
-                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .lineLimit(wraps ? nil : 1).minimumScaleFactor(wraps ? 1 : 0.7)
                 Text(displayTeamFullName(player.team))
                     .font(RinkType.bodyBold)
                     .foregroundStyle(.white.opacity(0.85))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .lineLimit(wraps ? nil : 1)
+                    .minimumScaleFactor(wraps ? 1 : 0.8)
                 Text(bioLine)
                     .font(RinkType.small)
                     .foregroundStyle(.white.opacity(0.65))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .lineLimit(wraps ? nil : 1)
+                    .minimumScaleFactor(wraps ? 1 : 0.8)
                 ForEach([originLine, careerLine].compactMap { $0 }, id: \.self) { line in
                     Text(line)
                         .font(RinkType.small)
                         .foregroundStyle(.white.opacity(0.65))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .lineLimit(wraps ? nil : 1)
+                        .minimumScaleFactor(wraps ? 1 : 0.8)
                 }
             }
             Spacer(minLength: 8)

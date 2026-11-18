@@ -144,6 +144,7 @@ enum PaywallTrigger: Identifiable, Hashable {
 struct PaywallView: View {
     @EnvironmentObject private var store: StoreService
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     let trigger: PaywallTrigger
 
@@ -297,8 +298,8 @@ struct PaywallView: View {
                     .font(RinkType.small)
                     .foregroundStyle(.white.opacity(0.85))
                     .multilineTextAlignment(.center)
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.9)
+                    .lineLimit(typeSize.isAccessibilitySize ? nil : 3)
+                    .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.9)
                     .padding(.horizontal, 22)
             }
             .padding(.top, 64)
