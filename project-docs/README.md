@@ -14,6 +14,7 @@ Developer notes for this repository. The published site remains in the docs dire
 - [state-machines-2026-11-06-verify.md](audits/state-machines-2026-11-06-verify.md): independent verification of those fixes, PASS, with revert proof and full suite runs
 - [presubmit-review-2026-11-07.md](audits/presubmit-review-2026-11-07.md): pre-submit review of 1.0.3 (build 17) against live 1.0.2 (build 16), no P0 or P1, nothing fixed
 - [presubmit-review-2026-11-08-deep.md](audits/presubmit-review-2026-11-08-deep.md): pre-submit deep review of 1.0.3, no P0, 3 P1 and 1 P2 fixed, 5 P2 risks open
+- [2026-11-20-bug-ux.html](audits/2026-11-20-bug-ux.html): Bug and UX catalog, 2026-11-20: 10 bugs (3 medium, 7 low; 9 confirmed), 19 UX items, October audit items rechecked. Catalog only, nothing fixed.
 
 ## Marketing
 
