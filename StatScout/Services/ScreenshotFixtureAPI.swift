@@ -50,6 +50,7 @@ struct ScreenshotFixtureAPI: StatcastProviding {
 
     static let freshLaunchArgument = "-FixtureFresh"
     static let keepStateArgument = "-FixtureKeepState"
+    static let offlineArgument = "-FixtureOffline"
 
     static let season = StatScoutSeason.current
     private static let priorSeason = season - 1
@@ -79,7 +80,11 @@ struct ScreenshotFixtureAPI: StatcastProviding {
     }
 
     func fetchCurrentPlayers() async throws -> [Player] {
-        Self.playersBySeason[Self.season] ?? []
+        // A phone with no signal, for UI tests of the failed first load.
+        if ProcessInfo.processInfo.arguments.contains(Self.offlineArgument) {
+            throw URLError(.notConnectedToInternet)
+        }
+        return Self.playersBySeason[Self.season] ?? []
     }
 
     func fetchGameLogs(
