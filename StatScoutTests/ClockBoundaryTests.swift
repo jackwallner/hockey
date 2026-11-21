@@ -410,4 +410,46 @@ final class ClockBoundaryTests: XCTestCase {
         let year = eastern.component(.year, from: .now)
         XCTAssertTrue((year - 1...year).contains(StatScoutSeason.current), "\(StatScoutSeason.current)")
     }
+
+    // MARK: Phone zones (2026-11-20 audit)
+
+    /// Runs `body` with the whole process in `identifier`'s zone, as a phone
+    /// set there would be, then puts the zone back.
+    private func inProcessZone(_ identifier: String, _ body: () throws -> Void) rethrows {
+        let savedTZ = getenv("TZ").map { String(cString: $0) }
+        let savedDefault = NSTimeZone.default
+        setenv("TZ", identifier, 1)
+        tzset()
+        NSTimeZone.resetSystemTimeZone()
+        NSTimeZone.default = TimeZone(identifier: identifier)!
+        defer {
+            if let savedTZ { setenv("TZ", savedTZ, 1) } else { unsetenv("TZ") }
+            tzset()
+            NSTimeZone.resetSystemTimeZone()
+            NSTimeZone.default = savedDefault
+        }
+        try body()
+    }
+
+    private func recentForm(asOf: String, weeks: Int) throws -> RecentForm {
+        let json = """
+        {"player_id":1,"season":2026,"player_type":"f","window_weeks":\(weeks),"as_of":"\(asOf)",
+         "games":4,"plays":70,"metrics":{},"prior_metrics":{},"delta":{}}
+        """
+        return try JSONDecoder.statScout.decode(RecentForm.self, from: Data(json.utf8))
+    }
+
+    /// B3: the Recent Form range is Eastern dates. On a Pacific phone,
+    /// formatting Eastern midnight in the phone's zone read a day early
+    /// ("Sep 23 - Oct 6").
+    func testRecentFormRangeReadsTheFeedsDatesOnAPacificPhone() throws {
+        let twoWeeks = try recentForm(asOf: "2026-10-07", weeks: 2)
+        let earlySeason = try recentForm(asOf: "2026-10-12", weeks: 2)
+        let opener = try log("2026-10-07").gameDate
+        try inProcessZone("America/Los_Angeles") {
+            XCTAssertEqual(TimeZone.current.identifier, "America/Los_Angeles", "precondition: the phone is on Pacific time")
+            XCTAssertEqual(twoWeeks.weekRangeLabel, "Sep 24 - Oct 7")
+            XCTAssertEqual(earlySeason.weekRangeLabel(notBefore: opener), "Oct 7 - Oct 12")
+        }
+    }
 }

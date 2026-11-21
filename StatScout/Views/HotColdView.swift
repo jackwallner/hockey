@@ -57,9 +57,11 @@ struct HotColdView: View {
     /// schedule; nil for an older season.
     private var openingDay: Date? {
         guard selectedSeason == viewModel.freeSeason else { return nil }
+        // The schedule date (Eastern midnight), the same calendar as the
+        // rollup's as_of the range label is measured against.
         return viewModel.games
             .filter { $0.seasonPhase == selectedPhase }
-            .map { GameDay.day(of: $0) }
+            .map(\.gameDate)
             .min()
     }
 
