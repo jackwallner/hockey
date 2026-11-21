@@ -277,4 +277,25 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         shot.lifetime = .keepAlways
         add(shot)
     }
+
+    // MARK: - Store messages
+
+    private func attachScreen(_ app: XCUIApplication, _ name: String) {
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = name
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
+    /// The onboarding offer page offers Restore while the player data is
+    /// still loading. The purchase-page harness never loads it, which is the
+    /// slowest first launch there is; the loading line used to take the slot.
+    func testOnboardingOfferPageOffersRestoreBeforeDataLoads() throws {
+        let app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
+        app.launchArguments = ["-PaywallSnapshot", "onboarding", "-ResetUITestState"]
+        app.launch()
+
+        XCTAssertTrue(app.buttons["Restore Purchases"].waitForExistence(timeout: 60))
+        attachScreen(app, "onboarding_offer_restore")
+    }
 }
