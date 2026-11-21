@@ -6,6 +6,8 @@ struct AboutView: View {
     var dataCoverage: DataCoverage?
     var freshness: DataFreshness?
     @State private var paywallTrigger: PaywallTrigger?
+    @State private var restoreMessage: String?
+    @State private var isRestoring = false
 
     private var version: String {
         let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -122,12 +124,23 @@ struct AboutView: View {
 
                 Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline)
                 Button {
-                    Task { await store.restorePurchases() }
+                    restoreMessage = nil
+                    isRestoring = true
+                    Task { @MainActor in
+                        defer { isRestoring = false }
+                        await store.restorePurchases()
+                        restoreMessage = store.lastError
+                    }
                 } label: {
                     HStack {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.caption)
-                        Text("Restore Purchases")
+                        if isRestoring {
+                            ProgressView()
+                                .controlSize(.mini)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.caption)
+                        }
+                        Text(isRestoring ? "Restoring…" : "Restore Purchases")
                             .font(RinkType.smallBold)
                     }
                     .foregroundStyle(RinkPalette.linkBlue)
@@ -135,8 +148,13 @@ struct AboutView: View {
                     .padding(RinkGeo.padCard)
                 }
                 .buttonStyle(.plain)
+                .disabled(isRestoring)
 
-                if let error = store.lastError {
+                // Only the outcome of a restore run here. `store.lastError` is
+                // shared by every store call, so a background refresh that
+                // failed offline printed a billing error under "StatScout+
+                // Unlocked".
+                if let error = restoreMessage {
                     Rectangle().fill(RinkPalette.divider).frame(height: RinkGeo.hairline)
                     Text(error)
                         .font(RinkType.small)
