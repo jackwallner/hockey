@@ -252,4 +252,29 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Heating up"].firstMatch.waitForExistence(timeout: loadTimeout) || app.staticTexts["Heating up"].exists)
         XCTAssertTrue(row("Callum Therrien", in: app).waitForExistence(timeout: 30) || app.staticTexts["Callum Therrien"].exists)
     }
+
+    // MARK: - Failed first load
+
+    /// A first launch with no signal, on the Standard board (the default).
+    /// It used to read "No data available" with no way to try again; it now
+    /// shows the Advanced board's "No connection" state with Retry.
+    func testStandardBoardOfflineFirstLoadOffersRetry() throws {
+        let app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
+        app.launchArguments += [
+            "-ScreenshotData",
+            "-FixtureOffline",
+            "-hasCompletedOnboarding", "YES",
+            "-ResetUITestState",
+            "-StartTab", "stats",
+        ]
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["No connection"].waitForExistence(timeout: loadTimeout))
+        XCTAssertTrue(app.buttons["Retry"].exists)
+        XCTAssertFalse(app.staticTexts["No data available"].exists)
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "standard_board_offline"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
 }

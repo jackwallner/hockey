@@ -280,6 +280,17 @@ struct StandardStatsLeadersView: View {
             if viewModel?.isLoading == true && players.isEmpty {
                 ProgressView("Loading player stats")
                     .padding(.vertical, 48)
+            } else if let viewModel, let errorMessage = viewModel.errorMessage,
+                      players.isEmpty, trimmedQuery.isEmpty {
+                BoardLoadFailureState(viewModel: viewModel, errorMessage: errorMessage)
+                    .padding(.vertical, 24)
+                    .frame(minHeight: 200)
+                    .background(RinkPalette.surface)
+            } else if let viewModel, viewModel.isHistoricalLoading, players.isEmpty {
+                BoardSeasonLoadingState(season: viewModel.selectedSeason)
+                    .padding(.vertical, 40)
+                    .frame(maxWidth: .infinity, minHeight: 200)
+                    .background(RinkPalette.surface)
             } else if sortedPlayers.isEmpty && trimmedQuery.isEmpty {
                 ContentUnavailableView {
                     Label("No data available", systemImage: "chart.bar")
