@@ -148,7 +148,13 @@ extension RecentFormWindow {
     /// first. The league board anchors on the league's latest game; a card
     /// that holds one player's or one club's logs anchors on the latest game
     /// in them.
-    static func logs(_ logs: [PlayerGameLog], weeks: Int, calendar: Calendar = .current) -> [PlayerGameLog] {
+    ///
+    /// Game dates are Eastern midnight, so the days are counted on an Eastern
+    /// calendar. The phone's calendar kept its own wall-clock time across the
+    /// subtraction, which drifts against Eastern midnight when the two zones
+    /// change clocks on different dates (Arizona, Europe), and the window
+    /// gained a 29th day.
+    static func logs(_ logs: [PlayerGameLog], weeks: Int, calendar: Calendar = .easternGregorian) -> [PlayerGameLog] {
         guard let anchor = logs.map(\.gameDate).max() else { return [] }
         let start = calendar.date(byAdding: .day, value: -(weeks * 7), to: anchor) ?? anchor
         return logs.filter { $0.gameDate > start }.sorted { $0.gameDate > $1.gameDate }

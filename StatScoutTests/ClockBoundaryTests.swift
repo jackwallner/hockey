@@ -452,4 +452,15 @@ final class ClockBoundaryTests: XCTestCase {
             XCTAssertEqual(earlySeason.weekRangeLabel(notBefore: opener), "Oct 7 - Oct 12")
         }
     }
+
+    /// B10: a four-week window is 28 Eastern dates on any phone. Across New
+    /// York's spring change, a calendar in a zone that keeps its clocks
+    /// (Arizona, and UTC) counted the game exactly 28 days back as well.
+    func testTrailingWindowIgnoresThePhonesClockChanges() throws {
+        let logs = try ["2027-03-07", "2027-03-20", "2027-04-04"].map(log)
+        try inProcessZone("America/Phoenix") {
+            let window = RecentFormWindow.logs(logs, weeks: 4)
+            XCTAssertEqual(window.map(\.gameDate), try ["2027-04-04", "2027-03-20"].map { try log($0).gameDate })
+        }
+    }
 }
