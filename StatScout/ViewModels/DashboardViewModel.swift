@@ -39,8 +39,15 @@ final class DashboardViewModel {
                 index[slice, default: []].append(player)
             }
         }
+        let previousFreeSeason = freeSeason
         seasonIndex = index
         historyGeneration += 1
+        // The board opened on the free season follows it when it moves, so
+        // the first rows of a new season (or the preseason fallback) do not
+        // leave it on a year that is empty or now locked.
+        if freeSeason != previousFreeSeason, selectedSeason == previousFreeSeason {
+            selectedSeason = freeSeason
+        }
     }
 
     var searchText = ""
@@ -113,9 +120,25 @@ final class DashboardViewModel {
     // selectedSeason clamping stay consistent without the VM depending on the store.
     var isPro: Bool = false
 
-    /// The season a free user gets: the live season, whatever has loaded.
-    /// See `StatScoutSeason.free`.
-    var freeSeason: Int { StatScoutSeason.free }
+    /// The season a free user gets, and the one every screen opens on.
+    ///
+    /// The live season (`StatScoutSeason.free`) from its first row on, opening
+    /// night included. Before that, from the 1 September rollover until the
+    /// first game is final in October, the pipeline has nothing for it, so
+    /// last season stays free: otherwise every free user opened on an empty
+    /// board with the only season that had data behind the paywall.
+    var freeSeason: Int {
+        let live = StatScoutSeason.free
+        let hasRows = { (season: Int) in self.seasonIndex.keys.contains { $0.season == season } }
+        guard !hasRows(live), hasRows(live - 1) else { return live }
+        return live - 1
+    }
+
+    /// The season the Games tab, standings and power ratings read: the
+    /// calendar's. Its schedule is published before its first game, so in the
+    /// preseason Games shows what is coming while the boards stay on last
+    /// season's rows.
+    var scheduleSeason: Int { StatScoutSeason.current }
 
     func isSeasonLocked(_ season: Int) -> Bool {
         !isPro && season != freeSeason
@@ -539,7 +562,7 @@ final class DashboardViewModel {
     private func performGamesLoad() async {
         defer { gamesTask = nil }
         isGamesLoading = games.isEmpty
-        let season = freeSeason
+        let season = scheduleSeason
         do {
             async let schedule = provider.fetchGames(season: season)
             async let withStats = provider.fetchGameIdsWithStats(season: season)
@@ -1393,7 +1416,7 @@ final class DashboardViewModel {
         localLastCheckedAt = now
 
         do {
-            guard let remote = try await provider.fetchDataFreshness(season: freeSeason) else {
+            guard let remote = try await provider.fetchDataFreshness(season: StatScoutSeason.current) else {
                 // The endpoint is optional while the backend rolls out. The
                 // player load remains the source of truth in that case.
                 return .unavailable
@@ -1736,8 +1759,9 @@ final class DashboardViewModel {
 
         self.playerHistories = histories
         self.players = latestPlayers
-        // No auto-jump to an older season when the live one is thin or empty:
-        // the live season is the default for everyone, Pro included.
+        // No auto-jump to an older season when the live one is thin: from its
+        // first row the live season is the default for everyone, Pro included.
+        // Only a live season with no rows at all hands over (`freeSeason`).
 
         recomputeTeamCache()
     }

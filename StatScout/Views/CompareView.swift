@@ -1203,7 +1203,7 @@ struct CompareTeamPicker: View {
 extension CompareView {
     /// The club's own numbers when the side is the live regular season.
     func clubSeason(_ team: String, season: Int, phase: SeasonPhase) -> ClubSeason? {
-        guard season == viewModel.freeSeason, phase == .regular else { return nil }
+        guard season == viewModel.scheduleSeason, phase == .regular else { return nil }
         let abbr = normalizedTeamAbbreviation(team)
         return ClubSeason(
             standing: viewModel.standings[abbr],

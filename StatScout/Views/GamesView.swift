@@ -222,7 +222,7 @@ struct GamesView: View {
                     systemImage: viewModel.gamesError == nil ? "calendar" : "wifi.slash"
                 )
             } description: {
-                Text(viewModel.gamesError ?? "The \(SeasonLabel.display(viewModel.freeSeason)) schedule isn't published yet.")
+                Text(viewModel.gamesError ?? "The \(SeasonLabel.display(viewModel.scheduleSeason)) schedule isn't published yet.")
             } actions: {
                 Button("Try Again") {
                     Task { await viewModel.loadGames(force: true) }

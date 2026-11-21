@@ -217,7 +217,7 @@ struct RootTabView: View {
                 viewModel: viewModel,
                 isActive: selection == Tab.games.rawValue
             )
-                .navigationTitle("Games · \(SeasonLabel.display(viewModel.freeSeason))")
+                .navigationTitle("Games · \(SeasonLabel.display(viewModel.scheduleSeason))")
                 .navigationBarTitleDisplayMode(.inline)
                 .modifier(RinkNavBar())
                 .modifier(HomeTabToolbar(lastUpdated: viewModel.lastUpdated, dataCoverage: viewModel.dataCoverage, freshness: viewModel.dataFreshness))

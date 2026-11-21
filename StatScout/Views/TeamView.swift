@@ -226,7 +226,7 @@ struct TeamView: View {
                     )
                         .padding(.horizontal, 12)
                         .padding(.top, 10)
-                    if displaySeason == viewModel.freeSeason {
+                    if displaySeason == viewModel.scheduleSeason {
                         TeamGameCard(viewModel: viewModel, team: team)
                             .padding(.horizontal, 12)
                             .padding(.top, 10)
