@@ -34,8 +34,12 @@ struct FollowPlayersSheet: View {
 
     private var followed: [Player] {
         // Ordered by when they were followed, matching the Trends board.
+        // Everyone followed, not just those with a row in the selected
+        // season: a rookie followed this year vanished from the list (and
+        // could not be unfollowed here) while a past season was selected.
+        // Those fall back to their newest row.
         favorites.playerIds.compactMap { id in
-            allPlayers.first { $0.playerId == id }
+            allPlayers.first { $0.playerId == id } ?? viewModel.playerHistories[id]?.first
         }
     }
 
