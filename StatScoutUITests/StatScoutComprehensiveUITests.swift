@@ -298,4 +298,49 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Restore Purchases"].waitForExistence(timeout: 60))
         attachScreen(app, "onboarding_offer_restore")
     }
+
+    /// Settings shows the result of its own Restore, not whatever another
+    /// store call last left in the shared error. A restore on the onboarding
+    /// page (which fails on a simulator) used to be repeated under the
+    /// STATSCOUT+ card.
+    func testSettingsShowsOnlyItsOwnRestoreResult() throws {
+        let simulatorRestore = "Purchases are unavailable in simulator builds."
+        let app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
+        app.launchArguments += [
+            "-ScreenshotData", "-FixtureFresh", "-MockProducts", "-ResetUITestState",
+            "-StartTab", "stats",
+        ]
+        app.launch()
+
+        let continueButton = app.buttons["Continue"].firstMatch
+        XCTAssertTrue(continueButton.waitForExistence(timeout: loadTimeout), "Onboarding should open")
+        var taps = 0
+        while continueButton.exists, taps < 4 {
+            continueButton.tap()
+            taps += 1
+            Thread.sleep(forTimeInterval: 1)
+        }
+        let restore = app.buttons["Restore Purchases"].firstMatch
+        XCTAssertTrue(restore.waitForExistence(timeout: 30))
+        restore.tap()
+        XCTAssertTrue(app.staticTexts[simulatorRestore].waitForExistence(timeout: 20), "precondition: the store holds an error")
+        app.buttons["Get Started"].firstMatch.tap()
+
+        XCTAssertTrue(waitForBoard(in: app), "Stats should open")
+        var gear = app.buttons["Settings"].firstMatch
+        if !gear.waitForExistence(timeout: 10) {
+            let bar = app.navigationBars.buttons
+            bar.element(boundBy: max(bar.count - 1, 0)).tap()
+            gear = app.buttons["Settings"].firstMatch
+        }
+        gear.tap()
+        let settingsRestore = app.buttons["Restore Purchases"].firstMatch
+        XCTAssertTrue(settingsRestore.waitForExistence(timeout: 30), "Settings should open")
+        XCTAssertFalse(app.staticTexts[simulatorRestore].exists, "no stale store error in Settings")
+        attachScreen(app, "settings_before_restore")
+
+        settingsRestore.tap()
+        XCTAssertTrue(app.staticTexts[simulatorRestore].waitForExistence(timeout: 20), "its own restore result shows")
+        attachScreen(app, "settings_after_restore")
+    }
 }
