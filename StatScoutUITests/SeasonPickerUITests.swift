@@ -134,4 +134,34 @@ final class SeasonPickerUITests: XCTestCase {
             "Choosing Playoffs should be reflected in the pill, got \(value ?? "nil")"
         )
     }
+
+    /// The Follow Players sheet lists everyone followed whatever season is
+    /// selected. With a season the followed players have no row in (All Time
+    /// on the fixture), it used to read FOLLOWING (0) with no row to unfollow.
+    func testFollowPlayersListsEveryFollowedPlayerOnAnySeason() throws {
+        app.terminate()
+        app.launchEnvironment["FORCE_PRO"] = "1"
+        app.launchEnvironment["STATSCOUT_FORCE_PRO"] = "1"
+        app.launch()
+        XCTAssertTrue(waitForBoard(), "Leaderboard should appear")
+
+        let control = seasonControl()
+        XCTAssertTrue(control.waitForExistence(timeout: 15))
+        control.tap()
+        let allTime = app.buttons["All Time"]
+        XCTAssertTrue(allTime.waitForExistence(timeout: 20))
+        allTime.tap()
+
+        app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Compare")).firstMatch.tap()
+        let edit = app.buttons["Edit"].firstMatch
+        let follow = app.buttons["Follow players"].firstMatch
+        XCTAssertTrue(edit.waitForExistence(timeout: 20) || follow.exists, "Compare should offer the follow sheet")
+        (edit.exists ? edit : follow).tap()
+
+        XCTAssertTrue(app.staticTexts["FOLLOWING (3)"].waitForExistence(timeout: 20), "all three seeded follows are listed")
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "follow_players_all_time"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
 }
