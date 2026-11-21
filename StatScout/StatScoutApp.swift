@@ -393,21 +393,15 @@ struct OnboardingCards: View {
             }
 
             // --- Fixed 24pt footer slot BELOW the button, identical every page.
-            // On the last page it carries Restore (or the loading state); on the
-            // others it is empty. Its constant height is what keeps the button's
-            // bottom edge, and therefore its Y, pinned across pages.
+            // On the last page it carries Restore (or, for a Pro user, the
+            // loading state); on the others it is empty. Its constant height
+            // is what keeps the button's bottom edge, and therefore its Y,
+            // pinned across pages.
             Group {
-                if isLastPage, !dataReady {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .tint(RinkPalette.inkSecondary)
-                            .scaleEffect(0.7)
-                        Text(viewModel.loadingMessage)
-                            .font(RinkType.micro)
-                    }
-                    .foregroundStyle(RinkPalette.inkSecondary)
-                } else if isLastPage && !store.isPro {
+                // Restore comes first: it needs no player data, and a returning
+                // subscriber on a slow first load had no way to restore while
+                // the loading line held this slot.
+                if isLastPage && !store.isPro {
                     Button {
                         // Surface the outcome through the same trialError line the
                         // purchase CTA uses, a restore that silently does nothing
@@ -430,6 +424,16 @@ struct OnboardingCards: View {
                     .contentShape(Rectangle())
                     .buttonStyle(.plain)
                     .disabled(isRestoring)
+                } else if isLastPage, !dataReady {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .tint(RinkPalette.inkSecondary)
+                            .scaleEffect(0.7)
+                        Text(viewModel.loadingMessage)
+                            .font(RinkType.micro)
+                    }
+                    .foregroundStyle(RinkPalette.inkSecondary)
                 } else {
                     Color.clear
                 }
