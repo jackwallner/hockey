@@ -124,13 +124,18 @@ struct RecentForm: Codable, Hashable, Sendable, Identifiable {
     /// anchor date.
     var weekRangeLabel: String? { weekRangeLabel(notBefore: nil) }
 
-    /// The span, starting no earlier than `notBefore` (opening night), so a
-    /// two-week window a few days into the season does not claim September.
+    /// The span, starting no earlier than `notBefore` (opening night, an
+    /// Eastern game date), so a two-week window a few days into the season
+    /// does not claim September.
+    ///
+    /// `asOf` is Eastern midnight, so the day arithmetic and the formatting
+    /// are Eastern too. In the phone's zone, Eastern midnight is the evening
+    /// before anywhere west of New York, and the label read a day early.
     func weekRangeLabel(notBefore: Date?) -> String? {
         guard let asOf else { return nil }
-        var start = Calendar.current.date(byAdding: .day, value: -(windowWeeks * 7 - 1), to: asOf) ?? asOf
+        var start = Calendar.easternGregorian.date(byAdding: .day, value: -(windowWeeks * 7 - 1), to: asOf) ?? asOf
         if let notBefore, notBefore > start, notBefore <= asOf { start = notBefore }
-        let style = Date.FormatStyle().month(.abbreviated).day()
+        let style = DataCoverage.gameDayStyle
         return "\(start.formatted(style)) - \(asOf.formatted(style))"
     }
 

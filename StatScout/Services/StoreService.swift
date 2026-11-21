@@ -144,6 +144,14 @@ extension Calendar {
         calendar.timeZone = timeZone
         return calendar
     }
+
+    /// The league's calendar: Gregorian, New York time. Game dates are stored
+    /// at its midnight.
+    static var easternGregorian: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/New_York") ?? .current
+        return calendar
+    }
 }
 
 enum StatScoutLegal {
