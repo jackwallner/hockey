@@ -598,7 +598,16 @@ final class StoreService: NSObject, ObservableObject {
     }
 
     /// Reports a custom-paywall impression to RevenueCat (required for native UI).
+    #if DEBUG
+    /// Every impression a surface asked for, before the configure guard, so a
+    /// hosted test can see which surfaces report without RevenueCat.
+    var requestedPaywallImpressions: [String] = []
+    #endif
+
     func trackPaywallImpression(id: String, oncePerSession: Bool = false) {
+        #if DEBUG
+        requestedPaywallImpressions.append(id)
+        #endif
         guard configureIfNeeded() else { return }
         #if DEBUG
         if ProcessInfo.processInfo.environment["FORCE_PRO"] == "1" { return }
