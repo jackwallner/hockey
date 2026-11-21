@@ -204,8 +204,17 @@ struct GameDay: Hashable, Identifiable, Sendable {
     /// Start of the day in the phone's calendar.
     let date: Date
     let phase: SeasonPhase
+    let id: String
 
-    var id: String { "\(phase.rawValue)-\(Self.key(date))" }
+    /// `calendar` is the one `date` is a start of day in. The id is that
+    /// calendar's own year, month and day: a GMT-formatted instant gave the
+    /// London 29th and 30th of March (clocks forward) the same id, and one of
+    /// the two days vanished from the Games tab.
+    init(date: Date, phase: SeasonPhase, calendar: Calendar = .current) {
+        self.date = date
+        self.phase = phase
+        self.id = "\(phase.rawValue)-\(Self.key(date, calendar: calendar))"
+    }
 
     /// "Today", "Yesterday", "Tomorrow", else "Tue, Oct 7".
     func label(now: Date = .now, calendar: Calendar = .current) -> String {
@@ -232,8 +241,9 @@ struct GameDay: Hashable, Identifiable, Sendable {
         }
     }
 
-    static func key(_ date: Date) -> String {
-        date.formatted(.iso8601.year().month().day())
+    static func key(_ date: Date, calendar: Calendar = .current) -> String {
+        let parts = calendar.gregorian.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
     }
 
     /// The local calendar day a game belongs to, from its start time when
@@ -246,7 +256,7 @@ struct GameDay: Hashable, Identifiable, Sendable {
     static func days(in games: [Game], calendar: Calendar = .current) -> [GameDay] {
         var seen: [String: GameDay] = [:]
         for game in games {
-            let day = GameDay(date: day(of: game, calendar: calendar), phase: game.seasonPhase)
+            let day = GameDay(date: day(of: game, calendar: calendar), phase: game.seasonPhase, calendar: calendar)
             seen[day.id] = day
         }
         return seen.values.sorted { $0.date < $1.date }

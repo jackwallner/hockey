@@ -463,4 +463,17 @@ final class ClockBoundaryTests: XCTestCase {
             XCTAssertEqual(window.map(\.gameDate), try ["2027-04-04", "2027-03-20"].map { try log($0).gameDate })
         }
     }
+
+    /// B9: in London the spring-forward Sunday and the Monday after it are
+    /// two Games tab days. Their ids came from a GMT-formatted instant, so both
+    /// read 2026-03-29 and one day replaced the other.
+    func testLondonSpringForwardKeepsBothDays() {
+        var london = Calendar(identifier: .gregorian)
+        london.timeZone = TimeZone(identifier: "Europe/London")!
+        let sunday = game("sun", kickoff: local(london, 2026, 3, 29, 15, 0))
+        let monday = game("mon", kickoff: local(london, 2026, 3, 30, 0, 30))
+        let days = GameDay.days(in: [sunday, monday], calendar: london)
+        XCTAssertEqual(days.map(\.id), ["REG-2026-03-29", "REG-2026-03-30"])
+        XCTAssertEqual(days.map { $0.games(from: [sunday, monday], calendar: london).map(\.id) }, [["sun"], ["mon"]])
+    }
 }
