@@ -170,6 +170,12 @@ struct OnboardingCards: View {
     @State private var trialError: String?
     @State private var isRestoring = false
 
+    init(viewModel: DashboardViewModel, hasCompletedOnboarding: Binding<Bool>, initialPage: Int = 0) {
+        self.viewModel = viewModel
+        _hasCompletedOnboarding = hasCompletedOnboarding
+        _currentPage = State(initialValue: initialPage)
+    }
+
     private var isLastPage: Bool { currentPage == pages.count - 1 }
     private var dataReady: Bool { viewModel.isReady }
     private var showsUpsellBlock: Bool { isLastPage && !store.isPro }
@@ -267,6 +273,13 @@ struct OnboardingCards: View {
             if store.currentOffering == nil {
                 await store.fetchProducts()
             }
+        }
+        // The last page is a paywall: price, disclosure and a buy button.
+        // Without its own impression an onboarding purchase was credited to
+        // whichever surface had reported last.
+        .task(id: isLastPage) {
+            guard isLastPage, !store.isPro else { return }
+            store.trackPaywallImpression(id: PaywallTrigger.onboarding.paywallImpressionId, oncePerSession: true)
         }
         #if DEBUG
         // Screenshot harness: open on the page that carries the purchase CTA,

@@ -216,6 +216,50 @@ final class StateMachineRegressionTests: XCTestCase {
         await waitFor(5) { provider.seasons.contains(live) }
         XCTAssertTrue(provider.seasons.contains(live), "after a lapse Trends moves to the live season")
     }
+
+    // MARK: - 2026-11-20 audit B7: paywall impressions
+
+    private var requested: [String] { StoreService.shared.requestedPaywallImpressions }
+
+    /// The tab bar keeps every tab alive at opacity 0. The locked Compare and
+    /// Trends gates on tabs nobody opened used to report paywall views at
+    /// launch.
+    func testHiddenTabsDoNotCountAsPaywallViews() async throws {
+        XCTAssertFalse(StoreService.shared.isPro, "precondition: a free user")
+        StoreService.shared.requestedPaywallImpressions = []
+        let vm = DashboardViewModel(provider: MockProvider(players: []))
+
+        try host(RootTabView(viewModel: vm))
+        await sleep(3)
+
+        XCTAssertFalse(requested.contains(PaywallTrigger.playerComparison.paywallImpressionId), "\(requested)")
+        XCTAssertFalse(requested.contains(PaywallTrigger.recentForm.paywallImpressionId), "\(requested)")
+    }
+
+    /// A gate that is actually on screen still reports.
+    func testAVisibleGateCountsAsAPaywallView() async throws {
+        StoreService.shared.requestedPaywallImpressions = []
+
+        try host(BlurGateUnlock(headline: "Locked", trigger: .playerComparison))
+        let id = PaywallTrigger.playerComparison.paywallImpressionId
+        await waitFor(5) { self.requested.contains(id) }
+
+        XCTAssertTrue(requested.contains(id), "\(requested)")
+    }
+
+    /// The onboarding offer page reports its own view, so an onboarding
+    /// purchase is credited to onboarding.
+    func testTheOnboardingOfferPageCountsAsAPaywallView() async throws {
+        XCTAssertFalse(StoreService.shared.isPro, "precondition: a free user")
+        StoreService.shared.requestedPaywallImpressions = []
+        let vm = DashboardViewModel(provider: MockProvider(players: []))
+        let id = PaywallTrigger.onboarding.paywallImpressionId
+
+        try host(OnboardingCards(viewModel: vm, hasCompletedOnboarding: .constant(false), initialPage: 2))
+        await waitFor(5) { self.requested.contains(id) }
+
+        XCTAssertTrue(requested.contains(id), "\(requested)")
+    }
 }
 
 @Observable

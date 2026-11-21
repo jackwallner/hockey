@@ -108,6 +108,7 @@ struct RootTabView: View {
             ZStack {
                 ForEach(Tab.allCases) { tab in
                     tabContent(tab)
+                        .environment(\.isSelectedTab, selection == tab.rawValue)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .opacity(selection == tab.rawValue ? 1 : 0)
                         .allowsHitTesting(selection == tab.rawValue)

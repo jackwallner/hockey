@@ -940,6 +940,13 @@ struct StatGlossaryLink: View {
 /// still there for anyone who wants to weigh monthly against lifetime, but it's
 /// a quiet text link rather than a toll gate, and it's also where a failed
 /// product load lands because that's the only screen that can retry.
+extension EnvironmentValues {
+    /// False inside a tab that `RootTabView` keeps alive but hidden. Views
+    /// outside the tab shell (onboarding, sheets from a visible screen) are
+    /// on screen, hence the default.
+    @Entry var isSelectedTab: Bool = true
+}
+
 struct PlusDirectCTA: View {
     enum Style {
         /// Compact pill, for the bottom of a blurred teaser.
@@ -949,6 +956,7 @@ struct PlusDirectCTA: View {
     }
 
     @EnvironmentObject private var store: StoreService
+    @Environment(\.isSelectedTab) private var isSelectedTab
 
     let trigger: PaywallTrigger
     var style: Style = .bar
@@ -1021,8 +1029,14 @@ struct PlusDirectCTA: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .task {
+        // Counted once it is on the selected tab. The tab bar keeps every tab
+        // alive at opacity 0, which still runs `.task`, so every launch counted
+        // the hidden Trends and Compare gates as paywall views.
+        .task(id: isSelectedTab) {
+            guard isSelectedTab else { return }
             store.trackPaywallImpression(id: trigger.paywallImpressionId, oncePerSession: true)
+        }
+        .task {
             if store.currentOffering == nil { await store.fetchProducts() }
         }
         .sheet(isPresented: $showingPlans) {
