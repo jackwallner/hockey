@@ -264,6 +264,11 @@ struct OnboardingCards: View {
                 }
 
                 bottomButtons
+                    // The purchase block sits under the pages and grows upward,
+                    // so at the accessibility sizes it took the whole screen
+                    // and squeezed the page out. Capped as one block, price and
+                    // button keep their order of prominence.
+                    .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                     .padding(.horizontal, 24)
                     .padding(.bottom, 32)
             }
@@ -359,7 +364,8 @@ struct OnboardingCards: View {
                 Text(store.monthlyPackage?.priceLabel ?? " ")
                     .font(RinkType.priceLead)
                     .foregroundStyle(RinkPalette.ink)
-                    .frame(height: 22)
+                    .multilineTextAlignment(.center)
+                    .frame(minHeight: 22)
             }
             .opacity(showsUpsellBlock ? 1 : 0)
             .allowsHitTesting(showsUpsellBlock)
@@ -374,7 +380,12 @@ struct OnboardingCards: View {
                         buyMonthly()
                     } label: {
                         ZStack {
+                            // Wraps rather than truncates at large text sizes:
+                            // this label names what the tap buys.
                             Text(proCTALabel)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
                                 .opacity(isStartingTrial ? 0 : 1)
                             if isStartingTrial {
                                 ProgressView().tint(.white)
@@ -383,7 +394,7 @@ struct OnboardingCards: View {
                         .font(RinkType.bodyBold)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 52)
+                        .frame(minHeight: 52)
                         .background(RinkPalette.turf)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
@@ -582,9 +593,14 @@ struct OnboardingCard: View {
     var body: some View {
         // Drops the art when the slot is short (an unfolded Duo, landscape):
         // the copy must be set in full, never truncated.
+        // At the largest text sizes even that is taller than the slot, and the
+        // title and bullets were pushed up under the top edge; then it scrolls.
         ViewThatFits(in: .vertical) {
             cardContent(showsArt: true)
             cardContent(showsArt: false)
+            ScrollView {
+                cardContent(showsArt: false)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

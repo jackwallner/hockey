@@ -343,4 +343,63 @@ final class StatScoutComprehensiveUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts[simulatorRestore].waitForExistence(timeout: 20), "its own restore result shows")
         attachScreen(app, "settings_after_restore")
     }
+
+    // MARK: - Largest text size
+
+    private func launchAtLargestText(_ mode: String) -> XCUIApplication {
+        let app = XCUIApplication(bundleIdentifier: "com.jackwallner.hockey")
+        app.launchArguments = [
+            "-PaywallSnapshot", mode, "-ResetUITestState",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+        ]
+        app.launch()
+        return app
+    }
+
+    private func purchaseButton(in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Start ", "Try StatScout+")
+        ).firstMatch
+    }
+
+    /// At the largest accessibility size the onboarding offer page keeps its
+    /// heading on screen and the billed price clear of the buy button. The
+    /// purchase block used to fill the screen, pushing the heading up under
+    /// the top edge, with the price sitting on the button's edge.
+    func testOnboardingOfferPageFitsAtTheLargestTextSize() throws {
+        let app = launchAtLargestText("onboarding")
+        let price = app.staticTexts.matching(NSPredicate(format: "label ENDSWITH %@", "/ month")).firstMatch
+        XCTAssertTrue(price.waitForExistence(timeout: 60), "the billed price should show")
+        let buy = purchaseButton(in: app)
+        XCTAssertTrue(buy.exists, "the buy button should show")
+        let title = app.staticTexts["Go Deeper\nwith StatScout+"]
+        XCTAssertTrue(title.exists)
+        attachScreen(app, "onboarding_offer_ax5")
+
+        let screen = app.windows.firstMatch.frame
+        XCTAssertLessThanOrEqual(price.frame.maxY, buy.frame.minY + 1, "price clear of the button")
+        XCTAssertLessThanOrEqual(buy.frame.maxY, screen.maxY)
+        XCTAssertGreaterThanOrEqual(title.frame.minY, screen.minY + 44, "heading below the top bar")
+    }
+
+    /// The trial pitch at the largest accessibility size: price above the
+    /// button, and the legal links and the way out still on screen.
+    func testTrialPitchFitsAtTheLargestTextSize() throws {
+        let app = launchAtLargestText("trial")
+        let price = app.staticTexts.matching(NSPredicate(format: "label ENDSWITH %@", "/ year")).firstMatch
+        XCTAssertTrue(price.waitForExistence(timeout: 60), "the billed price should show")
+        let buy = purchaseButton(in: app)
+        XCTAssertTrue(buy.exists, "the buy button should show")
+        Thread.sleep(forTimeInterval: 2)
+        attachScreen(app, "trial_pitch_ax5")
+
+        let screen = app.windows.firstMatch.frame
+        XCTAssertLessThanOrEqual(price.frame.maxY, buy.frame.minY + 1, "price clear of the button")
+        for label in ["Terms", "Maybe later"] {
+            let element = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+            XCTAssertTrue(element.exists, label)
+            XCTAssertLessThanOrEqual(element.frame.maxY, screen.maxY, "\(label) on screen")
+            XCTAssertGreaterThanOrEqual(element.frame.minY, screen.minY, "\(label) on screen")
+        }
+    }
 }

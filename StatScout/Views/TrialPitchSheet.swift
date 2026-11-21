@@ -221,6 +221,10 @@ struct TrialPitchSheet: View {
             .tracking(0.3)
             .foregroundStyle(RinkPalette.inkSecondary)
         }
+        // Pinned under the scrolling benefits, so it is capped as one block:
+        // at the accessibility sizes it outgrew the sheet and pushed the
+        // price and links out of view.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .padding(.horizontal, 20)
         .padding(.top, 12)
         .padding(.bottom, 10)

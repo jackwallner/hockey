@@ -985,7 +985,7 @@ struct PlusDirectCTA: View {
                 .font(RinkType.priceLead)
                 .foregroundStyle(RinkPalette.ink)
                 .multilineTextAlignment(.center)
-                .frame(height: 22)
+                .frame(minHeight: 22)
 
             Button(action: buy) {
                 label
@@ -1056,17 +1056,23 @@ struct PlusDirectCTA: View {
                         .font(.system(size: 11))
                     Text(store.directCTALabel(for: trigger))
                         .font(RinkType.bodyBold)
+                        .multilineTextAlignment(.center)
                 }
             }
             .foregroundStyle(.white)
             .padding(.horizontal, 22)
-            .frame(height: 42)
+            .padding(.vertical, 6)
+            .frame(minHeight: 42)
             .background(RinkPalette.turf)
             .clipShape(Capsule())
         case .bar:
             ZStack {
+                // Wraps rather than truncates at large text sizes.
                 Text(store.directCTALabel(for: trigger))
                     .font(RinkType.bodyBold)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .opacity(isPurchasing ? 0 : 1)
                 if isPurchasing {
                     ProgressView().tint(.white)
@@ -1074,7 +1080,7 @@ struct PlusDirectCTA: View {
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 50)
+            .frame(minHeight: 50)
             .background(RinkPalette.turf)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
