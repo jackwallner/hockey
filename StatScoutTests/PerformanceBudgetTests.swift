@@ -144,7 +144,9 @@ final class PerformanceBudgetTests: XCTestCase {
     func testSeasonAndPositionSwitchingStaysWithinBudget() async {
         let vm = await openedViewModel()
         let seasons = vm.availableSeasons
-        XCTAssertGreaterThan(seasons.count, 19)
+        // The fixture stops at last season, so the menu is All Time plus
+        // 2008-09 through last season (no empty live season).
+        XCTAssertEqual(seasons.count, StatScoutSeason.current - StatScoutSeason.earliest + 1)
         let elapsed = measure("switch \(seasons.count) seasons x 5 positions") {
             for season in seasons {
                 vm.selectSeason(season)

@@ -141,7 +141,7 @@ struct TeamScheduleView: View {
             LazyVStack(spacing: 0) {
                 VStack(spacing: 0) {
                     RinkSectionBar(
-                        title: "\(SeasonLabel.display(viewModel.freeSeason)) schedule",
+                        title: "\(SeasonLabel.display(viewModel.scheduleSeason)) schedule",
                         trailing: viewModel.record(forTeam: team).map {
                             AnyView(Text($0).font(RinkType.statSmall).foregroundStyle(RinkPalette.inkSecondary))
                         }

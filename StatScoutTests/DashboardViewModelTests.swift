@@ -312,26 +312,50 @@ final class DashboardViewModelTests: XCTestCase {
         XCTAssertFalse(vm.isSeasonLocked(StatScoutSeason.allTime))
     }
 
-    /// The free season is the calendar's season, even before its data lands.
+    /// Preseason: the calendar has named the new season (1 September) but its
+    /// first game is not final yet, so the feed holds only last season.
     ///
-    /// The model: the live season is free and the default for
-    /// everyone from the day it starts; every earlier season is StatScout+. It
-    /// used to trail the data, which kept 2025 free and 2026 hidden after the
-    /// 2026 opener had been played.
+    /// Last season stays free and is the board everyone opens on, Pro too. It
+    /// used to flip on the calendar alone, which left every free user on an
+    /// empty board for about five weeks with the only season that had data
+    /// behind the paywall (bug B1, 2026-11-20 audit).
     @MainActor
-    func testFreeSeasonIsTheCalendarSeasonEvenBeforeItsDataLands() async {
-        let stale = makeCompleteSeasonPlayers(
-            season: StatScoutSeason.current - 1,
-            namePrefix: "LastYear"
-        )
-        let vm = DashboardViewModel(provider: MockProvider(players: stale))
+    func testLastSeasonStaysFreeUntilTheNewSeasonHasRows() async {
+        let lastSeason = StatScoutSeason.current - 1
+        let stale = makeCompleteSeasonPlayers(season: lastSeason, namePrefix: "LastYear")
 
+        for pro in [false, true] {
+            let vm = DashboardViewModel(provider: MockProvider(players: stale))
+            vm.applyProState(pro)
+
+            await vm.load()
+
+            XCTAssertEqual(vm.freeSeason, lastSeason, "pro=\(pro)")
+            XCTAssertEqual(vm.selectedSeason, lastSeason, "pro=\(pro): opens on the season that has rows")
+            XCTAssertFalse(vm.isSeasonLocked(lastSeason), "pro=\(pro)")
+            XCTAssertFalse(vm.seasonPlayers.isEmpty, "pro=\(pro): the default board is not empty")
+            XCTAssertEqual(vm.recentFormSeasons.first, lastSeason)
+        }
+    }
+
+    /// The first rows of the new season move the free season, and the board
+    /// sitting on the old default, along with them.
+    @MainActor
+    func testTheBoardFollowsTheNewSeasonWhenItsFirstRowsLand() async {
+        let lastSeason = StatScoutSeason.current - 1
+        let provider = SwitchableProvider(
+            players: makeCompleteSeasonPlayers(season: lastSeason, namePrefix: "LastYear")
+        )
+        let vm = DashboardViewModel(provider: provider)
+        await vm.load()
+        XCTAssertEqual(vm.selectedSeason, lastSeason)
+
+        provider.players = makeCompleteCurrentPlayers(namePrefix: "Opener")
         await vm.load()
 
         XCTAssertEqual(vm.freeSeason, StatScoutSeason.current)
         XCTAssertEqual(vm.selectedSeason, StatScoutSeason.current)
-        XCTAssertTrue(vm.isSeasonLocked(StatScoutSeason.current - 1))
-        XCTAssertTrue(vm.availableSeasons.contains(StatScoutSeason.current))
+        XCTAssertTrue(vm.isSeasonLocked(lastSeason), "last season becomes Pro once the new one has rows")
     }
 
     /// Opening night: two teams have played. The live season is still the default,
@@ -618,13 +642,20 @@ final class DashboardViewModelTests: XCTestCase {
         XCTAssertTrue(vm.seasonPlayers.isEmpty)
     }
 
+    /// One live-season row is enough to keep the board on the live season.
+    /// (With none at all, the preseason, last season is the default: see
+    /// `testLastSeasonStaysFreeUntilTheNewSeasonHasRows`.)
     @MainActor
     func testLoadNeverSnapsAwayFromTheLiveSeason() async {
         let lastSeason = Player(
             playerId: 1, name: "Last Season", team: "SEA", position: "C", handedness: "",
             updatedAt: Date(), season: StatScoutSeason.current - 1, metrics: [], standardStats: [], games: []
         )
-        let vm = DashboardViewModel(provider: MockProvider(players: [lastSeason]))
+        let opener = Player(
+            playerId: 2, name: "Opener", team: "EDM", position: "C", handedness: "",
+            updatedAt: Date(), season: StatScoutSeason.current, metrics: [], standardStats: [], games: []
+        )
+        let vm = DashboardViewModel(provider: MockProvider(players: [lastSeason, opener]))
         vm.isPro = true
         await vm.load()
         XCTAssertEqual(vm.selectedSeason, StatScoutSeason.current)
@@ -681,6 +712,23 @@ final class InMemoryPlayerCache: PlayerCaching, @unchecked Sendable {
     var savedPlayers: [Player] { lock.withLock { stored } }
     func loadPlayers() throws -> [Player] { lock.withLock { stored } }
     func savePlayers(_ players: [Player]) throws { lock.withLock { stored = players } }
+}
+
+/// A `MockProvider` whose rows can change between loads.
+final class SwitchableProvider: StatcastProviding, @unchecked Sendable {
+    var players: [Player]
+
+    init(players: [Player]) { self.players = players }
+
+    func fetchPlayers() async throws -> [Player] { players }
+    func fetchHistoricalPlayers() async throws -> [Player] {
+        players.filter { ($0.season ?? 0) < StatScoutSeason.current }
+    }
+    func fetchCurrentPlayers() async throws -> [Player] { players }
+    func fetchGameLogs(playerId: Int, season: Int, seasonPhase: SeasonPhase) async throws -> [PlayerGameLog] { [] }
+    func fetchTeamGameLogs(team: String, season: Int, seasonPhase: SeasonPhase, sinceDate: Date) async throws -> [PlayerGameLog] { [] }
+    func fetchRecentForm(season: Int, seasonPhase: SeasonPhase, windowWeeks: Int) async throws -> [RecentForm] { [] }
+    func fetchDataCoverage(season: Int) async throws -> DataCoverage? { nil }
 }
 
 struct MockProvider: StatcastProviding, @unchecked Sendable {

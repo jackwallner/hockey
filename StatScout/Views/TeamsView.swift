@@ -38,7 +38,7 @@ struct TeamsView: View {
     /// Standings and power ratings are built from this season's games, so they
     /// only exist on the live season.
     private var showsLeagueTables: Bool {
-        viewModel.selectedSeason == viewModel.freeSeason && viewModel.selectedPhase == .regular
+        viewModel.selectedSeason == viewModel.scheduleSeason && viewModel.selectedPhase == .regular
     }
 
     private static let allTeams: [String] = leagueTeamAbbreviations
@@ -406,7 +406,7 @@ struct TeamsView: View {
 
     /// The club's record under each disk, or "Live" while it is playing.
     private func recordStatus(_ abbr: String) -> (text: String, spoken: String, color: Color)? {
-        guard viewModel.selectedSeason == viewModel.freeSeason,
+        guard viewModel.selectedSeason == viewModel.scheduleSeason,
               viewModel.selectedPhase == .regular else { return nil }
         if let game = viewModel.currentGame(forTeam: abbr),
            [.inProgress, .awaitingScore].contains(game.status()) {
