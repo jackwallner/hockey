@@ -100,7 +100,7 @@ fun GamesScreen(isActive: Boolean) {
     val favoriteGame = favorites.team?.let { team -> slate.firstOrNull { it.involves(team) } }
 
     Column(Modifier.fillMaxSize()) {
-        HomeTopBar("Games · ${SeasonLabel.display(vm.freeSeason)}")
+        HomeTopBar("Games · ${SeasonLabel.display(vm.scheduleSeason)}")
         GamesTeamsUi.RefreshBox(onRefresh = { vm.loadGames(force = true) }) {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 if (vm.games.isEmpty()) {
@@ -167,7 +167,7 @@ private fun EmptyState() {
     GamesTeamsUi.Unavailable(
         icon = if (failed) "wifi.slash" else "calendar",
         title = if (failed) "Couldn't load games" else "No games scheduled",
-        description = vm.gamesError ?: "The ${SeasonLabel.display(vm.freeSeason)} schedule isn't published yet.",
+        description = vm.gamesError ?: "The ${SeasonLabel.display(vm.scheduleSeason)} schedule isn't published yet.",
         modifier = Modifier.padding(vertical = 48.dp),
     ) {
         Box(

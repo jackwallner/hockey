@@ -103,7 +103,7 @@ fun TeamsScreen(isActive: Boolean) {
 
     // Standings and power ratings are built from this season's games, so they
     // only exist on the live season.
-    val showsLeagueTables = vm.selectedSeason == vm.freeSeason && vm.selectedPhase == SeasonPhase.REGULAR
+    val showsLeagueTables = vm.selectedSeason == vm.scheduleSeason && vm.selectedPhase == SeasonPhase.REGULAR
     val isInitiallyLoading = vm.isLoading && vm.teamsWithData.isEmpty()
 
     // On first Teams visit, drop the user straight into their favorite team (the
@@ -340,7 +340,7 @@ private data class RecordStatus(val text: String, val spoken: String, val color:
 @Composable
 private fun recordStatus(abbr: String): RecordStatus? {
     val vm = LocalGraph.current.dashboard
-    if (vm.selectedSeason != vm.freeSeason || vm.selectedPhase != SeasonPhase.REGULAR) return null
+    if (vm.selectedSeason != vm.scheduleSeason || vm.selectedPhase != SeasonPhase.REGULAR) return null
     val game = vm.currentGame(abbr)
     if (game != null && (game.status() == GameStatus.IN_PROGRESS || game.status() == GameStatus.AWAITING_SCORE)) {
         return liveStatus(game, abbr)

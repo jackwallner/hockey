@@ -92,6 +92,12 @@ open class MockProvider(
     }
 }
 
+/** A provider whose rows can change between loads. */
+class SwitchableProvider(var players: List<Player>) : MockProvider() {
+    override suspend fun fetchHistoricalPlayers(): List<Player> = players.filter { (it.season ?: 0) < StatScoutSeason.current }
+    override suspend fun fetchCurrentPlayers(): List<Player> = players
+}
+
 class InMemoryPlayerCache(seed: List<Player> = emptyList()) : PlayerCaching {
     var savedPlayers: List<Player> = seed
         private set

@@ -192,7 +192,7 @@ fun TeamScheduleScreen(team: String) {
     PushedScreen(teamFullName(team)) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(top = 12.dp).rinkCard()) {
-                RinkSectionBar("${SeasonLabel.display(vm.freeSeason)} schedule", trailing = vm.record(team)?.let { record ->
+                RinkSectionBar("${SeasonLabel.display(vm.scheduleSeason)} schedule", trailing = vm.record(team)?.let { record ->
                     { Text(record, style = RinkType.statSmall, color = RinkPalette.inkSecondary) }
                 })
                 entries.forEachIndexed { index, game ->

@@ -235,7 +235,7 @@ fun TeamScreen(abbr: String) {
         GamesTeamsUi.RefreshBox(onRefresh = { vm.load() }) {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 DataFreshnessView(vm, Modifier.padding(horizontal = 12.dp).padding(top = 10.dp), season = displaySeason, phase = displayPhase)
-                if (displaySeason == vm.freeSeason) {
+                if (displaySeason == vm.scheduleSeason) {
                     Box(Modifier.padding(horizontal = 12.dp).padding(top = 10.dp)) { TeamGameCard(vm, abbr) }
                     if (displayPhase == SeasonPhase.REGULAR) {
                         Box(Modifier.padding(horizontal = 12.dp).padding(top = 10.dp)) { TeamSeasonGlance(vm, abbr) }

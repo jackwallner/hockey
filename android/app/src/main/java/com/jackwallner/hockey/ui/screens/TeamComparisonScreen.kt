@@ -157,7 +157,7 @@ fun TeamComparisonScreen(route: Route.TeamComparison) {
     val rosterB = vm.players(sB, pB).filter { normalizedTeamAbbreviation(it.team) == normalizedTeamAbbreviation(b) }
     // The club's own numbers exist only for the live regular season.
     fun clubSeason(team: String, season: Int, phase: SeasonPhase): ClubSeason? {
-        if (season != vm.freeSeason || phase != SeasonPhase.REGULAR) return null
+        if (season != vm.scheduleSeason || phase != SeasonPhase.REGULAR) return null
         val abbr = normalizedTeamAbbreviation(team)
         return ClubSeason(vm.standings[abbr], vm.teamSummaries[abbr], vm.teamRating(abbr))
     }

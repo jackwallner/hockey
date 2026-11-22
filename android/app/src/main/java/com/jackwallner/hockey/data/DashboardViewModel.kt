@@ -145,7 +145,31 @@ class DashboardViewModel(
     var isPro by mutableStateOf(false)
         private set
 
-    val freeSeason: Int get() = StatScoutSeason.free
+    /** Seasons with at least one row on hand, kept by `ingestPlayers`. */
+    private var seasonsWithRows by mutableStateOf<Set<Int>>(emptySet())
+
+    /**
+     * The season a free user gets, and the one every screen opens on.
+     *
+     * The live season (`StatScoutSeason.free`) from its first row on, opening
+     * night included. Before that, from the 1 September rollover until the
+     * first game is final in October, the pipeline has nothing for it, so
+     * last season stays free: otherwise every free user opened on an empty
+     * board with the only season that had data behind the paywall.
+     */
+    val freeSeason: Int
+        get() {
+            val live = StatScoutSeason.free
+            return if (live !in seasonsWithRows && (live - 1) in seasonsWithRows) live - 1 else live
+        }
+
+    /**
+     * The season the Games tab, standings and power ratings read: the
+     * calendar's. Its schedule is published before its first game, so in the
+     * preseason Games shows what is coming while the boards stay on last
+     * season's rows.
+     */
+    val scheduleSeason: Int get() = StatScoutSeason.current
 
     fun isSeasonLocked(season: Int): Boolean = !isPro && season != freeSeason
 
@@ -398,7 +422,7 @@ class DashboardViewModel(
 
     private suspend fun performGamesLoad() {
         isGamesLoading = games.isEmpty()
-        val season = freeSeason
+        val season = scheduleSeason
         try {
             val (loadedGames, loadedIds) = coroutineScope {
                 val schedule = async { provider.fetchGames(season) }
@@ -820,7 +844,7 @@ class DashboardViewModel(
         lastStatusCheckAt = now
         localLastCheckedAt = now
         return try {
-            val remote = provider.fetchDataFreshness(freeSeason) ?: return FreshnessCheckResult.UNAVAILABLE
+            val remote = provider.fetchDataFreshness(StatScoutSeason.current) ?: return FreshnessCheckResult.UNAVAILABLE
             dataFreshness = remote.copy(checkedAt = remote.checkedAt ?: now, isCached = false)
             persistFreshness()
             when (remote.status) {
@@ -1081,8 +1105,14 @@ class DashboardViewModel(
             val percentileDescending = descending != lowerIsBetter(label, category)
             return Comparator { first, second ->
                 val a = first.metrics.firstOrNull { it.label == label && it.category == category }
+        val previousFreeSeason = freeSeason
                 val b = second.metrics.firstOrNull { it.label == label && it.category == category }
                 when {
+        seasonsWithRows = all.mapNotNullTo(HashSet()) { it.season }
+        // The board opened on the free season follows it when it moves, so
+        // the first rows of a new season (or the preseason fallback) do not
+        // leave it on a year that is empty or now locked.
+        if (freeSeason != previousFreeSeason && selectedSeason == previousFreeSeason) selectedSeason = freeSeason
                     a == null && b == null -> first.name.compareTo(second.name)
                     a == null -> 1
                     b == null -> -1

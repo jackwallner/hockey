@@ -269,17 +269,60 @@ class DashboardViewModelTest {
         assertFalse(vm.isSeasonLocked(StatScoutSeason.ALL_TIME))
     }
 
-    /** The free season is the calendar's season, even before its data lands. */
+    /**
+     * Preseason: the calendar has named the new season (1 September) but its
+     * first game is not final yet, so the feed holds only last season. Last
+     * season stays free and is the board everyone opens on, Pro too. It used
+     * to flip on the calendar alone, which left every free user on an empty
+     * board with the only season that had data behind the paywall (iOS B1).
+     */
     @Test
-    fun freeSeasonIsTheCalendarSeasonEvenBeforeItsDataLands() = runTest {
-        val vm = dashboard(MockProvider(completeSeasonPlayers(current - 1, "LastYear")))
+    fun lastSeasonStaysFreeUntilTheNewSeasonHasRows() = runTest {
+        val lastSeason = current - 1
+        for (pro in listOf(false, true)) {
+            val vm = dashboard(MockProvider(completeSeasonPlayers(lastSeason, "LastYear")))
+            vm.applyProState(pro)
 
+            vm.load()
+
+            assertEquals("pro=$pro", lastSeason, vm.freeSeason)
+            assertEquals("pro=$pro: opens on the season that has rows", lastSeason, vm.selectedSeason)
+            assertFalse("pro=$pro", vm.isSeasonLocked(lastSeason))
+            assertTrue("pro=$pro: the default board is not empty", vm.seasonPlayers.isNotEmpty())
+            assertEquals(lastSeason, vm.recentFormSeasons.first())
+            assertEquals("Games keeps the calendar season", current, vm.scheduleSeason)
+        }
+    }
+
+    /** The first rows of the new season move the free season, and the board sitting on the old default, with them. */
+    @Test
+    fun theBoardFollowsTheNewSeasonWhenItsFirstRowsLand() = runTest {
+        val lastSeason = current - 1
+        val provider = SwitchableProvider(completeSeasonPlayers(lastSeason, "LastYear"))
+        val vm = dashboard(provider)
+        vm.load()
+        assertEquals(lastSeason, vm.selectedSeason)
+
+        provider.players = completeSeasonPlayers(lastSeason, "LastYear") + completeCurrentPlayers("Opener")
         vm.load()
 
         assertEquals(current, vm.freeSeason)
         assertEquals(current, vm.selectedSeason)
-        assertTrue(vm.isSeasonLocked(current - 1))
-        assertTrue(vm.availableSeasons.contains(current))
+        assertTrue("last season becomes Pro once the new one has rows", vm.isSeasonLocked(lastSeason))
+    }
+
+    /** The preseason as a free user meets it: no live rows, last season only in the saved data. */
+    @Test
+    fun preseasonFreeUserOpensOnLastSeasonFromSavedData() = runTest {
+        val lastSeason = current - 1
+        val vm = dashboard(MockProvider(), InMemoryPlayerCache(completeSeasonPlayers(lastSeason, "Saved")))
+        vm.applyProState(false)
+
+        vm.load()
+
+        assertEquals(lastSeason, vm.selectedSeason)
+        assertFalse(vm.isSeasonLocked(lastSeason))
+        assertTrue("the free board is not empty", vm.seasonPlayers.isNotEmpty())
     }
 
     /** Opening night: two teams have played. The live season is still the default, for Pro too. */
@@ -477,9 +520,14 @@ class DashboardViewModelTest {
         assertTrue(vm.seasonPlayers.isEmpty())
     }
 
+    /**
+     * One live-season row is enough to keep the board on the live season.
+     * (With none at all, the preseason, last season is the default: see
+     * `lastSeasonStaysFreeUntilTheNewSeasonHasRows`.)
+     */
     @Test
     fun loadNeverSnapsAwayFromTheLiveSeason() = runTest {
-        val vm = dashboard(MockProvider(listOf(testPlayer(1, "Last Season", "SEA", "C", current - 1))))
+        val vm = dashboard(MockProvider(listOf(testPlayer(1, "Last Season", "SEA", "C", current - 1), testPlayer(2, "Opener", "EDM", "C", current))))
         vm.applyProState(true)
         vm.load()
         assertEquals(current, vm.selectedSeason)
