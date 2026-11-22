@@ -183,7 +183,7 @@ fun FollowPlayersSheet(vm: DashboardViewModel, side: TrendSide = TrendSide.FORWA
     var listSide by remember { mutableStateOf(side) }
     val all = vm.players(vm.selectedSeason)
     // Ordered by when they were followed, matching the Trends board.
-    val followed = favorites.playerIds.mapNotNull { id -> all.firstOrNull { it.playerId == id } }
+    val followed = vm.followedPlayers(favorites.playerIds, vm.selectedSeason)
     val query = searchText.trim().lowercase()
     val candidates = all.filter { (it.playerType ?: "") == listSide.playerType }
         .filter { query.isEmpty() || it.name.lowercase().contains(query) || it.team.lowercase().contains(query) }

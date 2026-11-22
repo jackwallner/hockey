@@ -647,6 +647,17 @@ class DashboardViewModel(
     /** Unique players for any season, for drill-downs opened from a player page. */
     fun players(season: Int, phase: SeasonPhase? = null): List<Player> = playersFor(season, phase ?: selectedPhase)
 
+    /**
+     * Everyone followed, in the order they were followed. A player with no row
+     * in [season] (a rookie on All Time, a retired name on the live season)
+     * falls back to their newest row, so the list never hides someone the
+     * star would then have no way to unfollow.
+     */
+    fun followedPlayers(ids: List<Int>, season: Int, phase: SeasonPhase? = null): List<Player> {
+        val inSeason = players(season, phase).associateBy { it.playerId }
+        return ids.distinct().mapNotNull { id -> inSeason[id] ?: playerHistories[id]?.firstOrNull() }
+    }
+
     private fun playersFor(season: Int, phase: SeasonPhase): List<Player> {
         val seen = HashSet<Int>()
         val out = ArrayList<Player>()
@@ -1094,8 +1105,14 @@ class DashboardViewModel(
             histories[id] = sorted
             sorted.firstOrNull()?.let(latest::add)
         }
+        val previousFreeSeason = freeSeason
         playerHistories = histories
         players = latest
+        seasonsWithRows = all.mapNotNullTo(HashSet()) { it.season }
+        // The board opened on the free season follows it when it moves, so
+        // the first rows of a new season (or the preseason fallback) do not
+        // leave it on a year that is empty or now locked.
+        if (freeSeason != previousFreeSeason && selectedSeason == previousFreeSeason) selectedSeason = freeSeason
     }
 
     private fun mergePlayers(replacements: List<Player>): List<Player> {
@@ -1116,14 +1133,8 @@ class DashboardViewModel(
             val percentileDescending = descending != lowerIsBetter(label, category)
             return Comparator { first, second ->
                 val a = first.metrics.firstOrNull { it.label == label && it.category == category }
-        val previousFreeSeason = freeSeason
                 val b = second.metrics.firstOrNull { it.label == label && it.category == category }
                 when {
-        seasonsWithRows = all.mapNotNullTo(HashSet()) { it.season }
-        // The board opened on the free season follows it when it moves, so
-        // the first rows of a new season (or the preseason fallback) do not
-        // leave it on a year that is empty or now locked.
-        if (freeSeason != previousFreeSeason && selectedSeason == previousFreeSeason) selectedSeason = freeSeason
                     a == null && b == null -> first.name.compareTo(second.name)
                     a == null -> 1
                     b == null -> -1
