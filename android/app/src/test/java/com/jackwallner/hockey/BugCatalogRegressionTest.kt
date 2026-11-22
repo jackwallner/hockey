@@ -67,6 +67,16 @@ class BugCatalogRegressionTest {
         assertEquals("Oct 7 - Oct 10", label)
     }
 
+    // B4: a free user always has Restore under the last onboarding page.
+    @Test
+    fun onboardingOfferPageOffersRestoreBeforeDataLoads() {
+        assertEquals(OnboardingFooter.RESTORE, onboardingFooter(isLastPage = true, isPro = false, isReady = false))
+        assertEquals(OnboardingFooter.RESTORE, onboardingFooter(isLastPage = true, isPro = false, isReady = true))
+        assertEquals(OnboardingFooter.LOADING, onboardingFooter(isLastPage = true, isPro = true, isReady = false))
+        assertEquals(OnboardingFooter.NONE, onboardingFooter(isLastPage = true, isPro = true, isReady = true))
+        assertEquals(OnboardingFooter.NONE, onboardingFooter(isLastPage = false, isPro = false, isReady = false))
+    }
+
     // B6: Follow Players lists every followed player, whatever season is on the board.
     @Test
     fun followPlayersListsEveryFollowedPlayerOnAnySeason() = runTest {

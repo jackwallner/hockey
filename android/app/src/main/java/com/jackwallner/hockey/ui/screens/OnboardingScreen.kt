@@ -193,12 +193,12 @@ fun OnboardingScreen(onFinish: () -> Unit, startPage: Int = 0) {
                     }
                 }
                 Box(Modifier.fillMaxWidth().height(32.dp), contentAlignment = Alignment.Center) {
-                    when {
-                        isLastPage && !vm.isReady -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    when (onboardingFooter(isLastPage, store.isPro, vm.isReady)) {
+                        OnboardingFooter.LOADING -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             CircularProgressIndicator(Modifier.size(14.dp), color = RinkPalette.inkSecondary, strokeWidth = 2.dp)
                             Text(vm.loadingMessage, style = RinkType.micro, color = RinkPalette.inkSecondary)
                         }
-                        isLastPage && !store.isPro -> Text(
+                        OnboardingFooter.RESTORE -> Text(
                             if (isRestoring) "Restoring…" else "Restore Purchases",
                             style = RinkType.micro,
                             color = RinkPalette.inkTertiary,
@@ -216,6 +216,7 @@ fun OnboardingScreen(onFinish: () -> Unit, startPage: Int = 0) {
             }
         }
     }
+                        OnboardingFooter.NONE -> Unit
 }
 
 @Composable
@@ -223,6 +224,21 @@ private fun PrimaryButton(
     title: String,
     prominent: Boolean,
     enabled: Boolean = true,
+enum class OnboardingFooter { NONE, RESTORE, LOADING }
+
+/**
+ * The slot under the last page's button. A free user always gets Restore: the
+ * loading line used to take the slot until player data arrived, which hid
+ * Restore from someone reinstalling on a slow connection. A member has nothing
+ * to restore, so the slot is free for the loading line.
+ */
+fun onboardingFooter(isLastPage: Boolean, isPro: Boolean, isReady: Boolean): OnboardingFooter = when {
+    !isLastPage -> OnboardingFooter.NONE
+    !isPro -> OnboardingFooter.RESTORE
+    !isReady -> OnboardingFooter.LOADING
+    else -> OnboardingFooter.NONE
+}
+
     loading: Boolean = false,
     tag: String? = null,
     onClick: () -> Unit,
