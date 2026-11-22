@@ -597,13 +597,13 @@ final class StoreService: NSObject, ObservableObject {
         return introEligibility[package.storeProduct.productIdentifier] ?? true
     }
 
-    /// Reports a custom-paywall impression to RevenueCat (required for native UI).
     #if DEBUG
     /// Every impression a surface asked for, before the configure guard, so a
     /// hosted test can see which surfaces report without RevenueCat.
     var requestedPaywallImpressions: [String] = []
     #endif
 
+    /// Reports a custom-paywall impression to RevenueCat (required for native UI).
     func trackPaywallImpression(id: String, oncePerSession: Bool = false) {
         #if DEBUG
         requestedPaywallImpressions.append(id)

@@ -930,6 +930,13 @@ struct StatGlossaryLink: View {
 
 // MARK: - One-tap StatScout+ CTA
 
+extension EnvironmentValues {
+    /// False inside a tab that `RootTabView` keeps alive but hidden. Views
+    /// outside the tab shell (onboarding, sheets from a visible screen) are
+    /// on screen, hence the default.
+    @Entry var isSelectedTab: Bool = true
+}
+
 /// The app's only in-place conversion control, and the reason there is no
 /// pitch-then-pitch path left.
 ///
@@ -940,13 +947,6 @@ struct StatGlossaryLink: View {
 /// still there for anyone who wants to weigh monthly against lifetime, but it's
 /// a quiet text link rather than a toll gate, and it's also where a failed
 /// product load lands because that's the only screen that can retry.
-extension EnvironmentValues {
-    /// False inside a tab that `RootTabView` keeps alive but hidden. Views
-    /// outside the tab shell (onboarding, sheets from a visible screen) are
-    /// on screen, hence the default.
-    @Entry var isSelectedTab: Bool = true
-}
-
 struct PlusDirectCTA: View {
     enum Style {
         /// Compact pill, for the bottom of a blurred teaser.
