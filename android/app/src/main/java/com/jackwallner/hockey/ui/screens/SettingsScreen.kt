@@ -37,6 +37,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
 import com.jackwallner.hockey.BuildConfig
 import com.jackwallner.hockey.data.StoreLinks
 import com.jackwallner.hockey.model.DateText
@@ -87,6 +89,8 @@ fun SettingsScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showReviewerCode by remember { mutableStateOf(false) }
+    var restoreMessage by remember { mutableStateOf<String?>(null) }
+    var isRestoring by remember { mutableStateOf(false) }
     val freshness = vm.freshnessForDisplay
     val coverage = freshness?.coverage ?: vm.dataCoverage
     val gamesThrough = coverage?.let { c ->
@@ -122,12 +126,27 @@ fun SettingsScreen() {
                     }
                 }
                 Hairline()
-                LinkRow("arrow.clockwise", "Restore Purchases") { scope.launch { store.restorePurchases() } }
+                LinkRow("arrow.clockwise", if (isRestoring) "Restoring…" else "Restore Purchases", enabled = !isRestoring, busy = isRestoring) {
+                    restoreMessage = null
+                    isRestoring = true
+                    scope.launch {
+                        try {
+                            store.restorePurchases()
+                            restoreMessage = store.lastError
+                        } finally {
+                            isRestoring = false
+                        }
+                    }
+                }
                 store.activeProductId?.let { productId ->
                     Hairline()
                     LinkRow("slider.horizontal.3", "Manage Subscription") { context.openUrl(StoreLinks.manageSubscriptionURL(productId)) }
                 }
-                store.lastError?.let {
+                // Only the outcome of a restore run here. `store.lastError` is
+                // shared by every store call, so a background refresh that
+                // failed offline printed a billing error under "StatScout+
+                // Unlocked".
+                restoreMessage?.let {
                     Hairline()
                     Text(it, style = RinkType.small, color = RinkPalette.turf, modifier = Modifier.fillMaxWidth().padding(RinkGeo.padCard))
                 }
@@ -215,13 +234,14 @@ private fun InfoRow(icon: String, title: String, subtitle: String) {
 }
 
 @Composable
-private fun LinkRow(icon: String, title: String, onClick: () -> Unit) {
+private fun LinkRow(icon: String, title: String, enabled: Boolean = true, busy: Boolean = false, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClick = onClick).padding(RinkGeo.padCard),
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(enabled = enabled, onClick = onClick).padding(RinkGeo.padCard),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SfIcon(icon, 14.dp, RinkPalette.linkBlue)
+        if (busy) CircularProgressIndicator(Modifier.size(14.dp), color = RinkPalette.linkBlue, strokeWidth = 2.dp)
+        else SfIcon(icon, 14.dp, RinkPalette.linkBlue)
         Text(title, style = RinkType.smallBold, color = RinkPalette.linkBlue)
     }
 }
