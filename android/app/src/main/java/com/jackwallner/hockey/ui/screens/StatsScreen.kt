@@ -437,33 +437,37 @@ private fun isSmallSample(vm: DashboardViewModel, player: Player, label: String?
     return !vm.isQualified(player, metric)
 }
 
+/** A failed load, with Retry. The Advanced and Standard boards share it. */
+@Composable
+internal fun BoardLoadFailureState(vm: DashboardViewModel) {
+    val offline = vm.lastFailureWasConnectivity
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    EmptyState(
+        if (offline) "No connection" else "Data Error",
+        if (offline) "wifi.exclamationmark" else "exclamationmark.triangle",
+        if (offline) "The current season needs a connection for its first update. Once it has loaded, your saved stats are here offline."
+        else vm.errorMessage,
+        Modifier.heightIn(min = 200.dp),
+        actionTitle = "Retry",
+    ) { scope.launch { vm.load() } }
+}
+
+/** A past season on its way in. The Advanced and Standard boards share it. */
+@Composable
+internal fun BoardSeasonLoadingState(vm: DashboardViewModel) {
+    Column(Modifier.fillMaxWidth().heightIn(min = 200.dp).padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        CircularProgressIndicator(color = RinkPalette.inkTertiary)
+        Text("Loading ${SeasonLabel.display(vm.selectedSeason)}…", style = RinkType.small, color = RinkPalette.inkSecondary)
+    }
+}
+
 /** The empty, error and loading states in place of the board; null when there are rows to show. */
 private fun boardStatus(vm: DashboardViewModel, empty: Boolean): (@Composable () -> Unit)? {
     if (!empty) return null
     return when {
         vm.searchText.isNotEmpty() -> { { EmptyState("No players found", "magnifyingglass", "Try a different search term.", Modifier.heightIn(min = 200.dp)) } }
-        vm.errorMessage != null -> {
-            {
-                val offline = vm.lastFailureWasConnectivity
-                val scope = androidx.compose.runtime.rememberCoroutineScope()
-                EmptyState(
-                    if (offline) "No connection" else "Data Error",
-                    if (offline) "wifi.exclamationmark" else "exclamationmark.triangle",
-                    if (offline) "The current season needs a connection for its first update. Once it has loaded, your saved stats are here offline."
-                    else vm.errorMessage,
-                    Modifier.heightIn(min = 200.dp),
-                    actionTitle = "Retry",
-                ) { scope.launch { vm.load() } }
-            }
-        }
-        vm.isHistoricalLoading -> {
-            {
-                Column(Modifier.fillMaxWidth().heightIn(min = 200.dp).padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    CircularProgressIndicator(color = RinkPalette.inkTertiary)
-                    Text("Loading ${SeasonLabel.display(vm.selectedSeason)}…", style = RinkType.small, color = RinkPalette.inkSecondary)
-                }
-            }
-        }
+        vm.errorMessage != null -> { { BoardLoadFailureState(vm) } }
+        vm.isHistoricalLoading -> { { BoardSeasonLoadingState(vm) } }
         !vm.isLoading -> {
             {
                 val hasSeasonData = vm.seasonPlayers.isNotEmpty()

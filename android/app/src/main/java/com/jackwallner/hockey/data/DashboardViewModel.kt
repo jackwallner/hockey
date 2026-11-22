@@ -278,6 +278,17 @@ class DashboardViewModel(
 
     val isReady: Boolean get() = players.isNotEmpty()
 
+    /** What a board with no rows says, in the order it is checked. */
+    enum class EmptyBoardState { LOADING, LOADING_SEASON, FAILED, EMPTY }
+
+    val emptyBoardState: EmptyBoardState
+        get() = when {
+            isLoading && players.isEmpty() -> EmptyBoardState.LOADING
+            isHistoricalLoading -> EmptyBoardState.LOADING_SEASON
+            errorMessage != null -> EmptyBoardState.FAILED
+            else -> EmptyBoardState.EMPTY
+        }
+
     // MARK: Season data
 
     /** Unique players in the selected season and phase. Empty when there is none. */

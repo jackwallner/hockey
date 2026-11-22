@@ -325,6 +325,19 @@ class DashboardViewModelTest {
         assertTrue("the free board is not empty", vm.seasonPlayers.isNotEmpty())
     }
 
+    /** iOS B2: a failed first load is a failure with Retry on every board, not an empty season. */
+    @Test
+    fun aFailedFirstLoadReadsAsAFailureNotAnEmptyBoard() = runTest {
+        val vm = dashboard(MockProvider(error = IOException("offline")))
+        assertEquals(DashboardViewModel.EmptyBoardState.LOADING, vm.emptyBoardState)
+
+        vm.load()
+
+        assertEquals(DashboardViewModel.EmptyBoardState.FAILED, vm.emptyBoardState)
+        assertTrue(vm.lastFailureWasConnectivity)
+        assertEquals(DashboardViewModel.EmptyBoardState.EMPTY, dashboard(MockProvider(completeCurrentPlayers())).also { it.load() }.emptyBoardState)
+    }
+
     /** Opening night: two teams have played. The live season is still the default, for Pro too. */
     @Test
     fun aThinLiveSeasonIsStillTheDefault() = runTest {

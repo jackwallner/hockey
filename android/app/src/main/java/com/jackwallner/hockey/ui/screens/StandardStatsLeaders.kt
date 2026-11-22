@@ -203,6 +203,14 @@ fun StandardStatsLeadersView(
                             }
                         }
                     }
+                    // A board with no rows says why, in the Advanced board's order:
+                    // a past season still loading, a failed load with Retry, then empty.
+                    sorted.isEmpty() && viewModel?.emptyBoardState == DashboardViewModel.EmptyBoardState.LOADING_SEASON -> item {
+                        Box(Modifier.padding(horizontal = 12.dp).cardSlice(false, true).fillMaxWidth()) { viewModel?.let { BoardSeasonLoadingState(it) } }
+                    }
+                    sorted.isEmpty() && viewModel?.emptyBoardState == DashboardViewModel.EmptyBoardState.FAILED -> item {
+                        Box(Modifier.padding(horizontal = 12.dp).cardSlice(false, true).padding(vertical = 24.dp)) { viewModel?.let { BoardLoadFailureState(it) } }
+                    }
                     sorted.isEmpty() -> item {
                         Box(Modifier.padding(horizontal = 12.dp).cardSlice(false, true).padding(vertical = 24.dp)) {
                             EmptyState("No data available", "chart.bar", "No ${selectedPosition.displayName.lowercase()} have $selectedStat data for this season.")
