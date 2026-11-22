@@ -125,7 +125,7 @@ class SubscriptionService(
     private var packages: List<Package> = emptyList()
     private var customerInfoLoaded = false
     private var isPreview = false
-    private val impressionsThisSession = mutableSetOf<String>()
+    private val impressions = PaywallImpressionGate()
 
     // MARK: Debug and review access
 
@@ -256,9 +256,9 @@ class SubscriptionService(
     }
 
     /** Feeds RevenueCat's paywall encounters; a custom paywall emits none of its own. */
-    fun trackPaywallImpression(id: String, oncePerSession: Boolean = false) {
+    fun trackPaywallImpression(id: String, oncePerSession: Boolean = false, onSelectedTab: Boolean = true) {
         if (forcePro) return
-        if (oncePerSession && !impressionsThisSession.add(id)) return
+        if (!impressions.shouldReport(id, oncePerSession, onSelectedTab)) return
         diagnostics.recordPitchView(id)
         if (!isConfigured || isPreview) return
         syncConversionAttributes()
@@ -415,5 +415,19 @@ class SubscriptionService(
         private const val ANDROID_OFFERING_ID = "android"
         private const val QA_APP_USER_ID = "qa-android"
         private const val UNAVAILABLE = "Google Play isn't reachable right now. Check your connection and try again."
+    }
+}
+
+/**
+ * Which paywall views are reported. Every tab stays composed, so a gate on a
+ * tab nobody has opened is on the tree at launch: it is not a view, and it
+ * must not use up its once-per-session report before the tab is opened.
+ */
+class PaywallImpressionGate {
+    private val reported = mutableSetOf<String>()
+
+    fun shouldReport(id: String, oncePerSession: Boolean = false, onSelectedTab: Boolean = true): Boolean {
+        if (!onSelectedTab) return false
+        return !oncePerSession || reported.add(id)
     }
 }

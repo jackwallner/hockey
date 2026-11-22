@@ -96,6 +96,16 @@ class BugCatalogRegressionTest {
         assertTrue(vm.followedPlayers(listOf(99), current).isEmpty())
     }
 
+    // B7: a gate on a tab nobody has opened is not a paywall view.
+    @Test
+    fun hiddenTabsDoNotCountAsPaywallViews() {
+        val gate = PaywallImpressionGate()
+        assertFalse(gate.shouldReport("player_comparison", oncePerSession = true, onSelectedTab = false))
+        assertTrue("opening the tab is the view", gate.shouldReport("player_comparison", oncePerSession = true, onSelectedTab = true))
+        assertFalse("once per session", gate.shouldReport("player_comparison", oncePerSession = true, onSelectedTab = true))
+        assertTrue("the plan sheet counts every time it opens", gate.shouldReport("paywall") && gate.shouldReport("paywall"))
+    }
+
     // B10: the trailing window counts Eastern days, whatever the phone's clock rules.
     @Test
     fun trailingWindowIgnoresThePhonesClockChanges() {

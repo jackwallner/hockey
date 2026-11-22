@@ -118,6 +118,11 @@ fun OnboardingScreen(onFinish: () -> Unit, startPage: Int = 0) {
     val ctaLabel = if (monthly != null && disclosure != null) store.onboardingMonthlyCTALabel else "Upgrade to StatScout+"
 
     LaunchedEffect(Unit) { if (store.offeringId == null) store.fetchProducts() }
+    // The offer page is a paywall view of its own, so a purchase made here is
+    // credited to it and not to whichever gate was last counted.
+    LaunchedEffect(showsUpsell) {
+        if (showsUpsell) store.trackPaywallImpression(PaywallTrigger.Onboarding.paywallImpressionId, oncePerSession = true)
+    }
     DarkStatusIcons()
     // Becoming Pro here (purchase or restore) finishes onboarding, as on iOS.
     var wasPro by remember { mutableStateOf(store.isPro) }
@@ -211,19 +216,14 @@ fun OnboardingScreen(onFinish: () -> Unit, startPage: Int = 0) {
                                 }
                             }.padding(horizontal = 12.dp, vertical = 8.dp),
                         )
+                        OnboardingFooter.NONE -> Unit
                     }
                 }
             }
         }
     }
-                        OnboardingFooter.NONE -> Unit
 }
 
-@Composable
-private fun PrimaryButton(
-    title: String,
-    prominent: Boolean,
-    enabled: Boolean = true,
 enum class OnboardingFooter { NONE, RESTORE, LOADING }
 
 /**
@@ -239,6 +239,11 @@ fun onboardingFooter(isLastPage: Boolean, isPro: Boolean, isReady: Boolean): Onb
     else -> OnboardingFooter.NONE
 }
 
+@Composable
+private fun PrimaryButton(
+    title: String,
+    prominent: Boolean,
+    enabled: Boolean = true,
     loading: Boolean = false,
     tag: String? = null,
     onClick: () -> Unit,

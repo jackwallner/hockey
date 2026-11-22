@@ -39,6 +39,7 @@ import com.jackwallner.hockey.data.DirectPurchaseOutcome
 import com.jackwallner.hockey.data.PaywallTrigger
 import com.jackwallner.hockey.ui.LocalAppActions
 import com.jackwallner.hockey.ui.LocalGraph
+import com.jackwallner.hockey.ui.LocalIsSelectedTab
 import com.jackwallner.hockey.ui.findActivity
 import com.jackwallner.hockey.ui.nav.LocalNavigator
 import com.jackwallner.hockey.ui.nav.Route
@@ -67,8 +68,9 @@ fun PlusDirectCTA(
     var isPurchasing by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(trigger) {
-        store.trackPaywallImpression(trigger.paywallImpressionId, oncePerSession = true)
+    val isSelectedTab = LocalIsSelectedTab.current
+    LaunchedEffect(trigger, isSelectedTab) {
+        store.trackPaywallImpression(trigger.paywallImpressionId, oncePerSession = true, onSelectedTab = isSelectedTab)
         if (store.offeringId == null) store.fetchProducts()
     }
 

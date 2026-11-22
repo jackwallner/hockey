@@ -172,8 +172,10 @@ fun RootScreen(graph: AppGraph) {
                     Modifier.fillMaxSize().zIndex(if (active) 1f else 0f).background(RinkPalette.canvas)
                         .then(if (active) Modifier else Modifier.alpha(0f).clearAndSetSemantics { }.swallowTouches()),
                 ) {
-                    NavStack(navigators.getValue(tab), enabled = active && hasCompletedOnboarding) { route ->
-                        if (route == Route.Root) TabRoot(tab, active) else Destination(route)
+                    CompositionLocalProvider(LocalIsSelectedTab provides active) {
+                        NavStack(navigators.getValue(tab), enabled = active && hasCompletedOnboarding) { route ->
+                            if (route == Route.Root) TabRoot(tab, active) else Destination(route)
+                        }
                     }
                 }
             }

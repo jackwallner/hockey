@@ -7,12 +7,16 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.jackwallner.hockey.AppGraph
 import com.jackwallner.hockey.data.PaywallTrigger
 import com.jackwallner.hockey.data.StoreLinks
 
 val LocalGraph = staticCompositionLocalOf<AppGraph> { error("No app graph") }
+
+/** False inside a tab that is composed but not the one on screen. */
+val LocalIsSelectedTab = compositionLocalOf { true }
 
 /** App-wide presentations any screen can ask for; the root owns the sheets. */
 interface AppActions {
