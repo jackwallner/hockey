@@ -16,6 +16,7 @@ Developer notes for this repository. The published site remains in the docs dire
 - [presubmit-review-2026-11-08-deep.md](audits/presubmit-review-2026-11-08-deep.md): pre-submit deep review of 1.0.3, no P0, 3 P1 and 1 P2 fixed, 5 P2 risks open
 - [2026-11-20-bug-ux.html](audits/2026-11-20-bug-ux.html): Bug and UX catalog, 2026-11-20: 10 bugs (3 medium, 7 low; 9 confirmed), 19 UX items, October audit items rechecked. Catalog only, nothing fixed.
 - [2026-11-20-bug-fixes.md](audits/2026-11-20-bug-fixes.md): independent review of the fixes for that catalog: all 10 bugs verified with fail-without-fix proof, unit suite green, 5 pre-existing UI failures proven on base
+- [2026-11-21-android-bug-port.md](audits/2026-11-21-android-bug-port.md): Android port of the 2026-11-20 fixes: 8 ported, 1 already fine, 1 not applicable
 
 ## Marketing
 
