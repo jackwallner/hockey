@@ -63,8 +63,14 @@ data class RecentFormWindow(
          * Logs from the trailing [weeks] before the newest one in the set,
          * newest first. A card holding one player's or one club's logs anchors
          * on the latest game in them.
+         *
+         * Game dates are Eastern midnight, so the days are counted on Eastern
+         * time. The phone's zone kept its own wall-clock time across the
+         * subtraction, which drifts against Eastern midnight when the two
+         * zones change clocks on different dates (Arizona, Europe), and the
+         * window gained a 29th day.
          */
-        fun logs(logs: List<PlayerGameLog>, weeks: Int, zone: ZoneId = ZoneId.systemDefault()): List<PlayerGameLog> {
+        fun logs(logs: List<PlayerGameLog>, weeks: Int, zone: ZoneId = EASTERN): List<PlayerGameLog> {
             val anchor = logs.maxOfOrNull { it.gameDate } ?: return emptyList()
             val start = anchor.atZone(zone).minusDays(weeks * 7L).toInstant()
             return logs.filter { it.gameDate > start }.sortedByDescending { it.gameDate }
@@ -180,12 +186,6 @@ data class RecentForm(
     }
 
     companion object {
-        fun fromJson(o: JsonObject) = RecentForm(
-            playerId = o.requireInt("player_id"),
-            season = o.requireInt("season"),
-            seasonPhase = o.string("season_type")?.let { SeasonPhase.from(it) ?: throw RowDecodeException("bad phase") } ?: SeasonPhase.REGULAR,
-            playerType = o.requireString("player_type"),
-            windowWeeks = o.int("window_weeks") ?: o.requireInt("window_games"),
         /**
          * Opening night of [phase]: the schedule's own date (Eastern
          * midnight), the same calendar as the rollup's as_of. The phone's
@@ -194,6 +194,12 @@ data class RecentForm(
         fun openingDay(games: List<Game>, phase: SeasonPhase): Instant? =
             games.filter { it.seasonPhase == phase }.minOfOrNull { it.gameDate }
 
+        fun fromJson(o: JsonObject) = RecentForm(
+            playerId = o.requireInt("player_id"),
+            season = o.requireInt("season"),
+            seasonPhase = o.string("season_type")?.let { SeasonPhase.from(it) ?: throw RowDecodeException("bad phase") } ?: SeasonPhase.REGULAR,
+            playerType = o.requireString("player_type"),
+            windowWeeks = o.int("window_weeks") ?: o.requireInt("window_games"),
             // A Postgres date at Eastern midnight, like every game date.
             asOf = o.string("as_of")?.let { parseDay(it) },
             startWeek = o.int("start_week"),

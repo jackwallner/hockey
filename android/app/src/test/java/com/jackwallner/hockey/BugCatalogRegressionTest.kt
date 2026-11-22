@@ -85,4 +85,16 @@ class BugCatalogRegressionTest {
         assertEquals(listOf(2, 1, 3), vm.followedPlayers(listOf(2, 1, 3), current).map { it.playerId })
         assertTrue(vm.followedPlayers(listOf(99), current).isEmpty())
     }
+
+    // B10: the trailing window counts Eastern days, whatever the phone's clock rules.
+    @Test
+    fun trailingWindowIgnoresThePhonesClockChanges() {
+        // New York springs forward on 8 March 2026 and London on 29 March. A
+        // London phone that kept its own wall-clock time across the 28 days
+        // reached back past Eastern midnight on 22 February.
+        val logs = listOf(log("2026-03-22"), log("2026-03-01"), log("2026-02-22"))
+        assertEquals(2, onAPhoneIn("Europe/London") { RecentFormWindow.logs(logs, 4) }.size)
+        assertEquals(2, onAPhoneIn("America/Phoenix") { RecentFormWindow.logs(logs, 4) }.size)
+        assertEquals(2, onAPhoneIn("America/New_York") { RecentFormWindow.logs(logs, 4) }.size)
+    }
 }
