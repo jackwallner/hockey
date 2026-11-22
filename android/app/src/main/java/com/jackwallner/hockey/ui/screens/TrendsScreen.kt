@@ -110,10 +110,7 @@ fun TrendsScreen(isActive: Boolean) {
         vm.players(selectedSeason, selectedPhase).associateBy { it.playerId }
     }
     // Opening night of the season and phase on the board, from the live schedule; null for an older season.
-    val openingDay: Instant? = if (selectedSeason != vm.freeSeason) null else vm.games
-        .filter { it.seasonPhase == selectedPhase }
-        .minOfOrNull { GameDay.day(it) }
-        ?.atStartOfDay(ZoneId.systemDefault())?.toInstant()
+    val openingDay: Instant? = if (selectedSeason != vm.freeSeason) null else RecentForm.openingDay(vm.games, selectedPhase)
     // Falling numbers are the improvement for goals against average.
     fun improvement(form: RecentForm): Double? = form.delta[metric.key]?.let { if (metric.lowerIsBetter) -it else it }
     // No prior window yet anywhere on the board: rank the current window by level instead.

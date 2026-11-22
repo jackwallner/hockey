@@ -155,8 +155,12 @@ data class RecentForm(
     /** Dates covered, e.g. "Sep 24 - Oct 7". Null when the rollup carries no anchor date. */
     val weekRangeLabel: String? get() = weekRangeLabel(null)
 
-    /** The span, starting no earlier than [notBefore] (opening night). */
-    fun weekRangeLabel(notBefore: Instant?, zone: ZoneId = ZoneId.systemDefault()): String? {
+    /**
+     * The span, starting no earlier than [notBefore] (opening night, an
+     * Eastern game date). `asOf` is Eastern midnight, so the day arithmetic
+     * and the formatting are Eastern too.
+     */
+    fun weekRangeLabel(notBefore: Instant?, zone: ZoneId = EASTERN): String? {
         val asOf = asOf ?: return null
         var start = asOf.atZone(zone).minusDays(windowWeeks * 7L - 1).toInstant()
         if (notBefore != null && notBefore > start && notBefore <= asOf) start = notBefore
@@ -182,8 +186,16 @@ data class RecentForm(
             seasonPhase = o.string("season_type")?.let { SeasonPhase.from(it) ?: throw RowDecodeException("bad phase") } ?: SeasonPhase.REGULAR,
             playerType = o.requireString("player_type"),
             windowWeeks = o.int("window_weeks") ?: o.requireInt("window_games"),
-            // A Postgres date at local midnight, as iOS reads it.
-            asOf = o.string("as_of")?.let { parseDay(it, ZoneId.systemDefault()) },
+        /**
+         * Opening night of [phase]: the schedule's own date (Eastern
+         * midnight), the same calendar as the rollup's as_of. The phone's
+         * local day of the first puck drop is the next day east of New York.
+         */
+        fun openingDay(games: List<Game>, phase: SeasonPhase): Instant? =
+            games.filter { it.seasonPhase == phase }.minOfOrNull { it.gameDate }
+
+            // A Postgres date at Eastern midnight, like every game date.
+            asOf = o.string("as_of")?.let { parseDay(it) },
             startWeek = o.int("start_week"),
             endWeek = o.int("end_week"),
             team = o.string("team"),

@@ -44,6 +44,29 @@ class BugCatalogRegressionTest {
         return RecentForm.fromJson(Json.parseToJsonElement(json) as JsonObject)
     }
 
+    // B3: the Recent Form range reads the feed's Eastern dates on any phone.
+    @Test
+    fun recentFormRangeReadsTheFeedsDatesOnAnyPhone() {
+        for (zone in listOf("America/Los_Angeles", "America/New_York", "Asia/Tokyo")) {
+            assertEquals(zone, "Sep 24 - Oct 7", onAPhoneIn(zone) { form("2026-10-07").weekRangeLabel })
+        }
+    }
+
+    // B3: opening night is the schedule's date, not the phone's local day of the first puck drop.
+    @Test
+    fun openingNightIsTheSchedulesEasternDate() {
+        val label = onAPhoneIn("Asia/Tokyo") {
+            // 7 PM Eastern on 7 October is already the 8th in Tokyo.
+            val opener = Game(
+                id = "1", season = 2026, week = 1, kickoff = Instant.parse("2026-10-07T23:00:00Z"),
+                gameDate = Instant.parse("2026-10-07T04:00:00Z"), awayTeam = "SEA", homeTeam = "EDM",
+            )
+            val later = opener.copy(id = "2", kickoff = Instant.parse("2026-10-09T23:00:00Z"), gameDate = Instant.parse("2026-10-09T04:00:00Z"))
+            form("2026-10-10").weekRangeLabel(RecentForm.openingDay(listOf(later, opener), SeasonPhase.REGULAR))
+        }
+        assertEquals("Oct 7 - Oct 10", label)
+    }
+
     // B6: Follow Players lists every followed player, whatever season is on the board.
     @Test
     fun followPlayersListsEveryFollowedPlayerOnAnySeason() = runTest {
