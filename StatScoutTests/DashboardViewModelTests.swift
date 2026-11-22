@@ -338,6 +338,22 @@ final class DashboardViewModelTests: XCTestCase {
         }
     }
 
+    /// The preseason as a free user meets it: the live feed has no rows for
+    /// the new season and last season is only in the saved data.
+    @MainActor
+    func testPreseasonFreeUserOpensOnLastSeasonFromSavedData() async {
+        let lastSeason = StatScoutSeason.current - 1
+        let cache = InMemoryPlayerCache(seed: makeCompleteSeasonPlayers(season: lastSeason, namePrefix: "Saved"))
+        let vm = DashboardViewModel(provider: MockProvider(players: []), cache: cache)
+        vm.applyProState(false)
+
+        await vm.load()
+
+        XCTAssertEqual(vm.selectedSeason, lastSeason)
+        XCTAssertFalse(vm.isSeasonLocked(lastSeason))
+        XCTAssertFalse(vm.seasonPlayers.isEmpty, "the free board is not empty")
+    }
+
     /// The first rows of the new season move the free season, and the board
     /// sitting on the old default, along with them.
     @MainActor
