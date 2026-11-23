@@ -1,3 +1,1 @@
-Del enhver spillers percentiltavle som et billede direkte fra profilen.
-Ranglister, søgning og skift af sæson er meget hurtigere, især for tidligere sæsoner.
-Tydeligere priser på opgraderingsskærmen.
+Forbedringer bag kulisserne og fejlrettelser, så Hockey Edge kører glat. Tak fordi du er her.

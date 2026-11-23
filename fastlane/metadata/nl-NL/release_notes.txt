@@ -1,3 +1,1 @@
-Deel het percentielbord van elke speler als afbeelding, direct vanuit zijn profiel.
-Ranglijsten, zoeken en wisselen van seizoen gaan veel sneller, vooral bij eerdere seizoenen.
-Duidelijkere prijzen op het upgradescherm.
+Verbeteringen achter de schermen en bugfixes zodat Hockey Edge soepel werkt. Bedankt dat je er bent.

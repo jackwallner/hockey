@@ -1,3 +1,1 @@
-Herhangi bir oyuncunun yüzdelik tablosunu doğrudan profilinden görsel olarak paylaşın.
-Sıralamalar, arama ve sezon değiştirme çok daha hızlı, özellikle geçmiş sezonlarda.
-Yükseltme ekranında daha net fiyatlar.
+Hockey Edge'in sorunsuz çalışması için arka planda iyileştirmeler ve hata düzeltmeleri. Burada olduğun için teşekkürler.

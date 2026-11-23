@@ -1,3 +1,1 @@
-Podijelite percentilnu ploču bilo kojeg igrača kao sliku, izravno s njegova profila.
-Ljestvice, pretraživanje i promjena sezone znatno su brži, osobito za prošle sezone.
-Jasnije cijene na zaslonu za nadogradnju.
+Poboljšanja u pozadini i ispravci grešaka kako bi Hockey Edge radio glatko. Hvala što ste tu.

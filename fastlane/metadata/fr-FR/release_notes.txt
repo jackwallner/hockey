@@ -1,3 +1,1 @@
-Partagez le tableau de percentiles de n'importe quel joueur en image, depuis son profil.
-Classements, recherche et changement de saison sont bien plus rapides, surtout pour les saisons passées.
-Tarifs plus clairs sur l'écran de mise à niveau.
+Améliorations en coulisses et corrections de bugs pour que Hockey Edge reste fluide. Merci d'être là.

@@ -1,3 +1,1 @@
-Teile die Perzentil-Übersicht jedes Spielers als Bild, direkt aus seinem Profil.
-Bestenlisten, Suche und Saisonwechsel sind deutlich schneller, vor allem bei früheren Saisons.
-Klarere Preise auf dem Upgrade-Bildschirm.
+Verbesserungen und Fehlerbehebungen im Hintergrund, damit Hockey Edge reibungslos läuft. Danke, dass du dabei bist.

@@ -1,3 +1,1 @@
-Distribuie tabelul de percentile al oricărui jucător ca imagine, direct din profilul său.
-Clasamentele, căutarea și schimbarea sezonului sunt mult mai rapide, mai ales pentru sezoanele trecute.
-Prețuri mai clare pe ecranul de upgrade.
+Îmbunătățiri și remedieri pentru ca Hockey Edge să funcționeze mai bine. Mulțumim că ești aici.

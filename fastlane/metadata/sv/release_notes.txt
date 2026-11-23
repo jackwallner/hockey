@@ -1,3 +1,1 @@
-Dela valfri spelares percentiltavla som en bild, direkt från profilen.
-Topplistor, sökning och byte av säsong går mycket snabbare, särskilt för tidigare säsonger.
-Tydligare priser på uppgraderingsskärmen.
+Förbättringar bakom kulisserna och buggfixar så att Hockey Edge fungerar smidigt. Tack för att du är här.

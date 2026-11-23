@@ -1,3 +1,1 @@
-Chia sẻ bảng phân vị của bất kỳ cầu thủ nào dưới dạng hình ảnh, ngay từ hồ sơ của họ.
-Bảng xếp hạng, tìm kiếm và chuyển mùa giải nhanh hơn nhiều, nhất là với các mùa trước.
-Giá hiển thị rõ ràng hơn trên màn hình nâng cấp.
+Cải tiến phía sau và sửa lỗi để Hockey Edge chạy mượt mà. Cảm ơn bạn đã đồng hành.

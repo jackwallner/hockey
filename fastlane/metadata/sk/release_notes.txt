@@ -1,3 +1,1 @@
-Zdieľajte percentilovú tabuľku ľubovoľného hráča ako obrázok priamo z jeho profilu.
-Rebríčky, vyhľadávanie a prepínanie sezón sú oveľa rýchlejšie, najmä pri minulých sezónach.
-Prehľadnejšie ceny na obrazovke upgradu.
+Vylepšenia na pozadí a opravy chýb, aby Hockey Edge fungoval hladko. Ďakujeme, že ste tu.

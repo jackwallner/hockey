@@ -1,3 +1,1 @@
-Bagikan papan persentil pemain mana pun sebagai gambar, langsung dari profilnya.
-Papan peringkat, pencarian, dan pergantian musim jauh lebih cepat, terutama untuk musim lalu.
-Harga lebih jelas di layar upgrade.
+Peningkatan di balik layar dan perbaikan bug agar Hockey Edge berjalan lancar. Terima kasih telah hadir.

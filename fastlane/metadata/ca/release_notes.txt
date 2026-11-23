@@ -1,3 +1,1 @@
-Comparteix el tauler de percentils de qualsevol jugador com a imatge, des del seu perfil.
-Les classificacions, la cerca i el canvi de temporada són molt més ràpids, sobretot en temporades passades.
-Preus més clars a la pantalla de millora.
+Millores internes i correccions d'errors perquè Hockey Edge funcioni bé. Gràcies per ser aquí.

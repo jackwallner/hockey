@@ -1,3 +1,1 @@
-Jaa minkä tahansa pelaajan persentiilitaulu kuvana suoraan hänen profiilistaan.
-Tulostaulut, haku ja kauden vaihto ovat paljon nopeampia, etenkin aiemmilla kausilla.
-Selkeämmät hinnat päivitysnäkymässä.
+Taustaparannuksia ja virhekorjauksia, jotta Hockey Edge toimii sujuvasti. Kiitos, että olet mukana.

@@ -1,3 +1,1 @@
-Comparte el panel de percentiles de cualquier jugador como imagen, desde su perfil.
-Las clasificaciones, la búsqueda y el cambio de temporada son mucho más rápidos, sobre todo en temporadas pasadas.
-Precios más claros en la pantalla de mejora.
+Mejoras internas y correcciones de errores para que Hockey Edge funcione mejor. Gracias por estar aquí.
