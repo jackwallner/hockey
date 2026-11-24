@@ -13,6 +13,7 @@ import com.jackwallner.hockey.model.SeasonLabel
 import com.jackwallner.hockey.model.SeasonPhase
 import com.jackwallner.hockey.model.StatScoutSeason
 import com.jackwallner.hockey.model.leagueTeamAbbreviations
+import com.jackwallner.hockey.model.cityOnlyTeamNames
 import com.jackwallner.hockey.model.teamFullName
 import com.jackwallner.hockey.model.teamNickname
 import java.io.IOException
@@ -35,6 +36,23 @@ class DashboardViewModelTest {
 
     private val expectedSeasons: List<Int>
         get() = listOf(StatScoutSeason.ALL_TIME) + (StatScoutSeason.EARLIEST..current).toList().reversed()
+
+    @Test
+    fun cityOnlyTeamNamesDropTheClubName() {
+        assertEquals("Seattle Kraken", teamFullName("SEA"))
+        assertEquals("Toronto Maple Leafs", teamFullName("TOR"))
+        cityOnlyTeamNames = true
+        try {
+            assertEquals("Seattle", teamFullName("SEA"))
+            assertEquals("Toronto", teamFullName("TOR"))
+            assertEquals("New York", teamFullName("NYR"))
+            assertEquals("Vegas", teamFullName("VGK"))
+            assertEquals("Seattle", teamNickname("SEA"))
+            assertEquals("Unknown", teamFullName("Unknown"))
+        } finally {
+            cityOnlyTeamNames = false
+        }
+    }
 
     @Test
     fun allMetricsKeyCollision() = runTest {
