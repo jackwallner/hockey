@@ -1,5 +1,5 @@
 Se hvem som leder utover kampreferatet.
-Ranger NHL-spillere etter forventede mål, åpne en komplett persentilprofil med ett trykk og følg hvem som er glovarm og hvem som kjølner akkurat nå.
+Ranger hockeyspillere etter forventede mål, åpne en komplett persentilprofil med ett trykk og følg hvem som er glovarm og hvem som kjølner akkurat nå.
 
 Merk: selve appen er på engelsk.
 
@@ -31,7 +31,7 @@ Lås opp resten av appen med StatScout+:
 Velg Månedlig, Årlig eller Livstid. Ett kjøp dekker alt.
 
 PERSONVERN FØRST
-Ingen konto. Ingen registrering. Ingen reklame. Ingen sporing fra tredjeparter. Appen gjør bare nettverkskallene som trengs for NHL-statistikk og kjøpsbekreftelse.
+Ingen konto. Ingen registrering. Ingen reklame. Ingen sporing fra tredjeparter. Appen gjør bare nettverkskallene som trengs for hockeystatistikk og kjøpsbekreftelse.
 
 Om abonnementet
 StatScout+ finnes som abonnement med automatisk fornyelse (månedlig eller årlig, begge med gratis prøveperiode for kvalifiserte nye abonnenter) eller som engangskjøp for Livstid. Prisene vises i appen før du kjøper og varierer etter region. Google Play belaster kontoen din når du bekrefter. Abonnementer fornyes automatisk til de sies opp. Administrer eller si opp når som helst i Google Play under Betalinger og abonnementer.
@@ -39,4 +39,4 @@ StatScout+ finnes som abonnement med automatisk fornyelse (månedlig eller årli
 Personvernerklæring: https://jackwallner.github.io/hockey/android-privacy.html
 Vilkår for bruk: https://jackwallner.github.io/hockey/android-terms.html
 
-Data om forventede mål og skudd kommer fra MoneyPuck.com. Kampoppsett, kampreferater og spillerdata er offentlige NHL-data. StatScout er ikke tilknyttet, autorisert, godkjent eller sponset av National Hockey League (NHL), noe NHL-lag, NHLPA eller MoneyPuck. Navn og statistikk brukes kun til identifikasjon og informasjon.
+Data om forventede mål og skudd kommer fra MoneyPuck.com. Kampoppsett, kampreferater og spillerdata er offentlige data. StatScout er en uavhengig app. Den er ikke tilknyttet, autorisert, godkjent eller sponset av noen profesjonell ishockeyliga, noe lag, noen spillerforening eller MoneyPuck. Navn og statistikk brukes kun til identifikasjon og informasjon.

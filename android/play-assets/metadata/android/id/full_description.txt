@@ -1,5 +1,5 @@
 Lihat siapa yang benar-benar unggul, lebih dari sekadar box score.
-Urutkan pemain NHL menurut expected goals, buka profil persentil lengkap dengan sekali ketuk, dan pantau siapa yang sedang panas dan siapa yang mendingin saat ini.
+Urutkan pemain hoki menurut expected goals, buka profil persentil lengkap dengan sekali ketuk, dan pantau siapa yang sedang panas dan siapa yang mendingin saat ini.
 
 Catatan: aplikasinya sendiri berbahasa Inggris.
 
@@ -31,7 +31,7 @@ Buka sisa aplikasi dengan StatScout+:
 Pilih Bulanan, Tahunan, atau Seumur Hidup. Satu pembelian mencakup semuanya.
 
 PRIVASI DIUTAMAKAN
-Tanpa akun. Tanpa pendaftaran. Tanpa iklan. Tanpa pelacakan pihak ketiga. Aplikasi hanya membuat permintaan jaringan yang dibutuhkan untuk statistik NHL dan verifikasi pembelian.
+Tanpa akun. Tanpa pendaftaran. Tanpa iklan. Tanpa pelacakan pihak ketiga. Aplikasi hanya membuat permintaan jaringan yang dibutuhkan untuk statistik hoki dan verifikasi pembelian.
 
 Detail langganan
 StatScout+ tersedia sebagai langganan yang diperpanjang otomatis (Bulanan atau Tahunan, masing-masing dengan uji coba gratis untuk pelanggan baru yang memenuhi syarat) atau sebagai pembelian sekali bayar Seumur Hidup. Harga ditampilkan di aplikasi sebelum membeli dan berbeda menurut wilayah. Google Play menagih akunmu saat kamu mengonfirmasi. Langganan diperpanjang otomatis sampai dibatalkan. Kelola atau batalkan kapan saja di Google Play pada Pembayaran & langganan.
@@ -39,4 +39,4 @@ StatScout+ tersedia sebagai langganan yang diperpanjang otomatis (Bulanan atau T
 Kebijakan Privasi: https://jackwallner.github.io/hockey/android-privacy.html
 Ketentuan Penggunaan: https://jackwallner.github.io/hockey/android-terms.html
 
-Data expected goals dan tembakan berasal dari MoneyPuck.com. Jadwal, box score, dan biodata pemain adalah data publik NHL. StatScout tidak berafiliasi dengan, diberi wewenang, didukung, atau disponsori oleh National Hockey League (NHL), tim NHL mana pun, NHLPA, atau MoneyPuck. Nama dan statistik digunakan hanya untuk identifikasi dan informasi.
+Data expected goals dan tembakan berasal dari MoneyPuck.com. Jadwal, box score, dan biodata pemain adalah data publik. StatScout adalah aplikasi independen. Aplikasi ini tidak berafiliasi dengan, diberi wewenang, didukung, atau disponsori oleh liga hoki profesional, tim, atau asosiasi pemain mana pun, maupun MoneyPuck. Nama dan statistik digunakan hanya untuk identifikasi dan informasi.

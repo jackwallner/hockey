@@ -1,5 +1,5 @@
 Se hvem der fører, ud over kampstatistikken.
-Rangér NHL-spillere efter forventede mål, åbn en komplet percentilprofil med ét tryk, og følg hvem der er varme, og hvem der køler af lige nu.
+Rangér hockeyspillere efter forventede mål, åbn en komplet percentilprofil med ét tryk, og følg hvem der er varme, og hvem der køler af lige nu.
 
 Bemærk: selve appen er på engelsk.
 
@@ -31,7 +31,7 @@ Lås resten af appen op med StatScout+:
 Vælg Månedlig, Årlig eller Livstid. Ét køb dækker det hele.
 
 PRIVATLIV FØRST
-Ingen konto. Ingen tilmelding. Ingen reklamer. Ingen sporing fra tredjeparter. Appen foretager kun de netværkskald, der er nødvendige for NHL-statistik og købsbekræftelse.
+Ingen konto. Ingen tilmelding. Ingen reklamer. Ingen sporing fra tredjeparter. Appen foretager kun de netværkskald, der er nødvendige for hockeystatistik og købsbekræftelse.
 
 Om abonnementet
 StatScout+ fås som abonnement med automatisk fornyelse (månedligt eller årligt, begge med gratis prøveperiode for berettigede nye abonnenter) eller som engangskøb for Livstid. Priserne vises i appen, før du køber, og varierer efter region. Google Play opkræver betaling fra din konto, når du bekræfter. Abonnementer fornyes automatisk, indtil de opsiges. Administrer eller opsig når som helst i Google Play under Betalinger og abonnementer.
@@ -39,4 +39,4 @@ StatScout+ fås som abonnement med automatisk fornyelse (månedligt eller årlig
 Privatlivspolitik: https://jackwallner.github.io/hockey/android-privacy.html
 Vilkår for brug: https://jackwallner.github.io/hockey/android-terms.html
 
-Data om forventede mål og skud kommer fra MoneyPuck.com. Kampprogram, kampstatistik og spillerdata er offentlige NHL-data. StatScout er ikke tilknyttet, autoriseret, godkendt eller sponsoreret af National Hockey League (NHL), noget NHL-hold, NHLPA eller MoneyPuck. Navne og statistik bruges kun til identifikation og information.
+Data om forventede mål og skud kommer fra MoneyPuck.com. Kampprogram, kampstatistik og spillerdata er offentlige data. StatScout er en uafhængig app. Den er ikke tilknyttet, autoriseret, godkendt eller sponsoreret af nogen professionel ishockeyliga, noget hold, nogen spillerforening eller MoneyPuck. Navne og statistik bruges kun til identifikation og information.

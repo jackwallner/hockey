@@ -1,5 +1,5 @@
 Lihat siapa yang benar-benar mendahului, melangkaui kad skor perlawanan.
-Susun pemain NHL mengikut jangkaan gol, buka profil persentil penuh dengan satu ketikan, dan jejaki siapa yang sedang panas dan siapa yang semakin dingin sekarang.
+Susun pemain hoki mengikut jangkaan gol, buka profil persentil penuh dengan satu ketikan, dan jejaki siapa yang sedang panas dan siapa yang semakin dingin sekarang.
 
 Nota: aplikasi ini sendiri dalam bahasa Inggeris.
 
@@ -31,7 +31,7 @@ Buka selebihnya aplikasi dengan StatScout+:
 Pilih Bulanan, Tahunan atau Seumur Hidup. Satu pembelian merangkumi semuanya.
 
 PRIVASI DIUTAMAKAN
-Tiada akaun. Tiada pendaftaran. Tiada iklan. Tiada penjejakan pihak ketiga. Aplikasi hanya membuat permintaan rangkaian yang diperlukan untuk statistik NHL dan pengesahan pembelian.
+Tiada akaun. Tiada pendaftaran. Tiada iklan. Tiada penjejakan pihak ketiga. Aplikasi hanya membuat permintaan rangkaian yang diperlukan untuk statistik hoki dan pengesahan pembelian.
 
 Butiran langganan
 StatScout+ tersedia sebagai langganan yang diperbaharui secara automatik (Bulanan atau Tahunan, masing-masing dengan percubaan percuma untuk pelanggan baharu yang layak) atau sebagai pembelian sekali Seumur Hidup. Harga dipaparkan dalam aplikasi sebelum anda membeli dan berbeza mengikut rantau. Google Play mengecaj akaun anda apabila anda mengesahkan. Langganan diperbaharui secara automatik sehingga dibatalkan. Urus atau batalkan pada bila-bila masa di Google Play di bawah Pembayaran & langganan.
@@ -39,4 +39,4 @@ StatScout+ tersedia sebagai langganan yang diperbaharui secara automatik (Bulana
 Dasar Privasi: https://jackwallner.github.io/hockey/android-privacy.html
 Terma Penggunaan: https://jackwallner.github.io/hockey/android-terms.html
 
-Data jangkaan gol dan rembatan diperoleh daripada MoneyPuck.com. Jadual, kad skor dan biodata pemain ialah data awam NHL. StatScout tidak bergabung dengan, diberi kuasa, disokong atau ditaja oleh National Hockey League (NHL), mana-mana pasukan NHL, NHLPA atau MoneyPuck. Nama dan statistik digunakan hanya untuk tujuan pengenalan dan maklumat.
+Data jangkaan gol dan rembatan diperoleh daripada MoneyPuck.com. Jadual, kad skor dan biodata pemain ialah data awam. StatScout ialah aplikasi bebas. Aplikasi ini tidak bergabung dengan, diberi kuasa, disokong atau ditaja oleh mana-mana liga hoki profesional, pasukan, persatuan pemain atau MoneyPuck. Nama dan statistik digunakan hanya untuk tujuan pengenalan dan maklumat.

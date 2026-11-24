@@ -1,5 +1,5 @@
 Vezi cine conduce dincolo de foaia de meci.
-Clasează jucătorii NHL după goluri așteptate, deschide un profil complet pe percentile cu o atingere și urmărește cine e în formă și cine se răcește chiar acum.
+Clasează jucătorii de hochei după goluri așteptate, deschide un profil complet pe percentile cu o atingere și urmărește cine e în formă și cine se răcește chiar acum.
 
 Notă: aplicația în sine este în limba engleză.
 
@@ -31,7 +31,7 @@ Deblochează restul aplicației cu StatScout+:
 Alege lunar, anual sau pe viață. O singură achiziție acoperă tot.
 
 CONFIDENȚIALITATEA ÎNAINTE DE TOATE
-Fără cont. Fără înregistrare. Fără reclame. Fără urmărire de către terți. Aplicația face doar cererile de rețea necesare pentru statisticile NHL și verificarea achizițiilor.
+Fără cont. Fără înregistrare. Fără reclame. Fără urmărire de către terți. Aplicația face doar cererile de rețea necesare pentru statisticile de hochei și verificarea achizițiilor.
 
 Detalii despre abonament
 StatScout+ este disponibil ca abonament cu reînnoire automată (lunar sau anual, fiecare cu perioadă de probă gratuită pentru abonații noi eligibili) sau ca achiziție unică pe viață. Prețurile apar în aplicație înainte de cumpărare și variază în funcție de regiune. Google Play debitează contul tău când confirmi. Abonamentele se reînnoiesc automat până la anulare. Gestionează sau anulează oricând în Google Play, la Plăți și abonamente.
@@ -39,4 +39,4 @@ StatScout+ este disponibil ca abonament cu reînnoire automată (lunar sau anual
 Politica de confidențialitate: https://jackwallner.github.io/hockey/android-privacy.html
 Termeni de utilizare: https://jackwallner.github.io/hockey/android-terms.html
 
-Datele despre goluri așteptate și șuturi provin de la MoneyPuck.com. Programul, foile de meci și datele jucătorilor sunt date publice NHL. StatScout nu este afiliat, autorizat, aprobat sau sponsorizat de National Hockey League (NHL), vreo echipă NHL, NHLPA sau MoneyPuck. Numele și statisticile sunt folosite doar pentru identificare și informare.
+Datele despre goluri așteptate și șuturi provin de la MoneyPuck.com. Programul, foile de meci și datele jucătorilor sunt date publice. StatScout este o aplicație independentă. Nu este afiliată, autorizată, aprobată sau sponsorizată de nicio ligă profesionistă de hochei, echipă, asociație a jucătorilor sau de MoneyPuck. Numele și statisticile sunt folosite doar pentru identificare și informare.

@@ -122,12 +122,12 @@ with System UI demo mode on. Pull them into `android/play-assets/raw/` and run
 Store headlines) and the 1024x500 feature graphic. Listing text lives in
 `android/play-assets/metadata/android/<play-locale>/` (fastlane supply layout)
 in Sober's 50 Play locales; en-US is the live listing, the changelog and
-graphics are en-US only. Titles are "<local NHL stats phrase>: StatScout" (en-US
+graphics are en-US only. Titles are "<local hockey stats phrase>: StatScout" (en-US
 keeps "Hockey Edge: Puck StatScout"), search terms come from the iOS
 `fastlane/metadata/<locale>/keywords.txt`, and every non-English description
 says the app itself is in English. Check with `scripts/validate-play-listing.py`
 (limits 30/80/4000, no em dashes, prices or Apple wording, policy links,
-MoneyPuck/NHL attribution, the English notice).
+MoneyPuck attribution, no league name in any field, the English notice).
 Privacy and terms pages are `docs/android-privacy.html` and
 `docs/android-terms.html` on GitHub Pages.
 
@@ -155,3 +155,4 @@ on  2026-10-17. The RevenueCat service account already has
 account-wide Play permissions, so no per-app grant is needed.
 
 - 2026-11-16: Football was suspended on Play (Impersonation) for league names in localized titles and short descriptions. This app's titles and shorts were stripped of league marks and Statcast the same day by API and sent for review; `scripts/validate-play-listing.py` now fails on any league name there. Never put the league acronym in a title or short description.
+- 2026-11-24: Full descriptions in all 50 locales cleaned of league names (NHL, NHLPA, LNH, the league's full name in any language); the non-affiliation line is generic ("any professional hockey league, team, or players association, or MoneyPuck"). fr-CA title and short were "Statistiques LNH" (LNH is the French form of the league acronym) and are now "Stats de hockey". Feature graphic tagline is "Hockey expected goals and percentile bars.", rendered with `play-assets/icon-512.png` because `scripts/play_screenshot_compositor.py` reads the iOS AppIcon, which is now a stick icon unlike the Play icon. `scripts/validate-play-listing.py` fails on any league name or local form in title, short or full description and on a locale set other than the 50. Sent for review by API with the 50 locales and the graphic on production vc1; Console showed "Changes in review". Screenshots carry full club names (Seattle Kraken, Toronto Maple Leafs) but no league mark.

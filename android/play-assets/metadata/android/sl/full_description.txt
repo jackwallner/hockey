@@ -1,5 +1,5 @@
 Poglejte, kdo vodi onkraj zapisnika tekme.
-Razvrstite igralce NHL po pričakovanih golih, z enim dotikom odprite celoten percentilni profil in spremljajte, kdo je trenutno v formi in kdo se ohlaja.
+Razvrstite hokejiste po pričakovanih golih, z enim dotikom odprite celoten percentilni profil in spremljajte, kdo je trenutno v formi in kdo se ohlaja.
 
 Opomba: aplikacija sama je v angleščini.
 
@@ -31,7 +31,7 @@ Odklenite preostanek aplikacije s StatScout+:
 Izberite mesečno, letno ali doživljenjsko možnost. En nakup pokrije vse.
 
 ZASEBNOST NA PRVEM MESTU
-Brez računa. Brez registracije. Brez oglasov. Brez sledenja tretjih oseb. Aplikacija pošilja le zahteve, potrebne za statistiko NHL in preverjanje nakupov.
+Brez računa. Brez registracije. Brez oglasov. Brez sledenja tretjih oseb. Aplikacija pošilja le zahteve, potrebne za hokejsko statistiko in preverjanje nakupov.
 
 Podrobnosti naročnine
 StatScout+ je na voljo kot samodejno podaljšana naročnina (mesečna ali letna, obe z brezplačnim preizkusom za upravičene nove naročnike) ali kot enkraten doživljenjski nakup. Cene so prikazane v aplikaciji pred nakupom in se razlikujejo po regijah. Google Play bremeni vaš račun ob potrditvi. Naročnine se samodejno podaljšujejo, dokler jih ne prekličete. Upravljajte ali prekličite kadar koli v Google Play pod Plačila in naročnine.
@@ -39,4 +39,4 @@ StatScout+ je na voljo kot samodejno podaljšana naročnina (mesečna ali letna,
 Pravilnik o zasebnosti: https://jackwallner.github.io/hockey/android-privacy.html
 Pogoji uporabe: https://jackwallner.github.io/hockey/android-terms.html
 
-Podatki o pričakovanih golih in strelih so z MoneyPuck.com. Razpored, zapisniki tekem in podatki o igralcih so javni podatki NHL. StatScout ni povezan z National Hockey League (NHL), nobeno ekipo NHL, NHLPA ali MoneyPuck, niti ga ti niso pooblastili, podprli ali sponzorirali. Imena in statistika se uporabljajo le za prepoznavanje in obveščanje.
+Podatki o pričakovanih golih in strelih so z MoneyPuck.com. Razpored, zapisniki tekem in podatki o igralcih so javni podatki. StatScout je neodvisna aplikacija. Ni povezana z nobeno profesionalno hokejsko ligo, ekipo, združenjem igralcev ali MoneyPuck, niti je ti niso pooblastili, podprli ali sponzorirali. Imena in statistika se uporabljajo le za prepoznavanje in obveščanje.

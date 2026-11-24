@@ -1,5 +1,5 @@
 Zobacz, kto naprawdę prowadzi, poza suchym protokołem meczu.
-Ułóż zawodników NHL według goli oczekiwanych, otwórz pełny profil percentylowy jednym dotknięciem i śledź, kto jest teraz w gazie, a kto stygnie.
+Ułóż hokeistów według goli oczekiwanych, otwórz pełny profil percentylowy jednym dotknięciem i śledź, kto jest teraz w gazie, a kto stygnie.
 
 Uwaga: sama aplikacja jest w języku angielskim.
 
@@ -31,7 +31,7 @@ Odblokuj resztę aplikacji dzięki StatScout+:
 Wybierz plan miesięczny, roczny lub dożywotni. Jeden zakup obejmuje wszystko.
 
 PRYWATNOŚĆ PRZEDE WSZYSTKIM
-Bez konta. Bez rejestracji. Bez reklam. Bez śledzenia przez firmy zewnętrzne. Aplikacja wysyła tylko zapytania potrzebne do statystyk NHL i weryfikacji zakupów.
+Bez konta. Bez rejestracji. Bez reklam. Bez śledzenia przez firmy zewnętrzne. Aplikacja wysyła tylko zapytania potrzebne do statystyk hokejowych i weryfikacji zakupów.
 
 Szczegóły subskrypcji
 StatScout+ jest dostępny jako automatycznie odnawiana subskrypcja (miesięczna lub roczna, każda z bezpłatnym okresem próbnym dla uprawnionych nowych subskrybentów) albo jako jednorazowy zakup dożywotni. Ceny widać w aplikacji przed zakupem i różnią się w zależności od regionu. Google Play obciąża Twoje konto po potwierdzeniu. Subskrypcje odnawiają się automatycznie do czasu anulowania. Zarządzaj nimi lub anuluj w dowolnym momencie w Google Play, w sekcji Płatności i subskrypcje.
@@ -39,4 +39,4 @@ StatScout+ jest dostępny jako automatycznie odnawiana subskrypcja (miesięczna 
 Polityka prywatności: https://jackwallner.github.io/hockey/android-privacy.html
 Warunki korzystania: https://jackwallner.github.io/hockey/android-terms.html
 
-Dane o golach oczekiwanych i strzałach pochodzą z MoneyPuck.com. Terminarz, protokoły meczów i dane zawodników to publiczne dane NHL. StatScout nie jest powiązany z National Hockey League (NHL), żadną drużyną NHL, NHLPA ani MoneyPuck, ani przez nie autoryzowany, popierany czy sponsorowany. Nazwiska i statystyki służą wyłącznie identyfikacji i informacji.
+Dane o golach oczekiwanych i strzałach pochodzą z MoneyPuck.com. Terminarz, protokoły meczów i dane zawodników to publiczne dane. StatScout to niezależna aplikacja. Nie jest powiązana z żadną profesjonalną ligą hokejową, drużyną, związkiem zawodowym graczy ani MoneyPuck, ani przez nie autoryzowana, popierana czy sponsorowana. Nazwiska i statystyki służą wyłącznie identyfikacji i informacji.

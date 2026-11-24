@@ -1,5 +1,5 @@
 Pogledajte tko vodi izvan zapisnika utakmice.
-Rangirajte NHL igrače po očekivanim golovima, jednim dodirom otvorite potpuni percentilni profil i pratite tko je trenutno u formi, a tko se hladi.
+Rangirajte hokejaše po očekivanim golovima, jednim dodirom otvorite potpuni percentilni profil i pratite tko je trenutno u formi, a tko se hladi.
 
 Napomena: sama aplikacija je na engleskom jeziku.
 
@@ -31,7 +31,7 @@ Otključajte ostatak aplikacije uz StatScout+:
 Odaberite mjesečnu, godišnju ili doživotnu opciju. Jedna kupnja pokriva sve.
 
 PRIVATNOST NA PRVOM MJESTU
-Bez računa. Bez registracije. Bez oglasa. Bez praćenja trećih strana. Aplikacija šalje samo zahtjeve potrebne za NHL statistiku i provjeru kupnje.
+Bez računa. Bez registracije. Bez oglasa. Bez praćenja trećih strana. Aplikacija šalje samo zahtjeve potrebne za hokejašku statistiku i provjeru kupnje.
 
 Pojedinosti pretplate
 StatScout+ dostupan je kao pretplata s automatskom obnovom (mjesečna ili godišnja, obje s besplatnim probnim razdobljem za nove pretplatnike koji ispunjavaju uvjete) ili kao jednokratna doživotna kupnja. Cijene se prikazuju u aplikaciji prije kupnje i razlikuju se po regijama. Google Play tereti vaš račun kada potvrdite. Pretplate se automatski obnavljaju dok ih ne otkažete. Upravljajte ili otkažite bilo kada u Google Playu pod Plaćanja i pretplate.
@@ -39,4 +39,4 @@ StatScout+ dostupan je kao pretplata s automatskom obnovom (mjesečna ili godiš
 Pravila o privatnosti: https://jackwallner.github.io/hockey/android-privacy.html
 Uvjeti korištenja: https://jackwallner.github.io/hockey/android-terms.html
 
-Podaci o očekivanim golovima i udarcima potječu s MoneyPuck.com. Raspored, zapisnici utakmica i podaci o igračima javni su NHL podaci. StatScout nije povezan s National Hockey League (NHL), nijednom NHL momčadi, NHLPA-om ni MoneyPuckom, niti su ga oni ovlastili, podržali ili sponzorirali. Imena i statistika koriste se samo za prepoznavanje i informiranje.
+Podaci o očekivanim golovima i udarcima potječu s MoneyPuck.com. Raspored, zapisnici utakmica i podaci o igračima javni su podaci. StatScout je neovisna aplikacija. Nije povezana ni s jednom profesionalnom hokejaškom ligom, momčadi, udrugom igrača ni MoneyPuckom te je oni nisu ovlastili, podržali niti sponzorirali. Imena i statistika koriste se samo za prepoznavanje i informiranje.

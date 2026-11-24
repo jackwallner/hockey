@@ -1,5 +1,5 @@
 Veja quem lidera além do placar.
-Ranqueie os jogadores da NHL por gols esperados, abra um perfil completo em percentis com um toque e acompanhe quem está em alta ou esfriando agora.
+Ranqueie os jogadores de hóquei por gols esperados, abra um perfil completo em percentis com um toque e acompanhe quem está em alta ou esfriando agora.
 
 Observação: o app está em inglês.
 
@@ -31,7 +31,7 @@ Desbloqueie o resto do app com o StatScout+:
 Escolha Mensal, Anual ou Vitalício. Uma compra libera tudo.
 
 PRIVACIDADE EM PRIMEIRO LUGAR
-Sem conta. Sem cadastro. Sem anúncios. Sem rastreamento de terceiros. O app só faz as conexões necessárias para as estatísticas da NHL e a verificação de compras.
+Sem conta. Sem cadastro. Sem anúncios. Sem rastreamento de terceiros. O app só faz as conexões necessárias para as estatísticas de hóquei e a verificação de compras.
 
 Detalhes da assinatura
 O StatScout+ está disponível como assinatura com renovação automática (mensal ou anual, cada uma com teste gratuito para novos assinantes qualificados) ou como compra única Vitalícia. Os preços aparecem no app antes da compra e variam por região. O Google Play cobra na sua conta quando você confirma. As assinaturas renovam automaticamente até serem canceladas. Gerencie ou cancele quando quiser no Google Play, em Pagamentos e assinaturas.
@@ -39,4 +39,4 @@ O StatScout+ está disponível como assinatura com renovação automática (mens
 Política de Privacidade: https://jackwallner.github.io/hockey/android-privacy.html
 Termos de Uso: https://jackwallner.github.io/hockey/android-terms.html
 
-Os dados de gols esperados e chutes vêm do MoneyPuck.com. Calendário, boxscores e fichas dos jogadores são dados públicos da NHL. O StatScout não é afiliado, autorizado, endossado nem patrocinado pela National Hockey League (NHL), por qualquer time da NHL, pela NHLPA ou pelo MoneyPuck. Nomes e estatísticas são usados apenas para identificação e informação.
+Os dados de gols esperados e chutes vêm do MoneyPuck.com. Calendário, boxscores e fichas dos jogadores são dados públicos. O StatScout é um app independente. Ele não é afiliado, autorizado, endossado nem patrocinado por nenhuma liga profissional de hóquei, time, associação de jogadores ou pelo MoneyPuck. Nomes e estatísticas são usados apenas para identificação e informação.

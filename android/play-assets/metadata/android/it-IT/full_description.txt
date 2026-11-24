@@ -1,5 +1,5 @@
 Scopri chi comanda oltre il tabellino.
-Classifica i giocatori NHL per gol attesi, apri un profilo completo in percentili con un tocco e segui chi è in forma e chi sta calando in questo momento.
+Classifica i giocatori di hockey per gol attesi, apri un profilo completo in percentili con un tocco e segui chi è in forma e chi sta calando in questo momento.
 
 Nota: l'app è in inglese.
 
@@ -31,7 +31,7 @@ Sblocca il resto dell'app con StatScout+:
 Scegli Mensile, Annuale o A vita. Un solo acquisto sblocca tutto.
 
 PRIVACY PRIMA DI TUTTO
-Nessun account. Nessuna registrazione. Nessuna pubblicità. Nessun tracciamento di terze parti. L'app effettua solo le richieste di rete necessarie per le statistiche NHL e la verifica degli acquisti.
+Nessun account. Nessuna registrazione. Nessuna pubblicità. Nessun tracciamento di terze parti. L'app effettua solo le richieste di rete necessarie per le statistiche di hockey e la verifica degli acquisti.
 
 Dettagli dell'abbonamento
 StatScout+ è disponibile come abbonamento a rinnovo automatico (mensile o annuale, ciascuno con prova gratuita per i nuovi abbonati idonei) o come acquisto unico A vita. I prezzi sono mostrati nell'app prima dell'acquisto e variano in base alla regione. Google Play addebita l'importo sul tuo account alla conferma. Gli abbonamenti si rinnovano automaticamente fino alla disdetta. Gestisci o annulla in qualsiasi momento in Google Play, in Pagamenti e abbonamenti.
@@ -39,4 +39,4 @@ StatScout+ è disponibile come abbonamento a rinnovo automatico (mensile o annua
 Informativa sulla privacy: https://jackwallner.github.io/hockey/android-privacy.html
 Termini di utilizzo: https://jackwallner.github.io/hockey/android-terms.html
 
-I dati su gol attesi e tiri provengono da MoneyPuck.com. Calendario, tabellini e schede dei giocatori sono dati pubblici della NHL. StatScout non è affiliato, autorizzato, approvato né sponsorizzato dalla National Hockey League (NHL), da alcuna squadra NHL, dalla NHLPA o da MoneyPuck. Nomi e statistiche sono usati solo a scopo identificativo e informativo.
+I dati su gol attesi e tiri provengono da MoneyPuck.com. Calendario, tabellini e schede dei giocatori sono dati pubblici. StatScout è un'app indipendente. Non è affiliata, autorizzata, approvata né sponsorizzata da alcuna lega professionistica di hockey, squadra, associazione dei giocatori o da MoneyPuck. Nomi e statistiche sono usati solo a scopo identificativo e informativo.

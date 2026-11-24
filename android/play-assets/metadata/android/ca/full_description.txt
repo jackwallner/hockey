@@ -1,5 +1,5 @@
 Descobreix qui mana més enllà de l'acta del partit.
-Classifica els jugadors de la NHL per gols esperats, obre un perfil complet en percentils amb un toc i segueix qui està en ratxa i qui es refreda ara mateix.
+Classifica els jugadors d'hoquei per gols esperats, obre un perfil complet en percentils amb un toc i segueix qui està en ratxa i qui es refreda ara mateix.
 
 Nota: l'aplicació és en anglès.
 
@@ -31,7 +31,7 @@ Desbloqueja la resta de l'aplicació amb StatScout+:
 Tria Mensual, Anual o Vitalici. Una sola compra ho inclou tot.
 
 LA PRIVADESA, PRIMER
-Sense comptes. Sense registre. Sense anuncis. Sense seguiment de tercers. L'aplicació només fa les connexions necessàries per a les estadístiques de la NHL i la verificació de compres.
+Sense comptes. Sense registre. Sense anuncis. Sense seguiment de tercers. L'aplicació només fa les connexions necessàries per a les estadístiques d'hoquei i la verificació de compres.
 
 Detalls de la subscripció
 StatScout+ està disponible com a subscripció de renovació automàtica (mensual o anual, cadascuna amb prova gratuïta per als nous subscriptors que compleixin els requisits) o com a compra única Vitalícia. Els preus es mostren a l'aplicació abans de comprar i varien segons la regió. Google Play fa el càrrec al teu compte quan confirmes. Les subscripcions es renoven automàticament fins que les cancel·lis. Gestiona-les o cancel·la-les quan vulguis a Google Play, a Pagaments i subscripcions.
@@ -39,4 +39,4 @@ StatScout+ està disponible com a subscripció de renovació automàtica (mensua
 Política de privadesa: https://jackwallner.github.io/hockey/android-privacy.html
 Condicions d'ús: https://jackwallner.github.io/hockey/android-terms.html
 
-Les dades de gols esperats i xuts provenen de MoneyPuck.com. Calendari, actes i fitxes de jugadors són dades públiques de la NHL. StatScout no està afiliat, autoritzat, avalat ni patrocinat per la National Hockey League (NHL), cap equip de la NHL, la NHLPA ni MoneyPuck. Els noms i les estadístiques s'utilitzen només amb finalitats d'identificació i informació.
+Les dades de gols esperats i xuts provenen de MoneyPuck.com. Calendari, actes i fitxes de jugadors són dades públiques. StatScout és una app independent. No està afiliada, autoritzada, avalada ni patrocinada per cap lliga d'hoquei professional, cap equip, cap associació de jugadors ni MoneyPuck. Els noms i les estadístiques s'utilitzen només amb finalitats d'identificació i informació.

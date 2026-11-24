@@ -1,5 +1,5 @@
 Voyez qui domine au-delà du sommaire de match.
-Classez les joueurs de la LNH par buts attendus, ouvrez un profil complet en percentiles d'un seul geste et suivez qui est en feu ou en panne en ce moment.
+Classez les joueurs de hockey par buts attendus, ouvrez un profil complet en percentiles d'un seul geste et suivez qui est en feu ou en panne en ce moment.
 
 À noter : l'application elle-même est en anglais.
 
@@ -31,7 +31,7 @@ Débloquez le reste de l'application avec StatScout+ :
 Choisissez Mensuel, Annuel ou À vie. Un seul achat débloque tout.
 
 LA CONFIDENTIALITÉ D'ABORD
-Pas de compte. Pas d'inscription. Pas de publicité. Aucun pistage par des tiers. L'application ne fait que les requêtes réseau nécessaires aux statistiques de la LNH et à la vérification des achats.
+Pas de compte. Pas d'inscription. Pas de publicité. Aucun pistage par des tiers. L'application ne fait que les requêtes réseau nécessaires aux statistiques de hockey et à la vérification des achats.
 
 Détails de l'abonnement
 StatScout+ est offert en abonnement à renouvellement automatique (mensuel ou annuel, avec essai gratuit pour les nouveaux abonnés admissibles) ou en achat unique À vie. Les prix sont affichés dans l'application avant l'achat et varient selon la région. Google Play facture votre compte à la confirmation. L'abonnement se renouvelle automatiquement jusqu'à son annulation. Gérez-le ou annulez-le en tout temps dans Google Play, sous Paiements et abonnements.
@@ -39,4 +39,4 @@ StatScout+ est offert en abonnement à renouvellement automatique (mensuel ou an
 Politique de confidentialité : https://jackwallner.github.io/hockey/android-privacy.html
 Conditions d'utilisation : https://jackwallner.github.io/hockey/android-terms.html
 
-Les données de buts attendus et de tirs proviennent de MoneyPuck.com. Calendrier, sommaires de match et fiches des joueurs sont des données publiques de la LNH (NHL). StatScout n'est ni affilié, ni autorisé, ni approuvé, ni commandité par la Ligue nationale de hockey (NHL), une équipe de la LNH, l'AJLNH (NHLPA) ou MoneyPuck. Les noms et statistiques sont utilisés uniquement à des fins d'identification et d'information.
+Les données de buts attendus et de tirs proviennent de MoneyPuck.com. Calendrier, sommaires de match et fiches des joueurs sont des données publiques. StatScout est une application indépendante. Elle n'est ni affiliée à une ligue professionnelle de hockey, à une équipe, à une association de joueurs ou à MoneyPuck, ni autorisée, approuvée ou commanditée par ceux-ci. Les noms et statistiques sont utilisés uniquement à des fins d'identification et d'information.

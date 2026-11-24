@@ -1,5 +1,5 @@
 Xem ai thực sự dẫn đầu, vượt xa bảng tỷ số.
-Xếp hạng cầu thủ NHL theo bàn thắng kỳ vọng, mở hồ sơ phân vị đầy đủ chỉ với một lần chạm và theo dõi ai đang lên phong độ, ai đang chững lại ngay lúc này.
+Xếp hạng cầu thủ khúc côn cầu theo bàn thắng kỳ vọng, mở hồ sơ phân vị đầy đủ chỉ với một lần chạm và theo dõi ai đang lên phong độ, ai đang chững lại ngay lúc này.
 
 Lưu ý: bản thân ứng dụng dùng tiếng Anh.
 
@@ -31,7 +31,7 @@ Mở khóa phần còn lại của ứng dụng với StatScout+:
 Chọn Hằng tháng, Hằng năm hoặc Trọn đời. Một lần mua mở khóa tất cả.
 
 QUYỀN RIÊNG TƯ LÀ TRÊN HẾT
-Không tài khoản. Không đăng ký. Không quảng cáo. Không theo dõi của bên thứ ba. Ứng dụng chỉ gửi những yêu cầu mạng cần thiết cho thống kê NHL và xác minh giao dịch mua.
+Không tài khoản. Không đăng ký. Không quảng cáo. Không theo dõi của bên thứ ba. Ứng dụng chỉ gửi những yêu cầu mạng cần thiết cho thống kê khúc côn cầu và xác minh giao dịch mua.
 
 Chi tiết gói đăng ký
 StatScout+ có dạng gói đăng ký tự động gia hạn (Hằng tháng hoặc Hằng năm, mỗi gói đều có dùng thử miễn phí cho người đăng ký mới đủ điều kiện) hoặc mua một lần Trọn đời. Giá hiển thị trong ứng dụng trước khi mua và khác nhau theo khu vực. Google Play trừ tiền vào tài khoản của bạn khi bạn xác nhận. Gói đăng ký tự động gia hạn cho đến khi bị hủy. Quản lý hoặc hủy bất cứ lúc nào trong Google Play, mục Thanh toán và gói thuê bao.
@@ -39,4 +39,4 @@ StatScout+ có dạng gói đăng ký tự động gia hạn (Hằng tháng ho�
 Chính sách quyền riêng tư: https://jackwallner.github.io/hockey/android-privacy.html
 Điều khoản sử dụng: https://jackwallner.github.io/hockey/android-terms.html
 
-Dữ liệu bàn thắng kỳ vọng và cú sút lấy từ MoneyPuck.com. Lịch thi đấu, bảng tỷ số và thông tin cầu thủ là dữ liệu NHL công khai. StatScout không liên kết với, không được ủy quyền, chứng thực hay tài trợ bởi National Hockey League (NHL), bất kỳ đội NHL nào, NHLPA hay MoneyPuck. Tên và số liệu chỉ được dùng để nhận diện và cung cấp thông tin.
+Dữ liệu bàn thắng kỳ vọng và cú sút lấy từ MoneyPuck.com. Lịch thi đấu, bảng tỷ số và thông tin cầu thủ là dữ liệu công khai. StatScout là ứng dụng độc lập. Ứng dụng không liên kết với, không được ủy quyền, chứng thực hay tài trợ bởi bất kỳ giải khúc côn cầu chuyên nghiệp, đội, hiệp hội cầu thủ nào hay MoneyPuck. Tên và số liệu chỉ được dùng để nhận diện và cung cấp thông tin.

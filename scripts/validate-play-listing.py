@@ -4,9 +4,9 @@
 Checks every locale folder for Play's limits (title 30, short 80, full 4000),
 the house rules (no em dashes, no prices, no Apple wording, no promo words in
 the title, no medical claims), the StatScout brand in the title, the Google
-Play billing paragraph, the policy links, the MoneyPuck/NHL attribution, and
-that every non-English description says the app itself is in English.
-Exit 1 on any failure.
+Play billing paragraph, the policy links, the MoneyPuck attribution, no league names in any field,
+that every non-English description says the app itself is in English, and
+that the folder set is exactly the 50 target locales. Exit 1 on any failure.
 
 Usage: scripts/validate-play-listing.py [--root DIR]
 """
@@ -19,9 +19,14 @@ import unicodedata
 from pathlib import Path
 
 # Play suspended Football on 2026-11-16 (Impersonation) for league names in localized
-# titles and short descriptions. Keep marks out of both; the full description may name
-# the league only in the non-affiliation line and factual copy.
-LEAGUE_MARK = re.compile(r"NFL|NBA|MLB|NHL|NFLPA|NBPA|MLBPA|NHLPA|НХЛ|Statcast|스탯캐스트")
+# titles and short descriptions; Google denied both appeals. Keep league names, their
+# local forms and league data brands out of the title, short and full description.
+LEAGUE_MARK = re.compile(
+    r"NFLPA|NFL|National Football League|NBPA|NBA|National Basketball Association|"
+    r"MLBPA|MLB|Major League Baseball|Grandes Ligas|大联盟|大聯盟|メジャーリーグ|메이저리그|"
+    r"NHLPA|NHL|National Hockey League|Ligue nationale de hockey|LNH|НХЛ|"
+    r"Национальн\w* хоккейн|Національн\w* хокейн|Statcast|스탯캐스트|Baseball Savant"
+)
 
 ROOT = Path(__file__).resolve().parent.parent / "android/play-assets/metadata/android"
 LIMITS = {"title.txt": 30, "short_description.txt": 80, "full_description.txt": 4000}
@@ -33,6 +38,13 @@ PLAY_LANGS = set(
     "lo-LA lt lv mk-MK ml-IN mn-MN mr-IN ms ms-MY my-MM ne-NP nl-NL no-NO pl-PL "
     "pt-BR pt-PT rm ro ru-RU si-LK sk sl sr sv-SE sw ta-IN te-IN th tr-TR uk vi "
     "zh-CN zh-HK zh-TW zu".split()
+)
+# The 50 locales this listing ships in (same set as Sober).
+EXPECTED = set(
+    "en-US en-GB en-AU en-CA en-IN de-DE fr-FR fr-CA es-ES es-419 es-US pt-BR pt-PT "
+    "it-IT nl-NL sv-SE no-NO da-DK fi-FI pl-PL cs-CZ sk sl hr hu-HU ro el-GR tr-TR "
+    "ru-RU uk ar iw-IL hi-IN bn-BD mr-IN ta-IN te-IN kn-IN ml-IN id ms ms-MY th vi "
+    "ja-JP ko-KR zh-CN zh-TW zh-HK ca".split()
 )
 # The word for "English" in each listing language, used to prove the
 # description says the Android app is not localized.
@@ -71,7 +83,7 @@ def check(locale_dir: Path) -> list[str]:
     loc = locale_dir.name
     if loc not in PLAY_LANGS:
         errs.append(f"unknown Play language code {loc}")
-    for name in ("title.txt", "short_description.txt"):
+    for name in ("title.txt", "short_description.txt", "full_description.txt"):
         p = locale_dir / name
         hit = LEAGUE_MARK.search(p.read_text(encoding="utf-8")) if p.exists() else None
         if hit:
@@ -108,8 +120,8 @@ def check(locale_dir: Path) -> list[str]:
     for url in REQUIRED_URLS:
         if url not in full:
             errs.append(f"full description lacks {url}")
-    if "MoneyPuck" not in full or "NHL" not in full:
-        errs.append("full description lacks the MoneyPuck/NHL attribution")
+    if "MoneyPuck" not in full:
+        errs.append("full description lacks the MoneyPuck attribution")
     lang = loc.split("-")[0]
     if lang != "en":
         word = ENGLISH_WORD.get(lang)
@@ -134,8 +146,14 @@ def main() -> int:
         for e in errs:
             print(f"      - {e}")
         bad += bool(errs)
+    names = {d.name for d in dirs}
+    missing, extra = sorted(EXPECTED - names), sorted(names - EXPECTED)
+    if missing:
+        print(f"\nmissing locales: {' '.join(missing)}")
+    if extra:
+        print(f"\nunexpected locales: {' '.join(extra)}")
     print(f"\n{len(dirs)} locales, {bad} with problems")
-    return 1 if bad else 0
+    return 1 if bad or missing or extra else 0
 
 
 if __name__ == "__main__":

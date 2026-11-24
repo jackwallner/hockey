@@ -1,5 +1,5 @@
 See who leads beyond the box score.
-Rank NHL players by expected goals, read a full percentile profile in one tap, and track who is heating up or cooling off right now.
+Rank hockey players by expected goals, read a full percentile profile in one tap, and track who is heating up or cooling off right now.
 
 StatScout puts ixG, goals above expected, xGF%, Corsi, high-danger chances, goals saved above expected and the familiar box-score totals in one fast Android app.
 
@@ -29,7 +29,7 @@ Unlock the rest of the app with StatScout+:
 Choose Monthly, Yearly or Lifetime. One purchase covers everything.
 
 PRIVACY-FIRST
-No accounts. No sign-up. No ads. No third-party tracking. The app makes only the network requests needed for NHL statistics and purchase verification.
+No accounts. No sign-up. No ads. No third-party tracking. The app makes only the network requests needed for hockey statistics and purchase verification.
 
 Subscription details
 StatScout+ is available as an auto-renewing subscription (Monthly or Yearly, each with a free trial for eligible new subscribers) or as a one-time Lifetime purchase. Prices are shown in the app before you buy and vary by region. Google Play charges your account when you confirm. Subscriptions renew automatically until cancelled. Manage or cancel anytime in Google Play under Payments & subscriptions.
@@ -37,4 +37,4 @@ StatScout+ is available as an auto-renewing subscription (Monthly or Yearly, eac
 Privacy Policy: https://jackwallner.github.io/hockey/android-privacy.html
 Terms of Use: https://jackwallner.github.io/hockey/android-terms.html
 
-Expected goals and shot data are from MoneyPuck.com. Schedule, box scores and player bios are public NHL data. StatScout is not affiliated with, authorized, endorsed by or sponsored by the National Hockey League (NHL), any NHL team, the NHLPA or MoneyPuck. Player names, team names and statistics are used for identification and informational purposes only.
+Expected goals and shot data are from MoneyPuck.com. Schedule, box scores and player bios are public data. StatScout is an independent app. It is not affiliated with, authorized, endorsed by, or sponsored by any professional hockey league, team, or players association, or by MoneyPuck. Player names, team names and statistics are used for identification and informational purposes only.

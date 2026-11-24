@@ -1,5 +1,5 @@
 Zie wie er echt de dienst uitmaakt, voorbij de boxscore.
-Rangschik NHL-spelers op expected goals, open met één tik een volledig percentielprofiel en volg wie nu op stoom is en wie afkoelt.
+Rangschik ijshockeyspelers op expected goals, open met één tik een volledig percentielprofiel en volg wie nu op stoom is en wie afkoelt.
 
 Let op: de app zelf is in het Engels.
 
@@ -31,7 +31,7 @@ Ontgrendel de rest van de app met StatScout+:
 Kies Maandelijks, Jaarlijks of Lifetime. Eén aankoop ontgrendelt alles.
 
 PRIVACY VOOROP
-Geen account. Geen registratie. Geen advertenties. Geen tracking door derden. De app doet alleen de netwerkverzoeken die nodig zijn voor NHL-statistieken en aankoopverificatie.
+Geen account. Geen registratie. Geen advertenties. Geen tracking door derden. De app doet alleen de netwerkverzoeken die nodig zijn voor ijshockeystatistieken en aankoopverificatie.
 
 Abonnementsgegevens
 StatScout+ is beschikbaar als automatisch verlengend abonnement (maandelijks of jaarlijks, elk met een gratis proefperiode voor nieuwe abonnees die daarvoor in aanmerking komen) of als eenmalige Lifetime-aankoop. Prijzen zie je in de app vóór je koopt en verschillen per regio. Google Play brengt de kosten in rekening zodra je bevestigt. Abonnementen worden automatisch verlengd tot je opzegt. Beheer of annuleer altijd in Google Play onder Betalingen en abonnementen.
@@ -39,4 +39,4 @@ StatScout+ is beschikbaar als automatisch verlengend abonnement (maandelijks of 
 Privacybeleid: https://jackwallner.github.io/hockey/android-privacy.html
 Gebruiksvoorwaarden: https://jackwallner.github.io/hockey/android-terms.html
 
-Expected goals en schotdata komen van MoneyPuck.com. Speelschema, boxscores en spelersgegevens zijn openbare NHL-data. StatScout is niet gelieerd aan, geautoriseerd, onderschreven of gesponsord door de National Hockey League (NHL), een NHL-team, de NHLPA of MoneyPuck. Namen en statistieken worden alleen gebruikt ter identificatie en informatie.
+Expected goals en schotdata komen van MoneyPuck.com. Speelschema, boxscores en spelersgegevens zijn openbare data. StatScout is een onafhankelijke app. De app is niet gelieerd aan, geautoriseerd, onderschreven of gesponsord door een professionele ijshockeycompetitie, een team, een spelersvakbond of MoneyPuck. Namen en statistieken worden alleen gebruikt ter identificatie en informatie.

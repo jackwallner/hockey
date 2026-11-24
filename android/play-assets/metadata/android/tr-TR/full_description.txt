@@ -1,5 +1,5 @@
 Maç raporunun ötesinde kimin öne çıktığını gör.
-NHL oyuncularını beklenen gole göre sırala, tek dokunuşla tam bir yüzdelik profil aç ve şu anda kimin form tuttuğunu, kimin düştüğünü takip et.
+Hokey oyuncularını beklenen gole göre sırala, tek dokunuşla tam bir yüzdelik profil aç ve şu anda kimin form tuttuğunu, kimin düştüğünü takip et.
 
 Not: Uygulamanın kendisi İngilizcedir.
 
@@ -31,7 +31,7 @@ Uygulamanın geri kalanını StatScout+ ile aç:
 Aylık, Yıllık veya Ömür Boyu seç. Tek satın alma her şeyi kapsar.
 
 ÖNCE GİZLİLİK
-Hesap yok. Kayıt yok. Reklam yok. Üçüncü taraf takibi yok. Uygulama yalnızca NHL istatistikleri ve satın alma doğrulaması için gereken ağ isteklerini yapar.
+Hesap yok. Kayıt yok. Reklam yok. Üçüncü taraf takibi yok. Uygulama yalnızca hokey istatistikleri ve satın alma doğrulaması için gereken ağ isteklerini yapar.
 
 Abonelik ayrıntıları
 StatScout+, otomatik yenilenen bir abonelik (Aylık veya Yıllık, her biri uygun yeni aboneler için ücretsiz deneme içerir) ya da tek seferlik Ömür Boyu satın alma olarak sunulur. Fiyatlar satın almadan önce uygulamada gösterilir ve bölgeye göre değişir. Google Play, onayladığında hesabından ücret alır. Abonelikler iptal edilene kadar otomatik olarak yenilenir. İstediğin zaman Google Play'de Ödemeler ve abonelikler bölümünden yönet veya iptal et.
@@ -39,4 +39,4 @@ StatScout+, otomatik yenilenen bir abonelik (Aylık veya Yıllık, her biri uygu
 Gizlilik Politikası: https://jackwallner.github.io/hockey/android-privacy.html
 Kullanım Koşulları: https://jackwallner.github.io/hockey/android-terms.html
 
-Beklenen gol ve şut verileri MoneyPuck.com'dan alınır. Fikstür, maç raporları ve oyuncu bilgileri herkese açık NHL verileridir. StatScout; National Hockey League (NHL), herhangi bir NHL takımı, NHLPA veya MoneyPuck ile bağlantılı değildir ve bunlar tarafından yetkilendirilmemiş, onaylanmamış ya da sponsor olunmamıştır. İsimler ve istatistikler yalnızca tanımlama ve bilgilendirme amacıyla kullanılır.
+Beklenen gol ve şut verileri MoneyPuck.com'dan alınır. Fikstür, maç raporları ve oyuncu bilgileri herkese açık verilerdir. StatScout bağımsız bir uygulamadır. Hiçbir profesyonel buz hokeyi ligi, takım, oyuncular birliği veya MoneyPuck ile bağlantılı değildir; bunlar tarafından yetkilendirilmemiş, onaylanmamış ya da desteklenmemiştir. İsimler ve istatistikler yalnızca tanımlama ve bilgilendirme amacıyla kullanılır.

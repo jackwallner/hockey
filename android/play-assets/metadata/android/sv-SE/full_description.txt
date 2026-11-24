@@ -1,5 +1,5 @@
 Se vem som leder bortom matchprotokollet.
-Ranka NHL-spelare efter förväntade mål, öppna en komplett percentilprofil med ett tryck och följ vem som är het och vem som svalnar just nu.
+Ranka hockeyspelare efter förväntade mål, öppna en komplett percentilprofil med ett tryck och följ vem som är het och vem som svalnar just nu.
 
 Obs: själva appen är på engelska.
 
@@ -31,7 +31,7 @@ Lås upp resten av appen med StatScout+:
 Välj Månadsvis, Årsvis eller Livstid. Ett köp täcker allt.
 
 INTEGRITET FÖRST
-Inget konto. Ingen registrering. Ingen reklam. Ingen spårning från tredje part. Appen gör bara de nätverksanrop som behövs för NHL-statistik och köpverifiering.
+Inget konto. Ingen registrering. Ingen reklam. Ingen spårning från tredje part. Appen gör bara de nätverksanrop som behövs för hockeystatistik och köpverifiering.
 
 Om prenumerationen
 StatScout+ finns som prenumeration som förnyas automatiskt (månadsvis eller årsvis, båda med gratis provperiod för berättigade nya prenumeranter) eller som engångsköp för Livstid. Priserna visas i appen innan du köper och varierar mellan regioner. Google Play debiterar ditt konto när du bekräftar. Prenumerationer förnyas automatiskt tills du avslutar dem. Hantera eller avsluta när som helst i Google Play under Betalningar och prenumerationer.
@@ -39,4 +39,4 @@ StatScout+ finns som prenumeration som förnyas automatiskt (månadsvis eller å
 Integritetspolicy: https://jackwallner.github.io/hockey/android-privacy.html
 Användarvillkor: https://jackwallner.github.io/hockey/android-terms.html
 
-Data om förväntade mål och skott kommer från MoneyPuck.com. Spelschema, matchprotokoll och spelarfakta är offentlig NHL-data. StatScout är inte anslutet till, auktoriserat, godkänt eller sponsrat av National Hockey League (NHL), något NHL-lag, NHLPA eller MoneyPuck. Namn och statistik används endast för identifiering och information.
+Data om förväntade mål och skott kommer från MoneyPuck.com. Spelschema, matchprotokoll och spelarfakta är offentlig data. StatScout är en oberoende app. Den är inte ansluten till, auktoriserad, godkänd eller sponsrad av någon professionell ishockeyliga, något lag, någon spelarförening eller MoneyPuck. Namn och statistik används endast för identifiering och information.
