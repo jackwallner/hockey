@@ -52,9 +52,11 @@ Included with StatScout+
 
 ### All 32 clubs
 
-Advanced and standard team stats, with the same percentile treatment.
+Advanced and standard team stats, a roster you can rank by any metric, division standings and power ratings. Follow a team and its game is pinned to the top of the slate.
 
-Included with StatScout+
+### Every game
+
+Each night's slate with live scores, and an advanced box score for every final: expected goals, shot attempts, high-danger chances and a cumulative xG race by period. Upcoming games show a win chance.
 
 ### Back to 2008-09
 
@@ -88,7 +90,9 @@ Leaderboards, filters, and full percentile profiles are free. StatScout+ is avai
 
 **Comparisons.** Two players side by side, or one player's seasons against each other.
 
-**Team scouting and history.** All 32 clubs, every season back to 2008-09, and all-time career percentiles.
+**Best & Worst and box score lines.** The league leader and trailer on every metric, and every player's line in each box score, with ixG, GAx and goalie GSAx.
+
+**History.** Every season back to 2008-09, and all-time career percentiles.
 
 ### Specs
 
@@ -132,7 +136,7 @@ In season, the app checks for newly published numbers after every night's games 
 
 ## Is Hockey Edge: Puck StatScout free?
 
-Leaderboards, filters, full percentile profiles and Following are free. The optional StatScout+ upgrade adds trends, recent form, comparisons, team scouting and history, and prices are shown in the app before you buy and vary by region.
+Leaderboards, filters, full percentile profiles and Following are free. The optional StatScout+ upgrade adds trends, recent form, comparisons, Best & Worst, full box score player lines and history, and prices are shown in the app before you buy and vary by region.
 
 ## Where does the data come from?
 
