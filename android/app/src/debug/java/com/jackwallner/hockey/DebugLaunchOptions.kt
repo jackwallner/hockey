@@ -5,6 +5,7 @@ import com.jackwallner.hockey.data.PackageKind
 import com.jackwallner.hockey.data.PeriodUnit
 import com.jackwallner.hockey.data.Plan
 import com.jackwallner.hockey.data.PlanPeriod
+import com.jackwallner.hockey.model.cityOnlyTeamNames
 
 /**
  * Debug-only launch extras, the Android side of the iOS launch arguments.
@@ -34,6 +35,7 @@ object DebugLaunchOptions {
             graph.feedOverride = ScreenshotFixtureApi to ScreenshotFixtureApi.cache
             graph.review.isAutomationRun = true
         }
+        cityOnlyTeamNames = extras.getBoolean("cityTeamNames")
         extras.getString("statsBoard")?.let { graph.defaults.putString("stats.board", it) }
         if (extras.getBoolean("onboarded")) graph.defaults.putBoolean("hasCompletedOnboarding", true)
         // The graph outlives an activity, so a reset also clears a Pro unlock left by an earlier launch.

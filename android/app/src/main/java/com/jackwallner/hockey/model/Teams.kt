@@ -90,13 +90,27 @@ fun normalizedTeamAbbreviation(team: String): String {
     return TEAM_ALIASES[key] ?: key
 }
 
-fun teamFullName(abbr: String): String = TEAM_NAMES[normalizedTeamAbbreviation(abbr)] ?: abbr
+/**
+ * Store captures show the city alone ("Seattle"), so listing screenshots carry no club
+ * names. Only the debug launch extra `cityTeamNames` sets this.
+ */
+@Volatile
+var cityOnlyTeamNames: Boolean = false
+
+fun teamFullName(abbr: String): String {
+    val name = TEAM_NAMES[normalizedTeamAbbreviation(abbr)] ?: return abbr
+    return if (cityOnlyTeamNames) name.removeSuffix(" " + nicknameOf(name)) else name
+}
 
 private val TWO_WORD_CITIES = listOf("Los Angeles", "New Jersey", "New York", "San Jose", "St. Louis", "Tampa Bay")
 
 /** Short club name for tight columns: "Oilers", "Maple Leafs". */
 fun teamNickname(abbr: String): String {
-    val full = teamFullName(abbr)
+    if (cityOnlyTeamNames) return teamFullName(abbr)
+    return nicknameOf(TEAM_NAMES[normalizedTeamAbbreviation(abbr)] ?: abbr)
+}
+
+private fun nicknameOf(full: String): String {
     for (city in TWO_WORD_CITIES) if (full.startsWith("$city ")) return full.drop(city.length + 1)
     val parts = full.split(" ", limit = 2)
     return parts.lastOrNull() ?: full

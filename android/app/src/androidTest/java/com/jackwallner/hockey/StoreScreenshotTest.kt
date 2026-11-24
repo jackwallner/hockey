@@ -125,6 +125,7 @@ class StoreScreenshotTest {
             .putExtra("resetAll", true)
             .putExtra("uiTest", true)
             .putExtra("screenshotData", true)
+            .putExtra("cityTeamNames", true)
             .putExtra("onboarded", true)
             .putExtra("forcePro", true)
             .putExtra("statsBoard", "ADVANCED")
