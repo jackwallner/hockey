@@ -607,6 +607,14 @@
             color: #2e6fd4;
         }
             summary > h2.faq-q { display: inline; margin: 0; font: inherit; letter-spacing: inherit; color: inherit; }
+.store-badges { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
+.store-badges.start { justify-content: flex-start; }
+.play-badge { display: inline-flex; transition: opacity 0.15s; }
+.play-badge:hover { opacity: 0.85; }
+.play-badge img { display: block; height: 46px; width: auto; }
+.nav-actions { display: flex; align-items: center; gap: 10px; }
+.nav-actions .play-badge img { height: 36px; }
+@media (max-width: 480px) { .nav-actions .play-badge { display: none; } }
 </style>
 </head>
 <body>
@@ -623,8 +631,9 @@
     <section class="hero">
         <h1>See who leads <span>beyond the box score</span></h1>
         <p class="tagline">Puck StatScout is an NHL stats app for iPhone: every player ranked on expected goals, with the full percentile profile one tap away and the whole league sorted by who's heating up.</p>
-        <p class="platforms">iPhone &middot; Fresh after every game &middot; No account</p>
-        <a class="download-btn" href="https://apps.apple.com/app/id6820644691?pt=128748779&amp;ct=jw-hockey-home&amp;mt=8">Download on the App Store</a>
+        <p class="platforms">iPhone &middot; Android &middot; Fresh after every game &middot; No account</p>
+        <div class="store-badges"><a class="download-btn" href="https://apps.apple.com/app/id6820644691?pt=128748779&amp;ct=jw-hockey-home&amp;mt=8">Download on the App Store</a>
+<a class="play-badge" href="https://play.google.com/store/apps/details?id=com.jackwallner.hockey" rel="noopener"><img src="google-play-badge.webp" alt="Get it on Google Play" width="155" height="46"></a></div>
     </section>
 
     <section class="showcase">
@@ -810,7 +819,8 @@
     <section class="cta">
         <h2>Know who's actually good</h2>
         <p>Free to use. No account required. StatScout+ optional.</p>
-        <a class="download-btn" href="https://apps.apple.com/app/id6820644691?pt=128748779&amp;ct=jw-hockey-home&amp;mt=8">Download on the App Store</a>
+        <div class="store-badges"><a class="download-btn" href="https://apps.apple.com/app/id6820644691?pt=128748779&amp;ct=jw-hockey-home&amp;mt=8">Download on the App Store</a>
+<a class="play-badge" href="https://play.google.com/store/apps/details?id=com.jackwallner.hockey" rel="noopener"><img src="google-play-badge.webp" alt="Get it on Google Play" width="155" height="46"></a></div>
     </section>
 
     <footer>

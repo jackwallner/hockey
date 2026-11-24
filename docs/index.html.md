@@ -8,7 +8,7 @@ Web page: https://jackwallner.com/ios/hockey/
 
 Puck StatScout is an NHL stats app for iPhone: every player ranked on expected goals, with the full percentile profile one tap away and the whole league sorted by who's heating up.
 
-iPhone · Fresh after every game · No account
+iPhone · Android · Fresh after every game · No account
 
 [Download on the App Store](https://apps.apple.com/app/id6820644691?pt=128748779&ct=jw-hockey-home&mt=8)
 
