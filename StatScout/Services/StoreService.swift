@@ -381,6 +381,9 @@ final class StoreService: NSObject, ObservableObject {
 
     @Published private(set) var products: [Package] = []
     @Published private(set) var currentOffering: Offering?
+    /// `offerings.current.metadata`, so a running Experiment's variant is the
+    /// one read. Nil until an offering fetch succeeds, which reads as control.
+    @Published private(set) var remoteMetadata: [String: Any]?
     @Published private(set) var customerInfo: CustomerInfo?
     #if DEBUG
     /// Local-only StatScout+ override so Pro-gated surfaces (Recent Form,
@@ -443,7 +446,8 @@ final class StoreService: NSObject, ObservableObject {
             return Self.directCTALabel(
                 price: yearly.priceLabel,
                 trial: isEligibleForIntroOffer(yearly) ? yearly.introOfferLabel : nil,
-                isWinback: trigger == .winback
+                isWinback: trigger == .winback,
+                cta: trialCTAArm
             )
         }
         if let price = proPrice {
@@ -465,10 +469,11 @@ final class StoreService: NSObject, ObservableObject {
     nonisolated static func directCTALabel(
         price: String,
         trial: String?,
-        isWinback: Bool
+        isWinback: Bool,
+        cta: TrialCTA = .control
     ) -> String {
         if !isWinback, let trial {
-            return "Start \(trial)"
+            return cta.title(.direct, trial: trial)
         }
         return "\(isWinback ? "Restart" : "Try") StatScout+ for \(price)"
     }
@@ -478,15 +483,20 @@ final class StoreService: NSObject, ObservableObject {
     /// The billed amount for the selected plan sits on its own `priceLead` line
     /// directly above this button, so repeating it inside the button buys
     /// nothing. Matches the approved Baseball Savvy StatScout ladder verbatim.
-    nonisolated static func planPickerCTALabel(isLifetime: Bool, trialEligible: Bool) -> String {
+    nonisolated static func planPickerCTALabel(
+        isLifetime: Bool,
+        trialEligible: Bool,
+        cta: TrialCTA = .control
+    ) -> String {
         if isLifetime { return "Unlock Lifetime" }
-        return trialEligible ? "Start Free Trial" : "Subscribe"
+        return trialEligible ? cta.title(.planPicker) : "Subscribe"
     }
 
     func planPickerCTALabel(for package: Package) -> String {
         Self.planPickerCTALabel(
             isLifetime: package.productKind == .lifetime,
-            trialEligible: isEligibleForIntroOffer(package) && package.introOfferLabel != nil
+            trialEligible: isEligibleForIntroOffer(package) && package.introOfferLabel != nil,
+            cta: trialCTAArm
         )
     }
 
@@ -552,7 +562,8 @@ final class StoreService: NSObject, ObservableObject {
         return Self.directCTALabel(
             price: monthly.priceLabel,
             trial: isEligibleForIntroOffer(monthly) ? monthly.introOfferLabel : nil,
-            isWinback: false
+            isWinback: false,
+            cta: trialCTAArm
         )
     }
 
@@ -642,6 +653,8 @@ final class StoreService: NSObject, ObservableObject {
         guard !attributes.isEmpty else { return }
         if let offering = currentOffering?.identifier {
             attributes["offering_id"] = offering
+            // The arm this customer saw, so tests can be read by attribute.
+            attributes[TrialCTA.metadataKey] = trialCTAArm.rawValue
         }
         Purchases.shared.attribution.setAttributes(attributes)
     }
@@ -699,6 +712,7 @@ final class StoreService: NSObject, ObservableObject {
             let offerings = try await Purchases.shared.offerings()
             let offering = offerings.paywallOffering
             currentOffering = offering
+            remoteMetadata = offerings.current?.metadata
             let offeringPackages = offering?.sortedPackages ?? []
             products = offeringPackages.isEmpty
                 ? await fetchDirectPackages()
