@@ -20,10 +20,16 @@ baseball StatScout repo. Metadata/screenshots here are app-specific.
 
 **App Store reviews:** system `requestReview()` only, no custom rating question
 (App Review 5.6.1). `ReviewPromptTracker` gates it (2nd launch on, onboarding
-done, 30-day cooldown, Settings "Rate StatScout" row ends asks; "Send Feedback"
-never does); `RootTabView` asks ~3s after a positive moment (3rd+ player profile
-open, Pro player comparison) only if nothing is presented. Write-review links
-use ASC ID `6820644691`.
+done, 30-day cooldown stamped when the call is made, Settings "Rate StatScout"
+row ends asks; "Send Feedback" never does). The only automatic asks are two
+good moments (`ReviewMoment`): following a 3rd player, and a Pro member opening a
+player comparison. `requestsReview(after:)` (ReviewRequest.swift) waits ~3s, then
+re-checks the view is still on screen and no sheet, alert or paywall is up.
+No launch, tab or open-count trigger. Write-review links use ASC ID `6820644691`.
+Remote config reads the current offering's metadata (`RemoteConfig.swift`);
+wording tests go through offering metadata `trial_cta` (`seven_day` control,
+`my`, `your`), and `rating_prompt: off` pauses the star prompt. Switch keys must
+be set the same on every offering.
 
 ## Rules that hold everywhere
 - Seasons are start years (2026 = 2026-27). Every label goes through
