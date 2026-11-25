@@ -81,11 +81,26 @@ final class ReviewPromptTrackerTests: XCTestCase {
 
     // MARK: - Good moments
 
-    func testFollowingIsGoodOnlyFromTheThirdPlayer() {
-        XCTAssertFalse(ReviewMoment.followedPlayer(followingCount: 1).isGood)
-        XCTAssertFalse(ReviewMoment.followedPlayer(followingCount: 2).isGood)
+    func testTheFirstFollowIsAGoodMoment() {
+        XCTAssertEqual(ReviewMoment.watchlistMilestone, 1)
+        XCTAssertTrue(ReviewMoment.followedPlayer(followingCount: 1).isGood)
         XCTAssertTrue(ReviewMoment.followedPlayer(followingCount: 3).isGood)
         XCTAssertTrue(ReviewMoment.followedPlayer(followingCount: 8).isGood)
+    }
+
+    /// Nothing followed means no follow happened (an unfollow back to empty).
+    func testAnEmptyWatchlistIsNotAGoodMoment() {
+        XCTAssertFalse(ReviewMoment.followedPlayer(followingCount: 0).isGood)
+    }
+
+    /// A follow in the first session is a good moment, but the tracker still
+    /// holds the ask until the 2nd cold launch.
+    func testAFirstSessionFollowIsStillHeldByTheGate() {
+        ReviewPromptTracker.appLaunchCount = 1
+        XCTAssertTrue(ReviewMoment.followedPlayer(followingCount: 1).isGood)
+        XCTAssertFalse(ReviewPromptTracker.canRequestReview(hasCompletedOnboarding: true))
+        ReviewPromptTracker.appLaunchCount = 2
+        XCTAssertTrue(ReviewPromptTracker.canRequestReview(hasCompletedOnboarding: true))
     }
 
     func testComparisonIsGoodOnlyForAMember() {

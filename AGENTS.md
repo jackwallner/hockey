@@ -22,8 +22,8 @@ baseball StatScout repo. Metadata/screenshots here are app-specific.
 (App Review 5.6.1). `ReviewPromptTracker` gates it (2nd launch on, onboarding
 done, 30-day cooldown stamped when the call is made, Settings "Rate StatScout"
 row ends asks; "Send Feedback" never does). The only automatic asks are two
-good moments (`ReviewMoment`): following a 3rd player, and a Pro member opening a
-player comparison. `requestsReview(after:)` (ReviewRequest.swift) waits ~3s, then
+good moments (`ReviewMoment`): following a player (the first follow counts), and a
+Pro member opening a player comparison. `requestsReview(after:)` (ReviewRequest.swift) waits ~3s, then
 re-checks the view is still on screen and no sheet, alert or paywall is up.
 No launch, tab or open-count trigger. Write-review links use ASC ID `6820644691`.
 Remote config reads the current offering's metadata (`RemoteConfig.swift`);
