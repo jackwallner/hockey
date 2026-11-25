@@ -3,13 +3,14 @@ import Foundation
 /// The good moments that may ask for a rating. Nothing else asks on its own:
 /// not launch, not a tab or screen appearing, not a count of opens.
 enum ReviewMoment: Equatable, Sendable {
-    /// The player just followed someone. Good once the watchlist holds three:
-    /// they have built something they came back to use.
+    /// The player just followed someone. The first follow counts: it is the
+    /// core action (the watchlist feeds the Trends tab) and a typical user
+    /// reaches it in their 2nd or 3rd session.
     case followedPlayer(followingCount: Int)
     /// A StatScout+ member is looking at a head-to-head comparison they built.
     case comparedPlayers(isPro: Bool)
 
-    static let watchlistMilestone = 3
+    static let watchlistMilestone = 1
 
     var isGood: Bool {
         switch self {
