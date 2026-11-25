@@ -35,6 +35,8 @@ struct PlayerProfileView: View {
     /// `onAppear` fires again when a pushed leaderboard or comparison pops,
     /// which is navigation, not another profile open.
     @State private var hasCountedOpen = false
+    /// Bumped on a good moment; `requestsReview` asks a few seconds later.
+    @State private var reviewMoment = 0
     @State private var selectedTab: PlayerStatTab = .advanced
     @State private var selectedPercentileSeason: Int? = nil
     @State private var paywallTrigger: PaywallTrigger?
@@ -276,13 +278,9 @@ struct PlayerProfileView: View {
             UserDefaults.standard.set(opens, forKey: profileOpenCountKey)
             if !store.isPro, opens >= 2, PaywallGate.shared.shouldPresent(.playerScouting) {
                 trialPitchTrigger = .playerScouting
-            } else if opens >= 3 {
-                // Third+ profile visit = engaged browsing, a positive moment for
-                // the system rating prompt. Never on a visit that just showed
-                // the pitch, so no ask follows a subscription sheet.
-                ReviewPromptTracker.recordPositiveMoment()
             }
         }
+        .requestsReview(after: reviewMoment)
     }
 
     /// Following a player is free. It's the signal the Trends tab reads from,
@@ -292,6 +290,11 @@ struct PlayerProfileView: View {
         return Button {
             favorites.toggleFavorite(playerId: player.playerId)
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            // Only a follow can be good, never an unfollow.
+            if favorites.isFavorite(playerId: player.playerId),
+               ReviewMoment.followedPlayer(followingCount: favorites.playerIds.count).isGood {
+                reviewMoment += 1
+            }
         } label: {
             Image(systemName: isFavorite ? "star.fill" : "star")
                 .foregroundStyle(isFavorite ? Color.yellow : .white)

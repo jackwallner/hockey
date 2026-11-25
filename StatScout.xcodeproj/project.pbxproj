@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AF3D9B18F9714917E8B50127 /* RemoteConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D8B0A6B48AB39669ADBBFE /* RemoteConfigTests.swift */; };
+		AA59945B9077D4C845C1F3F3 /* ReviewRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B4D925A5B67B65D09D19FE /* ReviewRequest.swift */; };
 		F56BFA09013288B381CCCE37 /* RemoteConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E686BEED8351364F107240F /* RemoteConfig.swift */; };
 		03322BA439762FE028116ADC /* TeamsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93AB140AC9F51D7E0F0E2C6D /* TeamsView.swift */; };
 		04023875866CC802E984C0B3 /* RecentForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F95C02E1622E88F580A23B6 /* RecentForm.swift */; };
@@ -141,6 +142,7 @@
 
 /* Begin PBXFileReference section */
 		20D8B0A6B48AB39669ADBBFE /* RemoteConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigTests.swift; sourceTree = "<group>"; };
+		B2B4D925A5B67B65D09D19FE /* ReviewRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewRequest.swift; sourceTree = "<group>"; };
 		1E686BEED8351364F107240F /* RemoteConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfig.swift; sourceTree = "<group>"; };
 		00934226FB4C12145112549C /* MetricRankingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricRankingView.swift; sourceTree = "<group>"; };
 		010E2231E8DE30734FAF333D /* FollowPlayersSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowPlayersSheet.swift; sourceTree = "<group>"; };
@@ -473,6 +475,7 @@
 				57A36C805E9D0AB83292B6F7 /* PaywallView.swift */,
 				7FCAA022DB7A039D9E5D4EC6 /* PlayerComparisonView.swift */,
 				9AD97C159FCE484C7AA9DDDF /* PlayerProfileView.swift */,
+				B2B4D925A5B67B65D09D19FE /* ReviewRequest.swift */,
 				45DE4C45AF67381478971E92 /* PlayerShareCard.swift */,
 				82D4BEC37C8EF5436239336D /* RecentFormCard.swift */,
 				725784CE4007DABF6BEAA038 /* RecentFormPercentile.swift */,
@@ -760,6 +763,7 @@
 				0DBDA29FECAC0D4AC9F8A986 /* PlayerComparisonView.swift in Sources */,
 				C0B5ED98CED5C19CF7179A7A /* PlayerGameLog.swift in Sources */,
 				B56324087E4F4F901D6586E5 /* PlayerProfileView.swift in Sources */,
+				AA59945B9077D4C845C1F3F3 /* ReviewRequest.swift in Sources */,
 				1D3DC396F2A1B8C199616A3E /* PlayerShareCard.swift in Sources */,
 				04023875866CC802E984C0B3 /* RecentForm.swift in Sources */,
 				71DFA98C72F18DEFBEC07100 /* RecentFormCard.swift in Sources */,

@@ -34,14 +34,9 @@ struct StandardStatRoute: Hashable {
 }
 
 struct RootTabView: View {
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @EnvironmentObject private var store: StoreService
-    @Environment(\.requestReview) private var requestReview
-    /// False while onboarding or an update showcase covers the tabs.
-    @Environment(\.isEnabled) private var isEnabled
     @State private var viewModel: DashboardViewModel
     @State private var selection = 0
-    @State private var reviewPromptShownThisSession = false
     // Owned here so TeamsView can auto-push the favorite team and the user can
     // still pop back to the list.
     @State private var teamsPath = NavigationPath()
@@ -53,41 +48,6 @@ struct RootTabView: View {
     var body: some View {
         tabView
             .tint(RinkPalette.turf)
-            .onReceive(NotificationCenter.default.publisher(for: .statscoutPositiveMomentForReview)) { _ in
-                scheduleReviewRequestAfterPositiveMoment()
-            }
-    }
-
-    /// Nothing sits over the tabs: onboarding and the update showcase are done,
-    /// and no sheet, alert, paywall or trial pitch is up. Those sheets belong
-    /// to the screens that raise them, so ask UIKit rather than tracking flags.
-    private var isScreenClear: Bool {
-        guard hasCompletedOnboarding, isEnabled else { return false }
-        return UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-            .allSatisfy { $0.rootViewController?.presentedViewController == nil }
-    }
-
-    /// The system rating prompt, straight after a positive moment, with no
-    /// question in front of it (App Review 5.6.1). Apple decides whether it
-    /// shows. If something is on screen the moment stays pending and the next
-    /// one asks.
-    private func scheduleReviewRequestAfterPositiveMoment() {
-        guard ReviewPromptTracker.shouldRequestAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding),
-              !reviewPromptShownThisSession
-        else { return }
-
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            guard isScreenClear,
-                  !reviewPromptShownThisSession,
-                  ReviewPromptTracker.shouldRequestAfterPositiveMoment(hasCompletedOnboarding: hasCompletedOnboarding)
-            else { return }
-            reviewPromptShownThisSession = true
-            ReviewPromptTracker.markShown()
-            requestReview()
-        }
     }
 
     /// Hand-rolled tab bar rather than a `TabView`.

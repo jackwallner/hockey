@@ -1,9 +1,22 @@
 import Foundation
 
-extension Notification.Name {
-    /// Posted after a satisfaction moment. The root view may request the system
-    /// rating prompt after a short delay, with no question in front of it.
-    static let statscoutPositiveMomentForReview = Notification.Name("com.jackwallner.hockey.positiveMomentForReview")
+/// The good moments that may ask for a rating. Nothing else asks on its own:
+/// not launch, not a tab or screen appearing, not a count of opens.
+enum ReviewMoment: Equatable, Sendable {
+    /// The player just followed someone. Good once the watchlist holds three:
+    /// they have built something they came back to use.
+    case followedPlayer(followingCount: Int)
+    /// A StatScout+ member is looking at a head-to-head comparison they built.
+    case comparedPlayers(isPro: Bool)
+
+    static let watchlistMilestone = 3
+
+    var isGood: Bool {
+        switch self {
+        case .followedPlayer(let count): return count >= Self.watchlistMilestone
+        case .comparedPlayers(let isPro): return isPro
+        }
+    }
 }
 
 /// What the user did about a review. Only opening the review page ends the
@@ -15,7 +28,8 @@ enum ReviewPromptOutcome: String, Sendable {
     case submittedFeedback
 }
 
-/// Persists launch counts, positive moments, and review-prompt eligibility.
+/// Persists launch counts and review-prompt eligibility. No question goes in
+/// front of Apple's prompt (App Review 5.6.1).
 @MainActor
 enum ReviewPromptTracker {
     private static let defaults = UserDefaults.standard
@@ -24,8 +38,6 @@ enum ReviewPromptTracker {
     private static let firstOpenKey = "reviewPrompt.firstAppOpenDate"
     private static let lastShownKey = "reviewPrompt.lastShownDate"
     private static let outcomeKey = "reviewPrompt.outcome"
-    private static let positiveMomentCountKey = "reviewPrompt.positiveMomentCount"
-    private static let pendingPositiveMomentKey = "reviewPrompt.pendingPositiveMoment"
 
     /// Ask early. Most installs are gone within a week, and a rating from
     /// someone on their second visit beats no rating at all. The only tenure
@@ -77,16 +89,6 @@ enum ReviewPromptTracker {
         }
     }
 
-    static var positiveMomentCount: Int {
-        get { max(defaults.integer(forKey: positiveMomentCountKey), 0) }
-        set { defaults.set(newValue, forKey: positiveMomentCountKey) }
-    }
-
-    static var hasPendingPositiveMoment: Bool {
-        get { defaults.bool(forKey: pendingPositiveMomentKey) }
-        set { defaults.set(newValue, forKey: pendingPositiveMomentKey) }
-    }
-
     /// Skip passive prompts during UI tests / Fastlane snapshot runs.
     static var isAutomationRun: Bool {
         #if DEBUG
@@ -104,16 +106,6 @@ enum ReviewPromptTracker {
         appLaunchCount += 1
     }
 
-    static func recordPositiveMoment() {
-        positiveMomentCount += 1
-        hasPendingPositiveMoment = true
-        NotificationCenter.default.post(name: .statscoutPositiveMomentForReview, object: nil)
-    }
-
-    static func consumePendingPositiveMoment() {
-        hasPendingPositiveMoment = false
-    }
-
     static func passivePromptAllowed(now: Date = .now) -> Bool {
         guard outcome != .openedWriteReview else { return false }
         guard let last = lastShownDate else { return true }
@@ -121,6 +113,7 @@ enum ReviewPromptTracker {
         return now.timeIntervalSince(last) >= cooldown
     }
 
+    /// Whether a good moment right now may call `requestReview()`.
     static func canRequestReview(hasCompletedOnboarding: Bool, now: Date = .now) -> Bool {
         guard !isAutomationRun else { return false }
         guard hasCompletedOnboarding else { return false }
@@ -128,17 +121,10 @@ enum ReviewPromptTracker {
         return appLaunchCount >= minimumLaunchCount
     }
 
-    static func shouldRequestAfterPositiveMoment(
-        hasCompletedOnboarding: Bool,
-        now: Date = .now
-    ) -> Bool {
-        guard hasPendingPositiveMoment else { return false }
-        return canRequestReview(hasCompletedOnboarding: hasCompletedOnboarding, now: now)
-    }
-
+    /// Recorded when the call is made: Apple may show nothing, and there is
+    /// no answer to wait for.
     static func markShown(now: Date = .now) {
         lastShownDate = now
-        consumePendingPositiveMoment()
     }
 
     /// The Settings "Rate" row. Ends the passive asks for good.

@@ -78,6 +78,8 @@ struct PlayerComparisonView: View {
     }
 
     @State private var showingTrial = false
+    /// Bumped on a good moment; `requestsReview` asks a few seconds later.
+    @State private var reviewMoment = 0
     @State private var overrideA: Player?
     @State private var overrideB: Player?
     @State private var picker: PickerTarget?
@@ -208,10 +210,11 @@ struct PlayerComparisonView: View {
             }
         }
         .onAppear {
-            if store.isPro {
-                ReviewPromptTracker.recordPositiveMoment()
+            if ReviewMoment.comparedPlayers(isPro: store.isPro).isGood {
+                reviewMoment += 1
             }
         }
+        .requestsReview(after: reviewMoment)
         .sheet(item: $picker) { target in
             if let catalog {
                 let side = target == .a ? a : b
